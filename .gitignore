@@ -1,0 +1,35 @@
+﻿# Visual Studio / VS Code / .NET
+.vs/
+bin/
+obj/
+*.csproj.user
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.tmp
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+bld/
+[Bb]in/
+[Oo]bj/
+
+# NuGet
+packages/
+*.nupkg
+*.snupkg
+
+# Certificates & secrets
+*.pfx
+*.snk
+*.key
+
+# Rider / other IDEs
+.idea/
+*.iml

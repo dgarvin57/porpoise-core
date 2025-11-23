@@ -6,7 +6,19 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-</Project>
   <PropertyGroup>
     <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Contracts\" />
+    <Folder Include="Calculators\" />
+    <Folder Include="Engines\" />
+    <Folder Include="Extensions\" />
+    <Folder Include="Exceptions\" />
+    <Folder Include="Utilities\" />
+    <Folder Include="Services\" />
+  </ItemGroup>
+
+</Project>
+ 
