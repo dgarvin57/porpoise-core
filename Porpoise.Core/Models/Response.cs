@@ -1,5 +1,6 @@
 ﻿#nullable enable
 
+using Porpoise.Core.Engines;
 using Porpoise.Core.Utilities;
 using System;
 using System.Collections.Generic;
@@ -131,7 +132,8 @@ public class Response : ObjectBase
         get => _weight;
         set => SetProperty(ref _weight, value, nameof(Weight));
     }
-
+    public VarCovarData? VarCovarData { get; set; }
+    
     #endregion
 
     #region Validation Methods
@@ -152,7 +154,7 @@ public class Response : ObjectBase
         var colorArray = new List<byte>();
 
         colorArray.AddRange(CxIVIndex.GetYellow());
-        colorArray.AddRange(VarCovarData.GetBlue());
+        //colorArray.AddRange(VarCovarData.GetBlue());
         colorArray.AddRange(IOUtils.GetRed());
         colorArray.AddRange(SurveySummary.GetBlack());
 

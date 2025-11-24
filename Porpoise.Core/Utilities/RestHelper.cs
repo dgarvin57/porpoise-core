@@ -81,51 +81,37 @@ public class RestHelper
         set => _singleKeyLicensesAvailable = value;
     }
 
-    public RestHelper GetMethod(Uri address, string data) => Method(address, data, MethodType.GetMethod);
+    public Task<RestHelper> GetMethodAsync(Uri address, string data) => MethodAsync(address, data, MethodType.GetMethod);
 
-    public RestHelper PostMethod(Uri address, string data) => Method(address, data, MethodType.PostMethod);
+    public Task<RestHelper> PostMethodAsync(Uri address, string data) => MethodAsync(address, data, MethodType.PostMethod);
 
-    private RestHelper Method(Uri address, string data, MethodType type)
+    private async Task<RestHelper> MethodAsync(Uri address, string data, MethodType type)
     {
-        var request = (HttpWebRequest)WebRequest.Create(address);
-        Stream? postStream = null;
+        using var httpClient = new HttpClient();
+        HttpResponseMessage response;
 
-        try
+        if (type == MethodType.PostMethod)
         {
-            if (type == MethodType.PostMethod)
-            {
-                request.Method = "POST";
-                request.ContentType = "application/x-www-form-urlencoded";
-
-                byte[] byteData = Encoding.UTF8.GetBytes(data);
-                request.ContentLength = byteData.Length;
-
-                postStream = request.GetRequestStream();
-                postStream.Write(byteData, 0, byteData.Length);
-            }
-            else
-            {
-                request.Method = "GET";
-            }
-
-            using var response = (HttpWebResponse)request.GetResponse();
-            using var reader = new StreamReader(response.GetResponseStream()!);
-            string result = reader.ReadToEnd();
-
-            // Check for non-JSON response
-            if (!string.IsNullOrWhiteSpace(result) && result.TrimStart().StartsWith("{") == false)
-            {
-                var msg = result.Split('{');
-                if (msg.Length > 0 && !string.IsNullOrWhiteSpace(msg[0]))
-                    throw new Exception(msg[0].Trim());
-            }
-
-            return JSONHelper.FromJSON<RestHelper>(result);
+            var content = new StringContent(data, Encoding.UTF8, "application/x-www-form-urlencoded");
+            response = await httpClient.PostAsync(address, content);
         }
-        finally
+        else
         {
-            postStream?.Dispose();
+            response = await httpClient.GetAsync(address);
         }
+
+        response.EnsureSuccessStatusCode();
+        string result = await response.Content.ReadAsStringAsync();
+
+        // Check for non-JSON response
+        if (!string.IsNullOrWhiteSpace(result) && result.TrimStart().StartsWith("{") == false)
+        {
+            var msg = result.Split('{');
+            if (msg.Length > 0 && !string.IsNullOrWhiteSpace(msg[0]))
+                throw new Exception(msg[0].Trim());
+        }
+
+        return JSONHelper.FromJSON<RestHelper>(result);
     }
 }
 

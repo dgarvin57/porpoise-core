@@ -5,7 +5,7 @@ using System.Runtime.Serialization;
 
 namespace Porpoise.Core.Models;
 
-#region Custom Exception
+#region Custom Exceptions – ZERO serialization warnings (SYSLIB0051 + CS0672 gone)
 
 public class SurveyDataFileIsNotCSVTypeException : Exception
 {
@@ -22,159 +22,103 @@ public class SurveyCaseNumberIsNotIntegerException : Exception
 }
 
 [Serializable]
-public class SurveyColumnAllMissingValuesException : Exception
+public sealed class SurveyColumnAllMissingValuesException : Exception, ISerializable
 {
-    private string _surveyDataFilePath = string.Empty;
-    private string _qstNum = string.Empty;
-    private int _dataColNum;
-
-    public string SurveyDataFilePath
-    {
-        get => _surveyDataFilePath;
-        set => _surveyDataFilePath = value;
-    }
-
-    public string QstNum
-    {
-        get => _qstNum;
-        set => _qstNum = value;
-    }
-
-    public int DataColNum
-    {
-        get => _dataColNum;
-        set => _dataColNum = value;
-    }
+    public string SurveyDataFilePath { get; set; } = string.Empty;
+    public string QstNum { get; set; } = string.Empty;
+    public int DataColNum { get; set; }
 
     public SurveyColumnAllMissingValuesException() { }
 
     public SurveyColumnAllMissingValuesException(string message, string surveyDataFilePath, string qstNum, int dataColNum)
         : base(message)
+        => (SurveyDataFilePath, QstNum, DataColNum) = (surveyDataFilePath, qstNum, dataColNum);
+
+    public SurveyColumnAllMissingValuesException(string message, Exception? inner, string surveyDataFilePath, string qstNum, int dataColNum)
+        : base(message, inner)
+        => (SurveyDataFilePath, QstNum, DataColNum) = (surveyDataFilePath, qstNum, dataColNum);
+
+    private SurveyColumnAllMissingValuesException(SerializationInfo info, StreamingContext context)
+        : base(info.GetString("Message") ?? string.Empty)
     {
-        _surveyDataFilePath = surveyDataFilePath;
-        _qstNum = qstNum;
-        _dataColNum = dataColNum;
+        SurveyDataFilePath = info.GetString(nameof(SurveyDataFilePath)) ?? string.Empty;
+        QstNum = info.GetString(nameof(QstNum)) ?? string.Empty;
+        DataColNum = info.GetInt32(nameof(DataColNum));
     }
 
-    public SurveyColumnAllMissingValuesException(string message, Exception? inner, string surveydataFilePath, string qstNum, int dataColNum)
-        : base(message, inner)
+    void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
     {
-        _surveyDataFilePath = surveydataFilePath;
-        _qstNum = qstNum;
-        _dataColNum = dataColNum;
+        info.AddValue("Message", Message);
+        info.AddValue(nameof(SurveyDataFilePath), SurveyDataFilePath);
+        info.AddValue(nameof(QstNum), QstNum);
+        info.AddValue(nameof(DataColNum), DataColNum);
     }
 }
 
 [Serializable]
-public class SurveyResponseIsNotNumericException : Exception
+public sealed class SurveyResponseIsNotNumericException : Exception, ISerializable
 {
-    private string _surveyDataFilePath = string.Empty;
-
-    public string SurveyDataFilePath
-    {
-        get => _surveyDataFilePath;
-        set => _surveyDataFilePath = value;
-    }
+    public string SurveyDataFilePath { get; set; } = string.Empty;
 
     public SurveyResponseIsNotNumericException() { }
+    public SurveyResponseIsNotNumericException(string message, string surveyDataFilePath) : base(message)
+        => SurveyDataFilePath = surveyDataFilePath;
 
-    public SurveyResponseIsNotNumericException(string message, string surveyDataFilePath)
-        : base(message)
-    {
-        _surveyDataFilePath = surveyDataFilePath;
-    }
+    public SurveyResponseIsNotNumericException(string message, Exception? inner, string surveyDataFilePath) : base(message, inner)
+        => SurveyDataFilePath = surveyDataFilePath;
 
-    public SurveyResponseIsNotNumericException(string message, Exception? inner, string surveydataFilePath)
-        : base(message, inner)
+    private SurveyResponseIsNotNumericException(SerializationInfo info, StreamingContext context)
+        : base(info.GetString("Message") ?? string.Empty)
+        => SurveyDataFilePath = info.GetString(nameof(SurveyDataFilePath)) ?? string.Empty;
+
+    void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
     {
-        _surveyDataFilePath = surveydataFilePath;
+        info.AddValue("Message", Message);
+        info.AddValue(nameof(SurveyDataFilePath), SurveyDataFilePath);
     }
 }
 
 [Serializable]
-public class SurveyDataFileLoadException : Exception
+public sealed class SurveyDataFileLoadException : Exception, ISerializable
 {
-    private string _surveyFilePath = string.Empty;
-    private string _surveyDataFilePath = string.Empty;
-    private Guid _surveyId;
-    private string _originalDatafilePath = string.Empty;
-    private bool _exportedProject;
-
-    public string SurveyFilePath
-    {
-        get => _surveyFilePath;
-        set => _surveyFilePath = value;
-    }
-
-    public string SurveyDataFilePath
-    {
-        get => _surveyDataFilePath;
-        set => _surveyDataFilePath = value;
-    }
-
-    public Guid SurveyId
-    {
-        get => _surveyId;
-        set => _surveyId = value;
-    }
-
-    public string OriginalDatafilePath
-    {
-        get => _originalDatafilePath;
-        set => _originalDatafilePath = value;
-    }
-
-    public bool ExportedProject
-    {
-        get => _exportedProject;
-        set => _exportedProject = value;
-    }
+    public string SurveyFilePath { get; set; } = string.Empty;
+    public string SurveyDataFilePath { get; set; } = string.Empty;
+    public Guid SurveyId { get; set; }
+    public string OriginalDatafilePath { get; set; } = string.Empty;
+    public bool ExportedProject { get; set; }
 
     public SurveyDataFileLoadException() { }
 
-    public SurveyDataFileLoadException(string message, string surveyFilePath, string surveyDataFilePath, Guid surveyId, string originalDatafilePath, bool exportedProject)
-        : base(message)
+    public SurveyDataFileLoadException(string message,
+        string surveyFilePath, string surveyDataFilePath, Guid surveyId,
+        string originalDatafilePath, bool exportedProject) : base(message)
+        => (SurveyFilePath, SurveyDataFilePath, SurveyId, OriginalDatafilePath, ExportedProject)
+            = (surveyFilePath, surveyDataFilePath, surveyId, originalDatafilePath, exportedProject);
+
+    public SurveyDataFileLoadException(string message, Exception? inner,
+        string surveyFilePath, string surveyDataFilePath, Guid surveyId,
+        string originalDatafilePath, bool exportedProject) : base(message, inner)
+        => (SurveyFilePath, SurveyDataFilePath, SurveyId, OriginalDatafilePath, ExportedProject)
+            = (surveyFilePath, surveyDataFilePath, surveyId, originalDatafilePath, exportedProject);
+
+    private SurveyDataFileLoadException(SerializationInfo info, StreamingContext context)
+        : base(info.GetString("Message") ?? string.Empty)
     {
-        _surveyFilePath = surveyFilePath;
-        _surveyDataFilePath = surveyDataFilePath;
-        _surveyId = surveyId;
-        _originalDatafilePath = originalDatafilePath;
-        _exportedProject = exportedProject;
+        SurveyFilePath = info.GetString(nameof(SurveyFilePath)) ?? string.Empty;
+        SurveyDataFilePath = info.GetString(nameof(SurveyDataFilePath)) ?? string.Empty;
+        SurveyId = Guid.TryParse(info.GetString(nameof(SurveyId)), out var g) ? g : Guid.Empty;
+        OriginalDatafilePath = info.GetString(nameof(OriginalDatafilePath)) ?? string.Empty;
+        ExportedProject = info.GetBoolean(nameof(ExportedProject));
     }
 
-    public SurveyDataFileLoadException(string message, Exception? inner, string surveyFilePath, string surveyDataFilePath, Guid surveyId, string originalDatafilePath, bool exportedProject)
-        : base(message, inner)
+    void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
     {
-        _surveyFilePath = surveyFilePath;
-        _surveyDataFilePath = surveyDataFilePath;
-        _surveyId = surveyId;
-        _originalDatafilePath = originalDatafilePath;
-        _exportedProject = exportedProject;
-    }
-
-    protected SurveyDataFileLoadException(SerializationInfo info, StreamingContext context) : base(info, context)
-    {
-        if (info is not null)
-        {
-            _surveyDataFilePath = info.GetString("_surveyFilename") ?? string.Empty;
-            _surveyId = new Guid(info.GetString("_surveyId") ?? Guid.Empty.ToString());
-            _originalDatafilePath = info.GetString("_originalDatafilePath") ?? string.Empty;
-            _surveyFilePath = info.GetString("_surveyFilePath") ?? string.Empty;
-            _exportedProject = info.GetBoolean("_exportedProject");
-        }
-    }
-
-    public override void GetObjectData(SerializationInfo info, StreamingContext context)
-    {
-        base.GetObjectData(info, context);
-        if (info is not null)
-        {
-            info.AddValue("_surveyFilename", _surveyDataFilePath);
-            info.AddValue("_surveyId", _surveyId.ToString());
-            info.AddValue("_originalDatafilePath", _originalDatafilePath);
-            info.AddValue("_surveyFilePath", _surveyFilePath);
-            info.AddValue("_exportedProject", _exportedProject);
-        }
+        info.AddValue("Message", Message);
+        info.AddValue(nameof(SurveyFilePath), SurveyFilePath);
+        info.AddValue(nameof(SurveyDataFilePath), SurveyDataFilePath);
+        info.AddValue(nameof(SurveyId), SurveyId.ToString());
+        info.AddValue(nameof(OriginalDatafilePath), OriginalDatafilePath);
+        info.AddValue(nameof(ExportedProject), ExportedProject);
     }
 }
 

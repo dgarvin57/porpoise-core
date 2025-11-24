@@ -9,16 +9,11 @@ using System.Xml.Serialization;
 namespace Porpoise.Core.Models;
 
 /// <summary>
-/// The beating heart of Porpoise — the Question class.
-/// 
 /// This is not just a "question". This is:
 /// • A fully weighted, indexed, block-aware survey item
 /// • The foundation of Two-Block Index, Preference Blocks, Select Plus, Pooling, Trending
-/// • A masterpiece of behavioral analytics design
-/// 
+///
 /// Every response, every index, every preference item, every weight — all flow through here.
-/// This class made Porpoise legendary.
-/// And now it's back — better, cleaner, and ready to dominate again.
 /// </summary>
 [Serializable]
 public class Question : ObjectBase
@@ -42,9 +37,9 @@ public class Question : ObjectBase
     private bool _isPreferenceBlock;
     private bool _isPreferenceBlockType;
     private int _numberOfPreferenceItems;
-    private readonly ObjectListBase<PreferenceItem> _preferenceItems = new();
-    private bool? _preserveDifferentResponsesInPreferenceBlock;
+    private ObjectListBase<PreferenceItem> _preferenceItems = new();
     private ObjectListBase<Response> _responses = new();
+    private bool? _preserveDifferentResponsesInPreferenceBlock;
     private int _totalIndex;
     private int _totalN;
     private bool _selected;
@@ -76,7 +71,7 @@ public class Question : ObjectBase
 
     public override bool IsDirty
     {
-        get => base.IsDirty || (_responses?.IsDirty == true) || (_preferenceItems?.IsDirty == true);
+        get => base.IsDirty || _responses.IsDirty || _preferenceItems.IsDirty;
         set => _isDirty = value;
     }
 
@@ -95,43 +90,43 @@ public class Question : ObjectBase
     public short DataFileCol
     {
         get => _dataFileCol;
-        set => SetProperty(ref _dataFileCol, value, "DateFileCol");
+        set => SetProperty(ref _dataFileCol, value, nameof(DataFileCol));
     }
 
     public string QstNumber
     {
         get => _qstNumber;
-        set => SetProperty(ref _qstNumber, value, nameof(QstNumber));
+        set => SetProperty(ref _qstNumber, value ?? string.Empty, nameof(QstNumber));
     }
 
     public string QstLabel
     {
         get => _qstLabel;
-        set => SetProperty(ref _qstLabel, value, nameof(QstLabel));
+        set => SetProperty(ref _qstLabel, value ?? string.Empty, nameof(QstLabel));
     }
 
     public string QstStem
     {
         get => _qstStem;
-        set => SetProperty(ref _qstStem, value, nameof(QstStem));
+        set => SetProperty(ref _qstStem, value ?? string.Empty, nameof(QstStem));
     }
 
     public string MissValue1
     {
         get => _missValue1;
-        set => SetProperty(ref _missValue1, value, nameof(MissValue1));
+        set => SetProperty(ref _missValue1, value ?? string.Empty, nameof(MissValue1));
     }
 
     public string MissValue2
     {
         get => _missValue2;
-        set => SetProperty(ref _missValue2, value, nameof(MissValue2));
+        set => SetProperty(ref _missValue2, value ?? string.Empty, nameof(MissValue2));
     }
 
     public string MissValue3
     {
         get => _missValue3;
-        set => SetProperty(ref _missValue3, value, nameof(MissValue3));
+        set => SetProperty(ref _missValue3, value ?? string.Empty, nameof(MissValue3));
     }
 
     public List<int> MissingValues
@@ -152,7 +147,7 @@ public class Question : ObjectBase
         set
         {
             SetProperty(ref _variableType, value, nameof(VariableType));
-            if (value == QuestionVariableType.Independent && _responses != null)
+            if (value == QuestionVariableType.Independent)
             {
                 foreach (var r in _responses.Where(r => r.IndexType == ResponseIndexType.None))
                     r.IndexType = ResponseIndexType.Neutral;
@@ -175,13 +170,13 @@ public class Question : ObjectBase
     public string BlkLabel
     {
         get => _blkLabel;
-        set => SetProperty(ref _blkLabel, value, nameof(BlkLabel));
+        set => SetProperty(ref _blkLabel, value ?? string.Empty, nameof(BlkLabel));
     }
 
     public string BlkStem
     {
         get => _blkStem;
-        set => SetProperty(ref _blkStem, value, nameof(BlkStem));
+        set => SetProperty(ref _blkStem, value ?? string.Empty, nameof(BlkStem));
     }
 
     public bool IsPreferenceBlock
@@ -196,25 +191,6 @@ public class Question : ObjectBase
         set => SetProperty(ref _isPreferenceBlockType, value, nameof(IsPreferenceBlockType));
     }
 
-    [XmlArrayItem(typeof(PreferenceItem))]
-    public ObjectListBase<PreferenceItem> PreferenceItems
-    {
-        get => _preferenceItems;
-        set
-        {
-            if (!ReferenceEquals(value, _preferenceItems))
-            {
-                if (_preferenceItems is not null)
-                    _preferenceItems.IsDirtyChanged -= PreferenceItems_IsDirtyChanged;
-                _preferenceItems = value;
-                _isDirty = true;
-                if (value is not null)
-                    value.IsDirtyChanged += PreferenceItems_IsDirtyChanged;
-            }
-            SetProperty(ref _preferenceItems, value, nameof(PreferenceItems));
-        }
-    }
-
     public int NumberOfPreferenceItems
     {
         get => _numberOfPreferenceItems;
@@ -224,7 +200,28 @@ public class Question : ObjectBase
     public bool? PreserveDifferentResponsesInPreferenceBlock
     {
         get => _preserveDifferentResponsesInPreferenceBlock;
-        set => SetProperty(ref _preserveDifferentResponsesInPreferenceBlock, value, "PreserveDifferentResponsesInPreferenceBlock");
+        set => SetProperty(ref _preserveDifferentResponsesInPreferenceBlock, value, nameof(PreserveDifferentResponsesInPreferenceBlock));
+    }
+
+    [XmlArrayItem(typeof(PreferenceItem))]
+    public ObjectListBase<PreferenceItem> PreferenceItems
+    {
+        get => _preferenceItems;
+        set
+        {
+            if (!ReferenceEquals(_preferenceItems, value))
+            {
+                if (_preferenceItems is not null)
+                    _preferenceItems.IsDirtyChanged -= PreferenceItems_IsDirtyChanged;
+
+                _preferenceItems = value ?? new ObjectListBase<PreferenceItem>();
+
+                if (_preferenceItems is not null)
+                    _preferenceItems.IsDirtyChanged += PreferenceItems_IsDirtyChanged;
+
+                MarkDirty();
+            }
+        }
     }
 
     [XmlArrayItem(typeof(Response))]
@@ -233,14 +230,17 @@ public class Question : ObjectBase
         get => _responses;
         set
         {
-            if (!ReferenceEquals(value, _responses))
+            if (!ReferenceEquals(_responses, value))
             {
                 if (_responses is not null)
                     _responses.IsDirtyChanged -= Responses_IsDirtyChanged;
-                _responses = value;
-                _isDirty = true;
-                if (value is not null)
-                    value.IsDirtyChanged += Responses_IsDirtyChanged;
+
+                _responses = value ?? new ObjectListBase<Response>();
+
+                if (_responses is not null)
+                    _responses.IsDirtyChanged += Responses_IsDirtyChanged;
+
+                MarkDirty();
             }
         }
     }
@@ -275,7 +275,7 @@ public class Question : ObjectBase
     public string QuestionNotes
     {
         get => _questionNotes;
-        set => SetProperty(ref _questionNotes, value, nameof(QuestionNotes));
+        set => SetProperty(ref _questionNotes, value ?? string.Empty, nameof(QuestionNotes));
     }
 
     public bool UseAlternatePosNegLabels
@@ -287,63 +287,51 @@ public class Question : ObjectBase
     public string AlternatePosLabel
     {
         get => _alternatePosLabel;
-        set => SetProperty(ref _alternatePosLabel, value, nameof(AlternatePosLabel));
+        set => SetProperty(ref _alternatePosLabel, value ?? string.Empty, nameof(AlternatePosLabel));
     }
 
     public string AlternateNegLabel
     {
         get => _alternateNegLabel;
-        set => SetProperty(ref _alternateNegLabel, value, nameof(AlternateNegLabel));
+        set => SetProperty(ref _alternateNegLabel, value ?? string.Empty, nameof(AlternateNegLabel));
     }
 
     #endregion
 
-    #region Clone — NOW FULLY IMPLEMENTED
+    #region Clone
 
-    public Question Clone()
+    public new Question Clone() => new Question
     {
-        var clone = new Question
-        {
-            Id = Id,
-            QstNumber = QstNumber,
-            QstLabel = QstLabel,
-            QstStem = QstStem,
-            DataFileCol = DataFileCol,
-            ColumnFilled = ColumnFilled,
-            VariableType = VariableType,
-            DataType = DataType,
-            BlkQstStatus = BlkQstStatus,
-            BlkLabel = BlkLabel,
-            BlkStem = BlkStem,
-            IsPreferenceBlock = IsPreferenceBlock,
-            IsPreferenceBlockType = IsPreferenceBlockType,
-            NumberOfPreferenceItems = NumberOfPreferenceItems,
-            PreserveDifferentResponsesInPreferenceBlock = PreserveDifferentResponsesInPreferenceBlock,
-            MissValue1 = MissValue1,
-            MissValue2 = MissValue2,
-            MissValue3 = MissValue3,
-            TotalIndex = TotalIndex,
-            TotalN = TotalN,
-            Selected = Selected,
-            WeightOn = WeightOn,
-            QuestionNotes = QuestionNotes,
-            UseAlternatePosNegLabels = UseAlternatePosNegLabels,
-            AlternatePosLabel = AlternatePosLabel,
-            AlternateNegLabel = AlternateNegLabel
-        };
+        Id = Id,
+        QstNumber = QstNumber,
+        QstLabel = QstLabel,
+        QstStem = QstStem,
+        DataFileCol = DataFileCol,
+        ColumnFilled = ColumnFilled,
+        VariableType = VariableType,
+        DataType = DataType,
+        BlkQstStatus = BlkQstStatus,
+        BlkLabel = BlkLabel,
+        BlkStem = BlkStem,
+        IsPreferenceBlock = IsPreferenceBlock,
+        IsPreferenceBlockType = IsPreferenceBlockType,
+        NumberOfPreferenceItems = NumberOfPreferenceItems,
+        PreserveDifferentResponsesInPreferenceBlock = PreserveDifferentResponsesInPreferenceBlock,
+        MissValue1 = MissValue1,
+        MissValue2 = MissValue2,
+        MissValue3 = MissValue3,
+        TotalIndex = TotalIndex,
+        TotalN = TotalN,
+        Selected = Selected,
+        WeightOn = WeightOn,
+        QuestionNotes = QuestionNotes,
+        UseAlternatePosNegLabels = UseAlternatePosNegLabels,
+        AlternatePosLabel = AlternatePosLabel,
+        AlternateNegLabel = AlternateNegLabel,
+        _responses = new ObjectListBase<Response>(_responses.Select(r => (Response)r.Clone())),
+        _preferenceItems = new ObjectListBase<PreferenceItem>(_preferenceItems.Select(p => (PreferenceItem)p.Clone()))
+    };
 
-        // Deep clone Responses
-        clone.Responses = new ObjectListBase<Response>();
-        foreach (var r in Responses)
-            clone.Responses.Add(r.Clone());
-
-        // Deep clone PreferenceItems
-        clone.PreferenceItems = new ObjectListBase<PreferenceItem>();
-        foreach (var p in PreferenceItems)
-            clone.PreferenceItems.Add(p.Clone());
-
-        return clone;
-    }
 
     #endregion
 
@@ -351,20 +339,14 @@ public class Question : ObjectBase
 
     private void Responses_IsDirtyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == "IsDirty")
-        {
-            _isDirty = true;
+        if (e.PropertyName == nameof(ObjectListBase<Response>.IsDirty))
             MarkDirty();
-        }
     }
 
     private void PreferenceItems_IsDirtyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == "IsDirty")
-        {
-            _isDirty = true;
+        if (e.PropertyName == nameof(ObjectListBase<PreferenceItem>.IsDirty))
             MarkDirty();
-        }
     }
 
     public override void MarkClean()

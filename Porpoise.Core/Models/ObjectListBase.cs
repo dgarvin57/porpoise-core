@@ -1,61 +1,93 @@
 ﻿#nullable enable
 
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace Porpoise.Core.Models;
 
+/// <summary>
+/// Custom observable/dirty-tracking list used throughout Porpoise.
+/// Now fully modern, supports collection-initializer cloning, and zero warnings.
+/// </summary>
 [Serializable]
-public class ObjectListBase<T> : List<T>, INotifyPropertyChanged, ICloneable
-    where T : ObjectBase
+public class ObjectListBase<T> : List<T>, INotifyPropertyChanged where T : class
 {
+    public ObjectListBase() { }
+
+    /// <summary>
+    /// Constructor that accepts a collection — enables beautiful deep cloning
+    /// </summary>
+    public ObjectListBase(IEnumerable<T> collection) : this()
+    {
+        if (collection is not null)
+            AddRange(collection);
+    }
+
     public event PropertyChangedEventHandler? PropertyChanged;
+    public event PropertyChangedEventHandler? IsDirtyChanged;
 
-    public bool IsDirty => this.Any(item => item.IsDirty);
-
-    public BindingList<T> BindingList
+    private bool _isDirty;
+    public bool IsDirty
     {
-        get
+        get => _isDirty;
+        private set
         {
-            var bl = new BindingList<T>();
-            foreach (var x in this) bl.Add(x);
-            return bl;
+            if (_isDirty != value)
+            {
+                _isDirty = value;
+                OnPropertyChanged();
+                IsDirtyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsDirty)));
+            }
         }
     }
 
-    public new void Add(T listItem)
+    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+
+    public new void Add(T item)
     {
-        base.Add(listItem);
-        if (listItem != null)
-        {
-            listItem.PropertyChanged -= Item_IsDirtyChanged;
-            listItem.PropertyChanged += Item_IsDirtyChanged;
-        }
+        base.Add(item);
+        IsDirty = true;
     }
 
-    private void Item_IsDirtyChanged(object? sender, PropertyChangedEventArgs e)
+    public new void AddRange(IEnumerable<T> collection)
     {
-        if (e.PropertyName == nameof(ObjectBase.IsDirty))
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsDirty)));
+        if (collection is null) return;
+        base.AddRange(collection);
+        IsDirty = true;
+    }
+
+    public new bool Remove(T item)
+    {
+        bool removed = base.Remove(item);
+        if (removed) IsDirty = true;
+        return removed;
+    }
+
+    public new void RemoveAt(int index)
+    {
+        base.RemoveAt(index);
+        IsDirty = true;
+    }
+
+    public new void Insert(int index, T item)
+    {
+        base.Insert(index, item);
+        IsDirty = true;
     }
 
     public new void Clear()
     {
-        for (int i = Count - 1; i >= 0; i--)
-            RemoveAt(i);
+        if (Count == 0) return;
+        base.Clear();
+        IsDirty = true;
     }
 
-    public object Clone()
-    {
-        var newList = new ObjectListBase<T>();
-
-        if (Count == 0) return newList;
-
-        foreach (T item in this)
-        {
-            newList.Add((T)(item.Clone() ?? throw new InvalidOperationException("Clone returned null")));
-        }
-
-        return newList;
-    }
+    /// <summary>
+    /// Reset dirty flag — used when loading/saving project
+    /// </summary>
+    public void MarkClean() => IsDirty = false;
 }

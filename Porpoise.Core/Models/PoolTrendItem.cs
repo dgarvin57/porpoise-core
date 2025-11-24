@@ -114,7 +114,7 @@ public class PoolTrendItem
 
     public PoolTrendItem(Survey survey)
     {
-        _survey = survey.Clone();
+        _survey = (Survey)survey.Clone();
         _surveyName = survey.SurveyName;
     }
 

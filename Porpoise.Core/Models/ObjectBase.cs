@@ -98,7 +98,7 @@ public class ObjectBase : INotifyPropertyChanged, ICloneable
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsDirty)));
     }
 
-    public virtual object Clone() => Clone(this);
+    public virtual object Clone() => Clone(this)!;
 
     private object? Clone(object? vObj)
     {

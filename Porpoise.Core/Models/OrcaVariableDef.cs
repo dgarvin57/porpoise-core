@@ -125,7 +125,6 @@ public class OrcaVariableDef : ObjectBase
     public ObjectListBase<OrcaResponseDef> UniqueResponses
     {
         get => _uniqueResponses;
-        set => _uniqueResponses = value;
     }
 
     public BlkQuestionStatusType BlockType

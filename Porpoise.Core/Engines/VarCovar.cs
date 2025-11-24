@@ -33,7 +33,7 @@ public sealed class VarCovar : IDisposable
 
     private readonly Question _xDV;
     private readonly Question? _yIV;
-    private readonly List<VarCovarData> _vcData;
+    private readonly List<VarCovarData> _vcData = new List<VarCovarData>();
     private readonly SurveyData _surveyData;
     private readonly bool _simWeighted;
     private readonly bool _useStaticWeight;
@@ -367,19 +367,19 @@ public sealed class VarCovar : IDisposable
 
     private void LoadQuestions()
     {
-        _vcData = new List<VarCovarData>();
+        // CS0191 fix: Remove assignment to readonly field, use collection initializer for IDE0028
+        _vcData.Clear();
         var items = _surveyData.GetCleanDVIVDataFromSurvey(_xDV, _yIV);
 
         foreach (var cti in items)
         {
-            var v = new VarCovarData
+            _vcData.Add(new VarCovarData
             {
                 XResp = cti.DVRespNumber,
                 YResp = cti.IVRespNumber,
                 SimWeight = cti.ResponseWeight,
                 StaticWeight = cti.StaticWeight
-            };
-            _vcData.Add(v);
+            });
         }
     }
 

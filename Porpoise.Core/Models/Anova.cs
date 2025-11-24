@@ -107,8 +107,9 @@ public class Anova : IDisposable
 
         foreach (var resp in _nominalIV!.Responses)
         {
-            var allDataByIVResponse = _data.Clone();
-            var selectedQ = _nominalIV.Clone();
+            // Clone returns object (ICloneable.Clone), cast to the expected types to avoid 'object' being used
+            var allDataByIVResponse = (SurveyData)_data.Clone();
+            var selectedQ = (Question)_nominalIV.Clone();
 
             for (int i = selectedQ.Responses.Count - 1; i >= 0; i--)
             {

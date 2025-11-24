@@ -4,9 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
-using System.IO;
 using System.Linq;
-using System.Text;
 using System.Xml.Serialization;
 
 namespace Porpoise.Core.Models;
@@ -24,17 +22,18 @@ public class SurveyData : ObjectBase, ICloneable
     private List<List<string>> _dataList = new();
     private readonly List<int> _missingResponseValues = new();
     private string _dataFilePath = string.Empty;
+
     private bool _selectOn;
     private Question? _selectedQuestion;
     private List<List<string>>? _selectOnDataList;
+
     private bool _selectPlusOn;
     private SelectPlusConditionType _selectPlusCondition;
     private Question? _selectPlusQ1;
     private Question? _selectPlusQ2;
-    private List<List<string>>? _selectPlusOnDataList;
+
     private bool _weightOn;
     private Question? _weightedQuestion;
-    private bool _hasStaticWeightColumn;
     private bool _useStaticWeight;
 
     #endregion
@@ -56,19 +55,8 @@ public class SurveyData : ObjectBase, ICloneable
     [XmlIgnore]
     public List<List<string>> DataList
     {
-        get
-        {
-            if ((_selectOn && _selectOnDataList is not null) || (_selectPlusOn && _selectOnDataList is not null))
-            {
-                return _selectOnDataList?.Any() == true ? _selectOnDataList : _dataList;
-            }
-            return _dataList;
-        }
-        set
-        {
-            _dataList = value;
-            SetProperty(_dataList, value, "DataOnly");
-        }
+        get => _selectOnDataList is not null && (_selectOn || _selectPlusOn) ? _selectOnDataList : _dataList;
+        set => SetProperty(ref _dataList, value, nameof(DataList));
     }
 
     [XmlIgnore]
@@ -81,78 +69,29 @@ public class SurveyData : ObjectBase, ICloneable
     public List<int> MissingResponseValues
     {
         get => _missingResponseValues;
-        set => SetProperty(_missingResponseValues, value, nameof(MissingResponseValues));
+        set
+        {
+            _missingResponseValues.Clear();
+            if (value is not null)
+                _missingResponseValues.AddRange(value);
+            OnPropertyChanged(nameof(MissingResponseValues));
+        }
     }
 
     public string DataFilePath
     {
         get => _dataFilePath;
-        set => SetProperty(ref _dataFilePath, value, nameof(DataFilePath));
+        set => SetProperty(ref _dataFilePath, value ?? string.Empty, nameof(DataFilePath));
     }
 
-    [XmlIgnore]
-    public bool SelectOn
-    {
-        get => _selectOn;
-        set
-        {
-            _selectOn = false;
-            if (value)
-            {
-                if (_selectedQuestion?.Responses?.Count > 0)
-                    _selectOn = true;
-            }
-            _selectOnDataList = GetFilteredDataList();
-        }
-    }
+    [XmlIgnore] public bool SelectOn { get => _selectOn; set { _selectOn = value; _selectOnDataList = GetFilteredDataList(); } }
+    [XmlIgnore] public bool SelectPlusOn { get => _selectPlusOn; set { _selectPlusOn = value; AddMovementToDataList(); SelectOnDataList = GetFilteredDataList(); } }
+    [XmlIgnore] public int OriginalTotalN => _dataList.Count;
 
-    [XmlIgnore]
-    public bool SelectPlusOn
-    {
-        get => _selectPlusOn;
-        set
-        {
-            _selectPlusOn = false;
-            if (value)
-            {
-                if (_selectPlusQ1?.Responses?.Count > 0 && _selectPlusQ2?.Responses?.Count > 0)
-                    _selectPlusOn = value;
-            }
-            AddMovementToDataList();
-            SelectOnDataList = GetFilteredDataList();
-        }
-    }
-
-    [XmlIgnore]
-    public int OriginalTotalN => _dataList.Count;
-
-    [XmlIgnore]
-    public Question? SelectedQuestion
-    {
-        get => _selectedQuestion;
-        set => SetProperty(ref _selectedQuestion, value, nameof(SelectedQuestion));
-    }
-
-    [XmlIgnore]
-    public Question? SelectPlusQ1
-    {
-        get => _selectPlusQ1;
-        set => SetProperty(ref _selectPlusQ1, value, nameof(SelectPlusQ1));
-    }
-
-    [XmlIgnore]
-    public Question? SelectPlusQ2
-    {
-        get => _selectPlusQ2;
-        set => SetProperty(ref _selectPlusQ2, value, nameof(SelectPlusQ2));
-    }
-
-    [XmlIgnore]
-    public SelectPlusConditionType SelectPlusCondition
-    {
-        get => _selectPlusCondition;
-        set => SetProperty(ref _selectPlusCondition, value, nameof(SelectPlusCondition));
-    }
+    [XmlIgnore] public Question? SelectedQuestion { get => _selectedQuestion; set => SetProperty(ref _selectedQuestion, value, nameof(SelectedQuestion)); }
+    [XmlIgnore] public Question? SelectPlusQ1 { get => _selectPlusQ1; set => SetProperty(ref _selectPlusQ1, value, nameof(SelectPlusQ1)); }
+    [XmlIgnore] public Question? SelectPlusQ2 { get => _selectPlusQ2; set => SetProperty(ref _selectPlusQ2, value, nameof(SelectPlusQ2)); }
+    [XmlIgnore] public SelectPlusConditionType SelectPlusCondition { get => _selectPlusCondition; set => SetProperty(ref _selectPlusCondition, value, nameof(SelectPlusCondition)); }
 
     [XmlIgnore]
     public bool WeightOn
@@ -160,13 +99,9 @@ public class SurveyData : ObjectBase, ICloneable
         get => _weightOn;
         set
         {
-            _weightOn = false;
-            if (value && _weightedQuestion?.Responses?.Count > 0)
-            {
-                _weightOn = true;
-                var list = _selectOn ? _selectOnDataList : _dataList;
-                if (list is not null) AddWeightsToDataList(list);
-            }
+            _weightOn = value;
+            if (value && _weightedQuestion is not null)
+                AddWeightsToDataList(_selectOn ? _selectOnDataList ?? _dataList : _dataList);
         }
     }
 
@@ -175,52 +110,41 @@ public class SurveyData : ObjectBase, ICloneable
         get => _useStaticWeight;
         set
         {
-            _useStaticWeight = false;
+            _useStaticWeight = value;
             if (value)
-            {
-                _useStaticWeight = true;
-                var list = _selectOn ? _selectOnDataList : _dataList;
-                if (list is not null) AddWeightsToDataList(list);
-            }
+                AddWeightsToDataList(_selectOn ? _selectOnDataList ?? _dataList : _dataList);
         }
     }
 
     public bool HasStaticWeightColumn => GetStaticWeightColumnNumber() > 0;
 
-    [XmlIgnore]
-    public Question? WeightedQuestion
-    {
-        get => _weightedQuestion;
-        set => _weightedQuestion = value;
-    }
+    [XmlIgnore] public Question? WeightedQuestion { get => _weightedQuestion; set => _weightedQuestion = value; }
 
     #endregion
 
     #region ICloneable
 
-    public object Clone()
+    public new SurveyData Clone() 
     {
-        var newClone = new SurveyData();
+        var clone = new SurveyData
+        {
+            _dataList = _dataList.Select(row => new List<string>(row)).ToList(),
+            MissingResponseValues = new List<int>(_missingResponseValues),
+            _dataFilePath = _dataFilePath,
+            _selectOn = _selectOn,
+            _selectPlusOn = _selectPlusOn,
+            _weightOn = _weightOn,
+            _useStaticWeight = _useStaticWeight,
+            _selectPlusCondition = _selectPlusCondition,
+            _selectOnDataList = _selectOnDataList?.Select(row => new List<string>(row)).ToList()
+        };
 
-        newClone.MissingResponseValues = new List<int>(_missingResponseValues);
-        newClone.DataFilePath = _dataFilePath;
+        if (_selectedQuestion is not null) clone._selectedQuestion = (Question?)_selectedQuestion.Clone();
+        if (_weightedQuestion is not null) clone._weightedQuestion = (Question?)_weightedQuestion.Clone();
+        if (_selectPlusQ1 is not null) clone._selectPlusQ1 = (Question?)_selectPlusQ1.Clone();
+        if (_selectPlusQ2 is not null) clone._selectPlusQ2 = (Question?)_selectPlusQ2.Clone();
 
-        if (_selectOn && _selectedQuestion is not null)
-            newClone.SelectedQuestion = (Question?)_selectedQuestion.Clone();
-
-        if (_weightedQuestion is not null)
-            newClone.WeightedQuestion = (Question?)_weightedQuestion.Clone();
-
-        var dlClone = new List<List<string>>();
-        foreach (var row in _dataList)
-            dlClone.Add(new List<string>(row));
-
-        newClone.DataList = dlClone;
-        newClone.SelectOn = _selectOn;
-        newClone.WeightOn = _weightOn;
-        newClone.UseStaticWeight = _useStaticWeight;
-
-        return newClone;
+        return clone;
     }
 
     #endregion
@@ -284,7 +208,7 @@ public class SurveyData : ObjectBase, ICloneable
 
     #endregion
 
-    #region Select On / Select Plus / Weighting / Movement — ALL PRESERVED 100%
+    #region Select On / Select Plus / Weighting / Movement
 
     private List<List<string>> GetFilteredDataList()
     {
@@ -300,7 +224,6 @@ public class SurveyData : ObjectBase, ICloneable
     private bool IncludeRow(int rowCount)
     {
         if (rowCount == 0) return true;
-
         bool include = true;
 
         if (_selectOn && !_selectPlusOn)
@@ -317,7 +240,6 @@ public class SurveyData : ObjectBase, ICloneable
             bool plus = GetMovementForRow(rowCount) == _selectPlusCondition;
             include = select && plus;
         }
-
         return include;
     }
 
@@ -362,13 +284,12 @@ public class SurveyData : ObjectBase, ICloneable
     }
 
     private ResponseIndexType GetIndexValue(Question q, int resp)
-    {
-        return q.Responses.FirstOrDefault(r => r.RespValue == resp)?.IndexType ?? ResponseIndexType.None;
-    }
+        => q.Responses.FirstOrDefault(r => r.RespValue == resp)?.IndexType ?? ResponseIndexType.None;
 
     private SelectPlusConditionType CalculateMovement(ResponseIndexType i1, ResponseIndexType i2)
     {
-        if (i1 == ResponseIndexType.None || i2 == ResponseIndexType.None) return SelectPlusConditionType.None;
+        if (i1 == ResponseIndexType.None || i2 == ResponseIndexType.None)
+            return SelectPlusConditionType.None;
 
         return (i1, i2) switch
         {
@@ -406,15 +327,16 @@ public class SurveyData : ObjectBase, ICloneable
         {
             string resp = list[row][_weightedQuestion!.DataFileCol];
             double weight = 1.0;
+
             if (_weightOn)
             {
-                var w = _weightedQuestion.Responses.FirstOrDefault(r => r.RespValue.ToString() == resp)?.weight ?? 1.0;
+                var w = _weightedQuestion.Responses.FirstOrDefault(r => r.RespValue.ToString() == resp)?.Weight ?? 1.0;
                 weight *= w;
             }
+
             if (_useStaticWeight)
-            {
                 weight *= GetStaticWeight(row, true);
-            }
+
             list[row][list[0].Count - 1] = weight.ToString();
         }
     }
@@ -433,13 +355,12 @@ public class SurveyData : ObjectBase, ICloneable
         return 0;
     }
 
-    private double GetResponseSimWeight(int rowNumber) => double.TryParse(DataList[rowNumber][GetSimWeightColumnNumber()], out var w) ? w : 1.0;
+    private double GetResponseSimWeight(int rowNumber)
+        => double.TryParse(DataList[rowNumber][GetSimWeightColumnNumber()], out var w) ? w : 1.0;
 
     private double GetStaticWeight(int rowNumber, bool ignoreUseStaticWeight)
-    {
-        if (!_useStaticWeight && !ignoreUseStaticWeight) return 1.0;
-        return double.TryParse(DataList[rowNumber][GetStaticWeightColumnNumber()], out var w) ? w : 1.0;
-    }
+        => (!_useStaticWeight && !ignoreUseStaticWeight) ? 1.0 :
+           double.TryParse(DataList[rowNumber][GetStaticWeightColumnNumber()], out var w) ? w : 1.0;
 
     public List<int> GetAllResponsesInColumn(int colNumber, bool omitMissingValues, List<int> qMissingValues)
     {
@@ -507,3 +428,13 @@ public class SurveyData : ObjectBase, ICloneable
     }
 
     #endregion
+
+    #region INotifyPropertyChanged (safe override)
+
+    protected void OnPropertyChanged(string propertyName)
+        => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+
+    public new event PropertyChangedEventHandler? PropertyChanged;
+
+    #endregion
+}

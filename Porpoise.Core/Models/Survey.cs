@@ -243,14 +243,14 @@ public class Survey : ObjectBase
 
     public bool IsAllResponsesInQuestionMissingValuesOK()
     {
-        if (QuestionList is null || Data?.DataList is null || !Data.DataList.Any) return true;
+        if (QuestionList is null || Data?.DataList is null || !Data.DataList.Any()) return true;
 
         foreach (Question q in QuestionList)
         {
             var combinedMissingValues = new List<int>(q.MissingValues);
             combinedMissingValues.AddRange(Data.MissingResponseValues);
 
-            if (!combinedMissingValues.Any) continue;
+            if (!combinedMissingValues.Any()) continue;
 
             int rnum = q.DataFileCol;
             if (rnum >= Data.DataList[0].Count || Data.DataList[0][rnum] != q.QstNumber) continue;
@@ -258,8 +258,17 @@ public class Survey : ObjectBase
             bool allMissing = true;
             for (int rowNum = 1; rowNum < Data.DataList.Count; rowNum++)
             {
-                if (!combinedMissingValues.Contains(Data.DataList[rowNum][rnum]))
+                if (int.TryParse(Data.DataList[rowNum][rnum], out int responseValue))
                 {
+                    if (!combinedMissingValues.Contains(responseValue))
+                    {
+                        allMissing = false;
+                        break;
+                    }
+                }
+                else
+                {
+                    // If parsing fails, treat as not missing (or handle as needed)
                     allMissing = false;
                     break;
                 }
