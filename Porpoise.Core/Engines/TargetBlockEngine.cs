@@ -17,13 +17,13 @@ public class TargetBlockEngine
     private readonly Question _blockQuestion;
     private readonly Question _targetQuestion;
 
-    private readonly ObjectListBase<Question> _questionsInBlock;
-    private readonly ObjectListBase<Question> _questionsInBlockCopy = new();
+    private ObjectListBase<Question> _questionsInBlock;
+    private readonly ObjectListBase<Question> _questionsInBlockCopy = [];
 
-    private readonly List<List<string>> _targetData = new();
+    private readonly List<List<string>> _targetData = [];
 
-    public List<CxIVIndex> IVIndexes { get; } = new();
-    public List<CxIVIndex> IVIndexesSelected { get; } = new();
+    public List<CxIVIndex> IVIndexes { get; } = [];
+    public List<CxIVIndex> IVIndexesSelected { get; } = [];
     public List<Response>? Responses { get; set; }
     public bool IsConsistent { get; private set; } = true;
     public string? IsConsistentMsg { get; private set; }
@@ -34,15 +34,16 @@ public class TargetBlockEngine
         _blockQuestion = blockQuestion ?? throw new ArgumentNullException(nameof(blockQuestion));
         _targetQuestion = targetQuestion ?? throw new ArgumentNullException(nameof(targetQuestion));
 
+        _questionsInBlock = [];
         CreateTargetBlockIVIndexesNormal();
     }
 
     private void CreateTargetBlockIVIndexesNormal()
     {
         _questionsInBlock = QuestionEngine.GetQuestionsInBlock(_blockQuestion, _survey.QuestionList)
-            ?? new ObjectListBase<Question>();
+            ?? [];
 
-        if (!_questionsInBlock.Any()) return;
+        if (_questionsInBlock.Count == 0) return;
 
         IVIndexes.Clear();
 
@@ -55,7 +56,7 @@ public class TargetBlockEngine
 
             foreach (var r in q.Responses)
             {
-                double percent = r.ResultPercent * 100;
+                double percent = (double)r.ResultPercent * 100;
 
                 if (r.IndexType == ResponseIndexType.Positive)
                     positive += percent;
@@ -75,13 +76,13 @@ public class TargetBlockEngine
 
     public void CreateTargetBlockIVIndexesSelectedGraph()
     {
-        if (Responses == null || !Responses.Any()) return;
+        if (Responses == null || Responses.Count == 0) return;
 
         _questionsInBlockCopy.Clear();
         _questionsInBlockCopy.AddRange(QuestionEngine.GetQuestionsInBlock(_blockQuestion, _survey.QuestionList)
-            ?? new ObjectListBase<Question>());
+            ?? []);
 
-        if (!_questionsInBlockCopy.Any()) return;
+        if (_questionsInBlockCopy.Count == 0) return;
 
         BuildTargetData();
 
@@ -96,7 +97,7 @@ public class TargetBlockEngine
 
             foreach (var r in q.Responses)
             {
-                double percent = r.ResultPercent * 100;
+                double percent = (double)r.ResultPercent * 100;
 
                 if (r.IndexType == ResponseIndexType.Positive)
                     positive += percent;
@@ -120,12 +121,13 @@ public class TargetBlockEngine
 
         int targetCol = _targetQuestion.DataFileCol;
 
-        for (int row = 0; row < _survey.Data.DataList.Count; row++)
+        for (int row = 0; row < (_survey.Data?.DataList?.Count ?? 0); row++)
         {
-            if (int.TryParse(_survey.Data.DataList[row][targetCol], out int responseValue) &&
-                Responses.Any(r => r.RespValue == responseValue))
+            if (_survey.Data?.DataList != null &&
+                int.TryParse(_survey.Data.DataList[row][targetCol], out int responseValue) &&
+                Responses?.Any(r => r.RespValue == responseValue) == true)
             {
-                _targetData.Add(new List<string>(_survey.Data.DataList[row]));
+                _targetData.Add([.. _survey.Data.DataList[row]]);
             }
         }
     }
@@ -141,7 +143,7 @@ public class TargetBlockEngine
 
     private List<int> GetAllResponsesInColumn(int colNumber, List<int> missingValues)
     {
-        var responses = new List<int>();
+        List<int> responses = [];
 
         for (int row = 1; row < _targetData.Count; row++)
         {
@@ -167,8 +169,8 @@ public class TargetBlockEngine
             if (!int.TryParse(_targetData[row][q.DataFileCol], out int respValue))
                 continue;
 
-            double simWeight = _survey.Data.WeightOn ? GetResponseSimWeight(row) : 1.0;
-            double staticWeight = _survey.Data.UseStaticWeight ? GetStaticWeight(row, false) : 1.0;
+            double simWeight = _survey.Data?.WeightOn == true ? GetResponseSimWeight(row) : 1.0;
+            double staticWeight = _survey.Data?.UseStaticWeight == true ? GetStaticWeight(row, false) : 1.0;
 
             int index = q.Responses.FindIndex(r => r.RespValue == respValue);
             if (index >= 0)
@@ -178,12 +180,12 @@ public class TargetBlockEngine
             }
         }
 
-        q.TotalN = Math.Ceiling(totalN);
+        q.TotalN = (int)Math.Ceiling(totalN);
     }
 
     private double GetResponseSimWeight(int rowNumber)
     {
-        if (!_survey.Data.WeightOn) return 1.0;
+        if (_survey.Data?.WeightOn != true) return 1.0;
 
         int weightCol = _survey.Data.GetSimWeightColumnNumber();
         if (weightCol <= 0) return 1.0;
@@ -193,9 +195,9 @@ public class TargetBlockEngine
 
     private double GetStaticWeight(int rowNumber, bool ignoreUseStaticWeight)
     {
-        if (!_survey.Data.UseStaticWeight && !ignoreUseStaticWeight) return 1.0;
+        if (_survey.Data?.UseStaticWeight != true && !ignoreUseStaticWeight) return 1.0;
 
-        int staticWeightCol = _survey.Data.GetStaticWeightColumnNumber();
+        int staticWeightCol = _survey.Data?.GetStaticWeightColumnNumber() ?? 0;
         if (staticWeightCol <= 0) return 1.0;
 
         return double.TryParse(_targetData[rowNumber][staticWeightCol], out double weight) ? weight : 1.0;

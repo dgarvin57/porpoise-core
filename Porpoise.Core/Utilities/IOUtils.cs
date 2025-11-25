@@ -88,18 +88,19 @@ public static class IOUtils
 
         var nameParts = fileName.Split('(');
         string baseName = nameParts[0];
-        int existingIncrement = 0;
 
         if (nameParts.Length > 1)
         {
             string incStr = nameParts[1].Replace(")", "");
-            int.TryParse(incStr, out existingIncrement);
+            if (!int.TryParse(incStr, out _))
+            {
+                increment = 1;
+            }
         }
-
-        if (existingIncrement > 0)
-            increment += existingIncrement;
         else
+        {
             increment = 1;
+        }
 
         return Path.Combine(folderPath, string.Format("{0}({1}){2}", baseName, increment, extension));
     }
@@ -125,7 +126,7 @@ public static class IOUtils
     public static string GetLastPartOfFolderPath(string path)
     {
         var parts = path.Split(Path.DirectorySeparatorChar);
-        return parts[parts.Length - 1];
+        return parts[^1];
     }
 
     // Return the full base project folder path (c:\user\documents\Porpoise Projects)
@@ -157,7 +158,7 @@ public static class IOUtils
         int endIndex = path.IndexOf(surveyFolderAndName, StringComparison.Ordinal);
         if (endIndex == -1) return null;
 
-        return path.Substring(0, endIndex - 1);
+        return path[..(endIndex - 1)];
     }
 
     public static bool IsFilePathIsOK(string fileNameAndPath)
@@ -224,7 +225,7 @@ public static class IOUtils
     }
 
     // Color red
-    public static byte[] GetRed() => new byte[] { 0x0F, 0x1E, 0x92, 0xFD };
+    public static byte[] GetRed() => [0x0F, 0x1E, 0x92, 0xFD];
 
     // Copies all folders and files (including subfolders) from source to destination
     public static void CopyDirectory(string sourcePath, string destinationPath)

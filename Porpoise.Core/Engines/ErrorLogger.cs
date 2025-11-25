@@ -31,11 +31,11 @@ public static class ErrorLogger
     /// <summary>
     /// Saves the complete error log collection (with optional file size limiting).
     /// </summary>
-    public static bool SaveAllErrorLogs(string path, ErrorLogs logs, int maxSize)
+    public static bool SaveAllErrorLogs(string path, ErrorLogs logs)
     {
         try
         {
-            LegacyDataAccess.SaveAllErrorsToXmlFile(path, logs, maxSize);
+            LegacyDataAccess.SaveAllErrorsToXmlFile(path, logs);
             return true;
         }
         catch

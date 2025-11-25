@@ -14,16 +14,18 @@ namespace Porpoise.Core.Engines;
 /// Unlock & account management engine — handles cloud license validation,
 /// password strength, account creation, sign-in, password reset, and license consumption.
 /// </summary>
-public class UnlockEngine
+public partial class UnlockEngine
 {
     private readonly Account _account;
     private readonly string _webBaseUri;
 
+#pragma warning disable IDE0290 // Use primary constructor
     public UnlockEngine(string webBaseUri, Account account)
     {
         _webBaseUri = webBaseUri ?? throw new ArgumentNullException(nameof(webBaseUri));
         _account = account ?? throw new ArgumentNullException(nameof(account));
     }
+#pragma warning restore IDE0290
 
     public static PasswordScore CheckPasswordStrength(string password)
     {
@@ -33,10 +35,10 @@ public class UnlockEngine
         int n = 0;
         int l = password.Length;
 
-        if (Regex.IsMatch(password, @"\d")) n += 10;
-        if (Regex.IsMatch(password, @"[a-z]")) n += 26;
-        if (Regex.IsMatch(password, @"[A-Z]")) n += 26;
-        if (Regex.IsMatch(password, @"[~`!@#$%\^&*\(\)\-_+=\[\{\]\}\|\\;:'""<,>\.\?\/£]"))
+        if (DigitRegex().IsMatch(password)) n += 10;
+        if (LowercaseRegex().IsMatch(password)) n += 26;
+        if (UppercaseRegex().IsMatch(password)) n += 26;
+        if (SpecialCharRegex().IsMatch(password))
             n += l <= 6 ? 40 : 43;
 
         if (n == 0) return PasswordScore.Blank;
@@ -50,6 +52,18 @@ public class UnlockEngine
                          PasswordScore.VeryStrong;
     }
 
+    [GeneratedRegex(@"\d")]
+    private static partial Regex DigitRegex();
+
+    [GeneratedRegex(@"[a-z]")]
+    private static partial Regex LowercaseRegex();
+
+    [GeneratedRegex(@"[A-Z]")]
+    private static partial Regex UppercaseRegex();
+
+    [GeneratedRegex(@"[~`!@#$%\^&*\(\)\-_+=\[\{\]\}\|\\;:'""<,>\.\?\/£]")]
+    private static partial Regex SpecialCharRegex();
+
     public RestHelper CreateNewAccount()
     {
         var address = new Uri($"{_webBaseUri}/accounts/");
@@ -61,9 +75,8 @@ public class UnlockEngine
             .Append("&phone=").Append(HttpUtility.UrlEncode(_account.Phone))
             .Append("&organization=").Append(HttpUtility.UrlEncode(_account.Organization));
 
-        var rest = new RestHelper();
-        var response = rest.PostMethod(address, data.ToString());
-        _account.AuthToken = response.authToken;
+        var response = RestHelper.PostMethod(address, data.ToString());
+        _account.AuthToken = response.AuthToken;
         return response;
     }
 
@@ -77,11 +90,10 @@ public class UnlockEngine
             .Append("email=").Append(HttpUtility.UrlEncode(_account.EmailId))
             .Append("&password=").Append(HttpUtility.UrlEncode(_account.Password));
 
-        var rest = new RestHelper();
-        var response = rest.PostMethod(address, data.ToString());
+        var response = RestHelper.PostMethod(address, data.ToString());
         if (response == null) return null;
 
-        _account.AuthToken = response.authToken;
+        _account.AuthToken = response.AuthToken;
         return response;
     }
 
@@ -92,8 +104,7 @@ public class UnlockEngine
         var emailEncoded = HttpUtility.UrlEncode(_account.EmailId);
         var address = new Uri($"{_webBaseUri}/accounts/{emailEncoded}/passwordResetTokens");
 
-        var rest = new RestHelper();
-        var response = rest.PostMethod(address, "");
+        var response = RestHelper.PostMethod(address, "");
 
         _account.AuthToken = "";
         return response;
@@ -107,8 +118,7 @@ public class UnlockEngine
             .Append(HttpUtility.UrlEncode(_account.AuthToken));
 
         var address = new Uri($"{_webBaseUri}/accounts/{data}");
-        var rest = new RestHelper();
-        return rest.GetMethod(address, null);
+        return RestHelper.GetMethod(address, null);
     }
 
     public RestHelper ConsumeLicense(Guid surveyId, string surveyName)
@@ -118,8 +128,7 @@ public class UnlockEngine
             .Append("surveyHash=").Append(HttpUtility.UrlEncode(surveyId.ToString()))
             .Append("&surveyDescr=").Append(HttpUtility.UrlEncode(surveyName));
 
-        var rest = new RestHelper();
-        return rest.PostMethod(address, data.ToString());
+        return RestHelper.PostMethod(address, data.ToString());
     }
 
     public static bool IsEmailValidFormat(string email)

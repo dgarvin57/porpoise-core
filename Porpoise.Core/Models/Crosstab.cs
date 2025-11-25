@@ -15,7 +15,7 @@ public class Crosstab
 {
     #region Private Members
 
-    private List<CrosstabItem> _pivotList = new();
+    private List<CrosstabItem> _pivotList = [];
     private readonly bool _simWeightIsOn;
     private readonly bool _useStaticWeight;
     private readonly SurveyData _surveyData;
@@ -23,7 +23,7 @@ public class Crosstab
     private readonly Question _indVarQ;
     private List<List<int>>? _cxMatrix;
     private DataTable? _cxTable;
-    private readonly List<CxIVIndex> _cxIVIndexes = new();
+    private readonly List<CxIVIndex> _cxIVIndexes = [];
     private double _chiSquare;
     private string _significant = string.Empty;
     private double _phi;
@@ -219,7 +219,7 @@ public class Crosstab
 
     private List<string> CalculateCxMarginalPercentage()
     {
-        var listOfMPs = new List<string>();
+        List<string> listOfMPs = [];
         int totN = 0;
 
         var matrix = _onProfileTab && _surveyData.SelectPlusOn ? _cxMatrixSave! : _cxMatrix!;
@@ -238,7 +238,7 @@ public class Crosstab
 
     private List<double> CalculateCxMarginalPercentageDbl()
     {
-        var result = new List<double>();
+        List<double> result = [];
         foreach (var s in CalculateCxMarginalPercentage())
         {
             if (double.TryParse(s.TrimEnd('%'), out double val))
@@ -263,14 +263,14 @@ public class Crosstab
 
     private void ConvertPivotListToCxMatrix()
     {
-        _cxMatrix = new List<List<int>>();
+        _cxMatrix = [];
 
         var distinctDV = _depVarQ.Responses.Select(r => r.RespValue).Distinct().OrderBy(x => x).ToList();
         var distinctIV = _indVarQ.Responses.Select(r => r.RespValue).Distinct().OrderBy(x => x).ToList();
 
         foreach (int dv in distinctDV)
         {
-            var row = new List<int>();
+            List<int> row = [];
             foreach (int iv in distinctIV)
             {
                 double count = _pivotList
@@ -292,14 +292,14 @@ public class Crosstab
 
     private void ConvertPivotListToCxMatrixSave(List<CrosstabItem> usePivotList)
     {
-        _cxMatrixSave = new List<List<int>>();
+        _cxMatrixSave = [];
 
         var distinctDV = _depVarQ.Responses.Select(r => r.RespValue).Distinct().OrderBy(x => x).ToList();
         var distinctIV = _indVarQ.Responses.Select(r => r.RespValue).Distinct().OrderBy(x => x).ToList();
 
         foreach (int dv in distinctDV)
         {
-            var row = new List<int>();
+            List<int> row = [];
             foreach (int iv in distinctIV)
             {
                 double count = usePivotList
@@ -332,11 +332,11 @@ public class Crosstab
 
     public List<IndexItem> GetIndexesList()
     {
-        var indexes = new List<IndexItem>();
+        List<IndexItem> indexes = [];
 
         foreach (DataRow dr in CxTable!.Rows)
         {
-            if (dr[0].ToString()?.ToUpper().Contains("INDEX") == true)
+            if (dr[0].ToString()?.ToUpper().Contains("INDEX", StringComparison.CurrentCultureIgnoreCase) == true)
             {
                 for (int i = 1; i < dr.ItemArray.Length; i++)
                 {
@@ -357,12 +357,12 @@ public class Crosstab
     public List<ProfileItem>? GetProfilePercentages(int respIndex)
     {
         if (_cxMatrix is null)
-            throw new ArgumentNullException("CxMatrix cannot be null. Instantiate the Crosstab object");
+            throw new ArgumentNullException(nameof(respIndex), "CxMatrix cannot be null. Instantiate the Crosstab object");
 
         if (respIndex < 0 || respIndex >= _cxMatrix.Count)
             return null;
 
-        var percentages = new List<ProfileItem>();
+        List<ProfileItem> percentages = [];
         var mps = CalculateCxMarginalPercentageDbl();
         int rowSum = AddCxMatrixRow(respIndex);
 

@@ -47,11 +47,7 @@ public class CxIVIndex
     #region Methods
 
     // Color Yellow
-    public static byte[] GetYellow()
-    {
-        byte[] rYellow = { 0xEA, 0xFB, 0x7A, 0x50 };
-        return rYellow;
-    }
+    public static byte[] GetYellow() => [0xEA, 0xFB, 0x7A, 0x50];
 
     #endregion
 }

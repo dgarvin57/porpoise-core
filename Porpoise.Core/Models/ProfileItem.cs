@@ -60,7 +60,7 @@ public class ProfileItem
     // Gather all colors and return in a byte array
     public static byte[] GetColors()
     {
-        var colorArray = new List<byte>();
+        List<byte> colorArray = [];
 
         // Get colors (preserving exact original order and method calls)
         colorArray.AddRange(ErrorLog.GetOrange());
@@ -68,7 +68,7 @@ public class ProfileItem
         colorArray.AddRange(Survey.GetViolet());
         colorArray.AddRange(TwoBlockIndex.GetBrown());
 
-        return colorArray.ToArray();
+        return [.. colorArray];
     }
 
     #endregion

@@ -54,9 +54,7 @@ public class PoolTrendList
         get
         {
             // Return list of surveys selected for pooling
-            var poolSList = new List<PoolTrendItem>();
-            poolSList.AddRange(_surveyList.Where(item => item.PoolSurveySelected));
-            return poolSList;
+            return [.._surveyList.Where(item => item.PoolSurveySelected)];
         }
     }
 
@@ -65,9 +63,7 @@ public class PoolTrendList
         get
         {
             // Return list of surveys selected for trending
-            var trendSList = new List<PoolTrendItem>();
-            trendSList.AddRange(_surveyList.Where(item => item.TrendSurveySelected));
-            return trendSList;
+            return [.._surveyList.Where(item => item.TrendSurveySelected)];
         }
     }
 
@@ -158,7 +154,7 @@ public class PoolTrendList
 
     private void BuildList(ObjectListBase<Survey> originalSurveyList)
     {
-        _surveyList = new List<PoolTrendItem>();
+        _surveyList = [];
         foreach (Survey s in originalSurveyList)
         {
             var ptItem = new PoolTrendItem(s);
@@ -213,7 +209,7 @@ public class PoolTrendList
     }
 
     // Combine all trended data for DV and IV into a surrogate PoolTrendItem
-    public PoolTrendItem GetTrendedSurvey()
+    public static PoolTrendItem GetTrendedSurvey()
     {
         return new PoolTrendItem(new Survey());
     }

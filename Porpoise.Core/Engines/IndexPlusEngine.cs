@@ -21,7 +21,7 @@ public class IndexPlusEngine
     public string? ErrorTitle { get; private set; }
     public string? ErrorMessageLong { get; private set; }
     public string? ErrorMessageShort { get; private set; }
-    public List<IndexPlusItem> Indexes { get; } = new();
+    public List<IndexPlusItem> Indexes { get; } = [];
     public bool IVNotInBlock { get; private set; }
     public bool DVNotInBlock { get; private set; }
 

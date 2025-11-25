@@ -32,7 +32,7 @@ public class Survey : ObjectBase
     private string _surveyPath = string.Empty;
     private string _surveyFolder = string.Empty;
     private string _fullProjectFolder = string.Empty;
-    private ObjectListBase<Question> _questionList = new();
+    private ObjectListBase<Question> _questionList = [];
     private SurveyData? _data;
     private bool _errorsExist = true;
     private string _surveyNotes = string.Empty;
@@ -239,18 +239,17 @@ public class Survey : ObjectBase
             QuestionList.Sort((x, y) => x.DataFileCol.CompareTo(y.DataFileCol));
     }
 
-    public static byte[] GetViolet() => new byte[] { 0xAF, 0x82, 0x9D, 0xFB };
+    public static byte[] GetViolet() => [0xAF, 0x82, 0x9D, 0xFB];
 
     public bool IsAllResponsesInQuestionMissingValuesOK()
     {
-        if (QuestionList is null || Data?.DataList is null || !Data.DataList.Any()) return true;
+        if (QuestionList is null || Data?.DataList is null || Data.DataList.Count == 0) return true;
 
         foreach (Question q in QuestionList)
         {
-            var combinedMissingValues = new List<int>(q.MissingValues);
-            combinedMissingValues.AddRange(Data.MissingResponseValues);
+            List<int> combinedMissingValues = [..q.MissingValues, ..Data.MissingResponseValues];
 
-            if (!combinedMissingValues.Any()) continue;
+            if (combinedMissingValues.Count == 0) continue;
 
             int rnum = q.DataFileCol;
             if (rnum >= Data.DataList[0].Count || Data.DataList[0][rnum] != q.QstNumber) continue;

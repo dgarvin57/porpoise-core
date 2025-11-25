@@ -19,7 +19,7 @@ public class SurveyLicenseEngine
     /// Verifies the survey is properly licensed.
     /// TODO: Implement full license verification logic.
     /// </summary>
-    public bool Verify()
+    public static bool Verify()
     {
         // Placeholder — full implementation to be added
         return true;

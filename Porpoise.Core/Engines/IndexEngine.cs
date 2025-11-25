@@ -13,23 +13,24 @@ namespace Porpoise.Core.Engines;
 /// </summary>
 public class IndexEngine
 {
-    public List<IndexItem> Indexes { get; } = new();
+    public List<IndexItem> Indexes { get; } = [];
 
     public IndexEngine(Survey survey, Question dvQuestion)
     {
-        if (survey == null) throw new ArgumentNullException(nameof(survey));
-        if (dvQuestion == null) throw new ArgumentNullException(nameof(dvQuestion));
+        ArgumentNullException.ThrowIfNull(survey);
+        ArgumentNullException.ThrowIfNull(dvQuestion);
+        if (survey.Data == null) throw new InvalidOperationException("Survey data is required for index analysis.");
 
         BuildIndexList(survey, dvQuestion);
     }
 
     private void BuildIndexList(Survey survey, Question dvQuestion)
     {
-        var indexList = new List<IndexItem>();
+        List<IndexItem> indexList = [];
 
         foreach (var ivQuestion in survey.QuestionList.Where(q => q.VariableType == QuestionVariableType.Independent))
         {
-            var crosstab = new Crosstab(survey.Data, dvQuestion, ivQuestion, includeWeights: false, includeBase: false);
+            var crosstab = new Crosstab(survey.Data!, dvQuestion, ivQuestion, showCount: false, onProfileTab: false);
             indexList.AddRange(crosstab.GetIndexesList());
         }
 

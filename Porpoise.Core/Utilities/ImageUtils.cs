@@ -17,9 +17,9 @@ public static class ImageUtils
         ImageVertAlign verticalAlign = ImageVertAlign.Middle,
         ImageHorizAlign horizontalAlign = ImageHorizAlign.Middle)
     {
-        if (sourceImage == null) throw new ArgumentNullException(nameof(sourceImage));
-        if (targetWidth <= 0) throw new ArgumentOutOfRangeException(nameof(targetWidth));
-        if (targetHeight <= 0) throw new ArgumentOutOfRangeException(nameof(targetHeight));
+        ArgumentNullException.ThrowIfNull(sourceImage);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(targetWidth);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(targetHeight);
 
         using var source = new Bitmap(sourceImage);
         var dest = new Bitmap(targetWidth, targetHeight, PixelFormat.Format32bppArgb);

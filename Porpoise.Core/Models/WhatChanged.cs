@@ -19,7 +19,7 @@ namespace Porpoise.Core.Models;
 /// </summary>
 public class WhatChanged
 {
-    private List<WhatChangedItem> _items = new();
+    private List<WhatChangedItem> _items = [];
     private ChangesApplyTo _appliedTo = (ChangesApplyTo)(-1);
     private string _messageTitle = string.Empty;
     private string _messageDetail = string.Empty;

@@ -19,8 +19,8 @@ public class SurveyData : ObjectBase, ICloneable
 {
     #region Private Members
 
-    private List<List<string>> _dataList = new();
-    private readonly List<int> _missingResponseValues = new();
+    private List<List<string>> _dataList = [];
+    private readonly List<int> _missingResponseValues = [];
     private string _dataFilePath = string.Empty;
 
     private bool _selectOn;
@@ -128,8 +128,8 @@ public class SurveyData : ObjectBase, ICloneable
     {
         var clone = new SurveyData
         {
-            _dataList = _dataList.Select(row => new List<string>(row)).ToList(),
-            MissingResponseValues = new List<int>(_missingResponseValues),
+            _dataList = [.. _dataList.Select(row => new List<string>(row))],
+            MissingResponseValues = [.._missingResponseValues],
             _dataFilePath = _dataFilePath,
             _selectOn = _selectOn,
             _selectPlusOn = _selectPlusOn,
@@ -146,6 +146,8 @@ public class SurveyData : ObjectBase, ICloneable
 
         return clone;
     }
+
+    object ICloneable.Clone() => Clone();
 
     #endregion
 
@@ -191,14 +193,14 @@ public class SurveyData : ObjectBase, ICloneable
 
     public List<List<string>> DataTableToListOfList(DataTable dt)
     {
-        var list = new List<List<string>>();
-        var headers = new List<string>();
+        List<List<string>> list = [];
+        List<string> headers = [];
         foreach (DataColumn c in dt.Columns) headers.Add(c.ColumnName);
         list.Add(headers);
 
         foreach (DataRow r in dt.Rows)
         {
-            var row = new List<string>();
+            List<string> row = [];
             foreach (var item in r.ItemArray)
                 row.Add(item?.ToString() ?? "");
             list.Add(row);
@@ -212,11 +214,11 @@ public class SurveyData : ObjectBase, ICloneable
 
     private List<List<string>> GetFilteredDataList()
     {
-        var filtered = new List<List<string>>();
+        List<List<string>> filtered = [];
         for (int i = 0; i < _dataList.Count; i++)
         {
             if (IncludeRow(i))
-                filtered.Add(new List<string>(_dataList[i]));
+                filtered.Add([.. _dataList[i]]);
         }
         return filtered;
     }
@@ -364,7 +366,7 @@ public class SurveyData : ObjectBase, ICloneable
 
     public List<int> GetAllResponsesInColumn(int colNumber, bool omitMissingValues, List<int> qMissingValues)
     {
-        var list = new List<int>();
+        List<int> list = [];
         for (int row = 1; row < DataList.Count; row++)
         {
             if (!IncludeRow(row)) continue;
@@ -391,7 +393,7 @@ public class SurveyData : ObjectBase, ICloneable
 
     public List<CrosstabItem> GetCleanDVIVDataFromSurvey(Question dvQ, Question? ivQ = null)
     {
-        var list = new List<CrosstabItem>();
+        List<CrosstabItem> list = [];
         bool both = ivQ is not null;
 
         for (int row = 1; row < DataList.Count; row++)
@@ -435,6 +437,132 @@ public class SurveyData : ObjectBase, ICloneable
         => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
     public new event PropertyChangedEventHandler? PropertyChanged;
+
+    #endregion
+
+    #region Additional helper methods used by SurveyEngine
+
+    public bool IsAllResponsesNumeric()
+    {
+        if (_dataList == null || _dataList.Count == 0) return false;
+        for (int row = 1; row < _dataList.Count; row++)
+        {
+            for (int col = 0; col < _dataList[row].Count; col++)
+            {
+                var header = _dataList[0][col].ToUpper();
+                var cell = _dataList[row][col];
+                if (header.Contains("#?SIM_WEIGHT/?#") || header.Contains("WEIGHT")) continue;
+                if (!int.TryParse(cell, out _)) return false;
+            }
+        }
+        return true;
+    }
+
+    public bool IsAllCasesInteger()
+    {
+        if (_dataList == null || _dataList.Count == 0) return false;
+        for (int row = 1; row < _dataList.Count; row++)
+        {
+            if (!int.TryParse(_dataList[row][0], out _)) return false;
+        }
+        return true;
+    }
+
+    public ObjectListBase<Response> GetQuestionResponses(int colNumber, List<int> qMissingValues)
+    {
+        var set = new SortedSet<int>();
+        for (int row = 1; row < _dataList.Count; row++)
+        {
+            var valStr = _dataList[row][colNumber];
+            if (!int.TryParse(valStr, out int val)) continue;
+            if (qMissingValues != null && qMissingValues.Contains(val)) continue;
+            set.Add(val);
+        }
+
+        var responses = new ObjectListBase<Response>();
+        foreach (var v in set)
+            responses.Add(new Response(v, v.ToString(), ResponseIndexType.None));
+
+        return responses;
+    }
+
+    public void RemoveWeightsFromDataList()
+    {
+        int simCol = GetSimWeightColumnNumber();
+        if (simCol == 0) return;
+
+        for (int i = 0; i < _dataList.Count; i++)
+        {
+            if (simCol < _dataList[i].Count)
+                _dataList[i].RemoveAt(simCol);
+        }
+    }
+
+    public void RemoveMovementColumn()
+    {
+        int moveCol = GetMovementColumnNumber();
+        if (moveCol == 0) return;
+
+        for (int i = 0; i < _dataList.Count; i++)
+        {
+            if (moveCol < _dataList[i].Count)
+                _dataList[i].RemoveAt(moveCol);
+        }
+    }
+
+    public List<int> GetUniqueResponsesForQuestion(int colNumber, bool omitMissingValues, List<int> qMissingValues)
+    {
+        var set = new SortedSet<int>();
+        for (int row = 1; row < _dataList.Count; row++)
+        {
+            var valStr = _dataList[row][colNumber];
+            if (!int.TryParse(valStr, out int val)) continue;
+            if (omitMissingValues && qMissingValues != null && qMissingValues.Contains(val)) continue;
+            set.Add(val);
+        }
+        return [.. set];
+    }
+
+    public List<int> GetAllOriginalResponsesInColumn(short dataFileCol)
+    {
+        List<int> list = [];
+        for (int row = 1; row < _dataList.Count; row++)
+        {
+            if (dataFileCol >= _dataList[row].Count) continue;
+            if (int.TryParse(_dataList[row][dataFileCol], out int val))
+                list.Add(val);
+        }
+        return list;
+    }
+
+    public void GetResponseFrequencyAndTotalN(Question question)
+    {
+        // Reset all frequencies
+        foreach (var response in question.Responses)
+        {
+            response.ResultFrequency = 0;
+        }
+
+        double totalN = 0;
+        double weightedN = 0;
+
+        for (int row = 1; row < DataList.Count; row++)
+        {
+            if (!IncludeRow(row)) continue;
+
+            if (!int.TryParse(DataList[row][question.DataFileCol], out int respValue)) continue;
+
+            var response = question.Responses.FirstOrDefault(r => r.RespValue == respValue);
+            if (response == null) continue;
+
+            double weight = GetResponseSimWeight(row) * GetStaticWeight(row, false);
+            response.ResultFrequency += weight;
+            weightedN += weight;
+            totalN++;
+        }
+
+        question.TotalN = (_weightOn || _useStaticWeight) ? (int)Math.Round(weightedN) : (int)totalN;
+    }
 
     #endregion
 }

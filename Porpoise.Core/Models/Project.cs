@@ -44,8 +44,7 @@ namespace Porpoise.Core.Models
         public Project(string baseProjectFolder)
         {
             _baseProjectFolder = baseProjectFolder;
-            _surveyList = new ObjectListBase<Survey>();
-            _surveyList.Add(new Survey());
+            _surveyList = [new Survey()];
         }
 
         #endregion

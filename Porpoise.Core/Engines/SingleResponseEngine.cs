@@ -13,15 +13,15 @@ namespace Porpoise.Core.Engines;
 /// </summary>
 public class SingleResponseEngine
 {
-    public List<OneResponseItem> Items { get; } = new();
+    public List<OneResponseItem> Items { get; } = [];
     public bool IsConsistent { get; private set; } = true;
     public string? ConsistencyMessage { get; private set; }
 
     public SingleResponseEngine(Survey survey, Question dvQuestion, int responseValue)
     {
-        if (survey == null) throw new ArgumentNullException(nameof(survey));
-        if (dvQuestion == null) throw new ArgumentNullException(nameof(dvQuestion));
-        if (responseValue <= 0) throw new ArgumentOutOfRangeException(nameof(responseValue));
+        ArgumentNullException.ThrowIfNull(survey);
+        ArgumentNullException.ThrowIfNull(dvQuestion);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(responseValue);
 
         BuildResponseBlock(survey, dvQuestion, responseValue);
     }
@@ -48,7 +48,7 @@ public class SingleResponseEngine
 
             if (responseValue <= q.Responses.Count)
             {
-                item.Percent = q.Responses[responseValue - 1].ResultPercent;
+                item.Percent = (double)q.Responses[responseValue - 1].ResultPercent;
             }
             else
             {

@@ -11,13 +11,13 @@ namespace Porpoise.Core.Models;
 /// real-time multi-survey aggregation and longitudinal tracking — something very few tools
 /// have ever offered with this level of precision and flexibility.
 /// </summary>
-public class PoolTrendItem
+public class PoolTrendItem(Survey survey)
 {
     #region Private Members
 
     private bool _isDirty;
-    private Survey _survey = null!;
-    private readonly string _surveyName;
+    private Survey _survey = (Survey)survey.Clone();
+    private readonly string _surveyName = survey.SurveyName;
     private bool _poolSurveySelected;
     private Question? _poolDVQuestionSelected;
     private Question? _poolIVQuestionSelected;
@@ -109,14 +109,7 @@ public class PoolTrendItem
     }
 
     #endregion
-
     #region Constructors
-
-    public PoolTrendItem(Survey survey)
-    {
-        _survey = (Survey)survey.Clone();
-        _surveyName = survey.SurveyName;
-    }
 
     #endregion
 

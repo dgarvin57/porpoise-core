@@ -14,24 +14,14 @@ namespace Porpoise.Core.Models;
 /// • Why it was necessary
 /// 
 /// </summary>
-public class WhatChangedItem
+/// <param name="itemChanged">The type of change that occurred</param>
+/// <param name="fromValue">Original value (null becomes empty string)</param>
+/// <param name="toValue">New corrected value (null becomes empty string)</param>
+public class WhatChangedItem(WhatChangedEnum itemChanged, string? fromValue, string? toValue)
 {
-    private WhatChangedEnum _itemChanged;
-    private string _fromValue = string.Empty;
-    private string _toValue = string.Empty;
-
-    /// <summary>
-    /// Creates a new change record.
-    /// </summary>
-    /// <param name="itemChanged">The type of change that occurred</param>
-    /// <param name="fromValue">Original value (null becomes empty string)</param>
-    /// <param name="toValue">New corrected value (null becomes empty string)</param>
-    public WhatChangedItem(WhatChangedEnum itemChanged, string? fromValue, string? toValue)
-    {
-        _itemChanged = itemChanged;
-        _fromValue = fromValue ?? string.Empty;
-        _toValue = toValue ?? string.Empty;
-    }
+    private WhatChangedEnum _itemChanged = itemChanged;
+    private string _fromValue = fromValue ?? string.Empty;
+    private string _toValue = toValue ?? string.Empty;
 
     public WhatChangedEnum ItemChanged
     {

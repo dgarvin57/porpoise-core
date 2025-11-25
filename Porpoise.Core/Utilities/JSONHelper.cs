@@ -25,9 +25,8 @@ public static class JSONHelper
 
     public static T FromJSON<T>(string json) where T : new()
     {
-        if (json is null)
-            throw new ArgumentNullException(nameof(json));
-        T obj = new T();
+        ArgumentNullException.ThrowIfNull(json);
+        T obj = new();
         byte[] bytes = Encoding.Unicode.GetBytes(json);
         using var ms = new MemoryStream(bytes);
         var serializer = new DataContractJsonSerializer(obj.GetType());

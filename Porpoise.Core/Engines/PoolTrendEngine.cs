@@ -13,17 +13,12 @@ namespace Porpoise.Core.Engines;
 /// into a single virtual dataset for analysis (crosstabs, topline, etc.).
 /// One of the most powerful and complex features in Porpoise.
 /// </summary>
-public class PoolTrendEngine
+public class PoolTrendEngine(PoolTrendList poolTrendList)
 {
-    private readonly PoolTrendList _poolTrendList;
+    private readonly PoolTrendList _poolTrendList = poolTrendList ?? throw new ArgumentNullException(nameof(poolTrendList));
     private readonly BlockQuestionValidator _validator = new();
 
     public PoolTrendItem? SurrogateSurveyItem { get; private set; }
-
-    public PoolTrendEngine(PoolTrendList poolTrendList)
-    {
-        _poolTrendList = poolTrendList ?? throw new ArgumentNullException(nameof(poolTrendList));
-    }
 
     public void CreateSurrogateSurvey(PoolTrendType type)
     {
@@ -36,7 +31,7 @@ public class PoolTrendEngine
 
     private PoolTrendItem? CreatePooledSurvey()
     {
-        if (!_poolTrendList.PoolSurveyList.Any() || !ValidatePoolQuestions()) return null;
+        if (_poolTrendList.PoolSurveyList.Count == 0 || !ValidatePoolQuestions()) return null;
 
         var lastItem = _poolTrendList.PoolSurveyList.Last();
         var pooled = BuildBasePooledSurvey(lastItem);
@@ -46,13 +41,18 @@ public class PoolTrendEngine
 
         foreach (var item in _poolTrendList.PoolSurveyList)
         {
+            if (item.Survey?.Data == null || 
+                item.PoolDVQuestionSelected == null || 
+                item.PoolIVQuestionSelected == null)
+                continue;
+
             var dvResponses = item.Survey.Data.GetAllOriginalResponsesInColumn(item.PoolDVQuestionSelected.DataFileCol);
             var ivResponses = item.Survey.Data.GetAllOriginalResponsesInColumn(item.PoolIVQuestionSelected.DataFileCol);
 
             ValidateSameCaseCount(item, dvResponses.Count, ivResponses.Count);
 
             for (int i = 0; i < dvResponses.Count; i++)
-                combinedData.Add(new List<string> { caseId++.ToString(), dvResponses[i].ToString(), ivResponses[i].ToString() });
+                combinedData.Add([caseId++.ToString(), dvResponses[i].ToString(), ivResponses[i].ToString()]);
         }
 
         ApplyCombinedData(pooled, combinedData, lastItem);
@@ -64,11 +64,19 @@ public class PoolTrendEngine
 
     private bool ValidatePoolQuestions()
     {
-        var dvQuestions = _checkboxList.PoolSurveyList.Select(x => x.PoolDVQuestionSelected).ToList();
-        var ivQuestions = _checkboxList.PoolSurveyList.Select(x => x.PoolIVQuestionSelected).ToList();
+        var dvQuestions = _poolTrendList.PoolSurveyList
+            .Select(x => x.PoolDVQuestionSelected)
+            .Where(q => q != null)
+            .Cast<Question>()
+            .ToList();
+        var ivQuestions = _poolTrendList.PoolSurveyList
+            .Select(x => x.PoolIVQuestionSelected)
+            .Where(q => q != null)
+            .Cast<Question>()
+            .ToList();
 
-        return _validator.IsQuestionListValid(new ObjectListBase<Question>(dvQuestions)) &&
-               _validator.IsQuestionListValid(new ObjectListBase<Question>(ivQuestions));
+        return _validator.IsQuestionListValid([.. dvQuestions]) &&
+               _validator.IsQuestionListValid([.. ivQuestions]);
     }
 
     #endregion
@@ -77,7 +85,7 @@ public class PoolTrendEngine
 
     private PoolTrendItem? CreateTrendedSurvey()
     {
-        if (!_poolTrendList.TrendSurveyList.Any() || !ValidateTrendQuestions()) return null;
+        if (_poolTrendList.TrendSurveyList.Count == 0 || !ValidateTrendQuestions()) return null;
 
         var lastItem = _poolTrendList.TrendSurveyList.Last();
         var trended = BuildBaseTrendedSurvey(lastItem);
@@ -91,10 +99,10 @@ public class PoolTrendEngine
         for (int surveyIndex = 0; surveyIndex < _poolTrendList.TrendSurveyList.Count; surveyIndex++)
         {
             var item = _poolTrendList.TrendSurveyList[surveyIndex];
-            var dvResponses = item.Survey.Data.GetAllOriginalResponsesInColumn(item.TrendDVQuestionSelected.DataFileCol);
+            var dvResponses = item.Survey?.Data?.GetAllOriginalResponsesInColumn(item.TrendDVQuestionSelected?.DataFileCol ?? 0) ?? [];
 
             foreach (var resp in dvResponses)
-                combinedData.Add(new List<string> { caseId++.ToString(), resp.ToString(), (surveyIndex + 1).ToString() });
+                combinedData.Add([caseId++.ToString(), resp.ToString(), (surveyIndex + 1).ToString()]);
         }
 
         ApplyCombinedData(trended, combinedData, lastItem);
@@ -114,14 +122,14 @@ public class PoolTrendEngine
             BlkQstStatus = BlkQuestionStatusType.DiscreetQuestion,
             DataType = QuestionDataType.Nominal,
             VariableType = QuestionVariableType.Independent,
-            Responses = new ObjectListBase<Response>()
+            Responses = []
         };
 
         for (int i = 0; i < _poolTrendList.TrendSurveyList.Count; i++)
         {
             var resp = new Response
             {
-                Label = _poolTrendList.TrendSurveyList[i].SurveyName,
+                Label = _poolTrendList.TrendSurveyList[i].SurveyName ?? "Survey " + (i + 1),
                 RespValue = i + 1,
                 IndexType = ResponseIndexType.Neutral
             };
@@ -135,9 +143,11 @@ public class PoolTrendEngine
     {
         var questions = _poolTrendList.TrendSurveyList
             .Select(x => x.TrendDVQuestionSelected)
+            .Where(q => q != null)
+            .Cast<Question>()
             .ToList();
 
-        return _validator.IsQuestionListValid(new ObjectListBase<Question>(questions));
+        return _validator.IsQuestionListValid([.. questions]);
     }
 
     #endregion
@@ -151,17 +161,17 @@ public class PoolTrendEngine
             SurveyName = "Pooled Data",
             LockStatus = LockStatusType.Unlocked,
             Status = SurveyStatus.Verified,
-            QuestionList = new ObjectListBase<Question>()
+            QuestionList = []
         };
 
         var pooled = new PoolTrendItem(survey);
 
-        var dvClone = (Question)lastItem.PoolDVQuestionSelected.Clone();
+        var dvClone = (Question)(lastItem.PoolDVQuestionSelected?.Clone() ?? throw new InvalidOperationException("DV Question is required"));
         dvClone.DataFileCol = 1;
         dvClone.QstNumber = "q1DV";
         pooled.Survey.QuestionList.Add(dvClone);
 
-        var ivClone = (Question)lastItem.PoolIVQuestionSelected.Clone();
+        var ivClone = (Question)(lastItem.PoolIVQuestionSelected?.Clone() ?? throw new InvalidOperationException("IV Question is required"));
         ivClone.DataFileCol = 2;
         ivClone.QstNumber = "q2IV";
         pooled.Survey.QuestionList.Add(ivClone);
@@ -176,12 +186,12 @@ public class PoolTrendEngine
             SurveyName = "Trended Data",
             LockStatus = LockStatusType.Unlocked,
             Status = SurveyStatus.Verified,
-            QuestionList = new ObjectListBase<Question>()
+            QuestionList = []
         };
 
         var trended = new PoolTrendItem(survey);
 
-        var dvClone = (Question)lastItem.TrendDVQuestionSelected.Clone();
+        var dvClone = (Question)(lastItem.TrendDVQuestionSelected?.Clone() ?? throw new InvalidOperationException("DV Question is required"));
         dvClone.DataFileCol = 1;
         dvClone.QstNumber = "q1DV";
         trended.Survey.QuestionList.Add(dvClone);
@@ -192,16 +202,19 @@ public class PoolTrendEngine
     private static void ApplyCombinedData(PoolTrendItem item, List<List<string>> combinedData, PoolTrendItem lastItem)
     {
         item.Survey.Data = new SurveyData();
-        item.Survey.Data.DataList = lastItem.Survey.Data.DataList;
-        item.Survey.Data.SelectedQuestion = lastItem.Survey.Data.SelectedQuestion;
-        item.Survey.Data.SelectOn = lastItem.Survey.Data.SelectOn;
+        if (lastItem.Survey?.Data != null)
+        {
+            item.Survey.Data.DataList = lastItem.Survey.Data.DataList;
+            item.Survey.Data.SelectedQuestion = lastItem.Survey.Data.SelectedQuestion;
+            item.Survey.Data.SelectOn = lastItem.Survey.Data.SelectOn;
+        }
 
         item.Survey.Data.DataList = combinedData;
 
         if (item.Survey.Data.SelectOn)
             item.Survey.Data.SelectOnDataList = combinedData;
 
-        item.Survey.Id = lastItem.Survey.Id;
+        item.Survey.Id = lastItem.Survey?.Id ?? Guid.NewGuid();
     }
 
     private static void ValidateSameCaseCount(PoolTrendItem item, int dvCount, int ivCount)
@@ -209,8 +222,8 @@ public class PoolTrendEngine
         if (dvCount != ivCount)
         {
             throw new InvalidOperationException(
-                $"DV question '{item.PoolDVQuestionSelected.QstLabel}' ({dvCount} cases) and " +
-                $"IV question '{item.PoolIVQuestionSelected.QstLabel}' ({ivCount} cases) " +
+                $"DV question '{item.PoolDVQuestionSelected?.QstLabel}' ({dvCount} cases) and " +
+                $"IV question '{item.PoolIVQuestionSelected?.QstLabel}' ({ivCount} cases) " +
                 $"from survey '{item.SurveyName}' have different case counts.");
         }
     }
@@ -221,7 +234,7 @@ public class PoolTrendEngine
 
     public static bool IsSelectValid(List<PoolTrendItem> items, PoolTrendType type, out string errorMessage)
     {
-        int selectOnCount = items.Count(x => x.Survey.Data.SelectOn);
+        int selectOnCount = items.Count(x => x.Survey?.Data?.SelectOn == true);
         if (selectOnCount == 0 || selectOnCount == items.Count)
         {
             errorMessage = string.Empty;
@@ -236,7 +249,7 @@ public class PoolTrendEngine
 
     public static bool IsSelectPlusValid(List<PoolTrendItem> items, PoolTrendType type, out string errorMessage)
     {
-        int selectPlusOnCount = items.Count(x => x.Survey.Data.SelectPlusOn);
+        int selectPlusOnCount = items.Count(x => x.Survey?.Data?.SelectPlusOn == true);
         if (selectPlusOnCount == 0 || selectPlusOnCount == items.Count)
         {
             errorMessage = string.Empty;
@@ -264,34 +277,34 @@ public class PoolTrendEngine
         dt.Columns.Add("TotalN", typeof(int));
 
         var list = type == PoolTrendType.Pool ? _poolTrendList.PoolSurveyList : _poolTrendList.TrendSurveyList;
-        if (list == null || !list.Any()) return dt;
+        if (list == null || list.Count == 0) return dt;
 
         foreach (var item in list)
         {
             var dvQuestion = type == PoolTrendType.Pool ? item.PoolDVQuestionSelected : item.TrendDVQuestionSelected;
 
             string selectedText = string.Empty;
-            if (item.Survey.Data.SelectOn && item.Survey.Data.SelectedQuestion != null)
+            if (item.Survey?.Data?.SelectOn == true && item.Survey.Data.SelectedQuestion != null)
             {
                 var responses = SurveyEngine.FormatSelectedResponsesToString(item.Survey.Data.SelectedQuestion)
                     .Replace("Selected responses:", "").Trim();
                 selectedText = $"{item.Survey.Data.SelectedQuestion.QstLabel}: {responses}";
             }
-            if (item.Survey.Data.SelectPlusOn)
+            if (item.Survey?.Data?.SelectPlusOn == true)
             {
                 var plusText = SurveyEngine.FormatSelectPlusSelectionToString(item.Survey.Data, false);
                 selectedText += (string.IsNullOrEmpty(selectedText) ? "" : Environment.NewLine) + plusText;
             }
 
-            dt.Rows.Add("DV", item.SurveyName, selectedText, dvQuestion.QstLabel, dvQuestion.Responses.Count, dvQuestion.TotalN);
+            dt.Rows.Add("DV", item.SurveyName, selectedText, dvQuestion?.QstLabel, dvQuestion?.Responses.Count ?? 0, dvQuestion?.TotalN ?? 0);
         }
 
         if (type == PoolTrendType.Pool)
         {
             foreach (var item in list)
             {
-                dt.Rows.Add("IV", item.SurveyName, string.Empty, item.PoolIVQuestionSelected.QstLabel,
-                    item.PoolIVQuestionSelected.Responses.Count, item.PoolIVQuestionSelected.TotalN);
+                dt.Rows.Add("IV", item.SurveyName, string.Empty, item.PoolIVQuestionSelected?.QstLabel,
+                    item.PoolIVQuestionSelected?.Responses.Count ?? 0, item.PoolIVQuestionSelected?.TotalN ?? 0);
             }
         }
 

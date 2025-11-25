@@ -158,7 +158,7 @@ public class Response : ObjectBase
         colorArray.AddRange(IOUtils.GetRed());
         colorArray.AddRange(SurveySummary.GetBlack());
 
-        return colorArray.ToArray();
+        return [.. colorArray];
     }
 
     #endregion

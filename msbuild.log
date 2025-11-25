@@ -1,0 +1,39 @@
+﻿Build started 11/24/2025 9:25:56 PM.
+Logging verbosity is set to: Normal.     1>Project "C:\source\porpoise-core\Porpoise.Core\Porpoise.Core.csproj" on node 1 (Restore target(s)).
+     1>_GetAllRestoreProjectPathItems:
+         Determining projects to restore...
+       Restore:
+         X.509 certificate chain validation will use the default trust store selected by .NET for code signing.
+         X.509 certificate chain validation will use the default trust store selected by .NET for timestamping.
+         Assets file has not changed. Skipping assets file writing. Path: C:\source\porpoise-core\Porpoise.Core\obj\project.assets.json
+         Restored C:\source\porpoise-core\Porpoise.Core\Porpoise.Core.csproj (in 37 ms).
+         
+         NuGet Config files used:
+             C:\Users\dgarv\AppData\Roaming\NuGet\NuGet.Config
+             C:\Program Files (x86)\NuGet\Config\Microsoft.VisualStudio.Offline.config
+         
+         Feeds used:
+             https://api.nuget.org/v3/index.json
+             C:\Program Files (x86)\Microsoft SDKs\NuGetPackages\
+         All projects are up-to-date for restore.
+     1>Done Building Project "C:\source\porpoise-core\Porpoise.Core\Porpoise.Core.csproj" (Restore target(s)).
+   1:7>Project "C:\source\porpoise-core\Porpoise.Core\Porpoise.Core.csproj" on node 1 (default targets).
+     1>GenerateTargetFrameworkMonikerAttribute:
+       Skipping target "GenerateTargetFrameworkMonikerAttribute" because all output files are up-to-date with respect to the input files.
+       CoreGenerateAssemblyInfo:
+       Skipping target "CoreGenerateAssemblyInfo" because all output files are up-to-date with respect to the input files.
+       _GenerateSourceLinkFile:
+         Source Link file 'obj\Debug\net9.0-windows\Porpoise.Core.sourcelink.json' is up-to-date.
+       CoreCompile:
+       Skipping target "CoreCompile" because all output files are up-to-date with respect to the input files.
+       GenerateBuildDependencyFile:
+       Skipping target "GenerateBuildDependencyFile" because all output files are up-to-date with respect to the input files.
+       CopyFilesToOutputDirectory:
+         Porpoise.Core -> C:\source\porpoise-core\Porpoise.Core\bin\Debug\net9.0-windows\Porpoise.Core.dll
+     1>Done Building Project "C:\source\porpoise-core\Porpoise.Core\Porpoise.Core.csproj" (default targets).
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:00.75

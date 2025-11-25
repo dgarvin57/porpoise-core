@@ -19,10 +19,10 @@ public static class ExtensionMethods
     /// </summary>
     public static List<List<string>> ToListOfList(this DataTable dt)
     {
-        var newList = new List<List<string>>();
+        List<List<string>> newList = [];
 
         // Get column names
-        var colList = new List<string>();
+        List<string> colList = [];
         foreach (DataColumn cn in dt.Columns)
             colList.Add(cn.ColumnName);
         newList.Add(colList);
@@ -30,7 +30,7 @@ public static class ExtensionMethods
         // Get rows (note: original VB started at index 1, skipping first row)
         for (int rowCount = 1; rowCount < dt.Rows.Count; rowCount++)
         {
-            var rowList = new List<string>();
+            List<string> rowList = [];
             foreach (var item in dt.Rows[rowCount].ItemArray)
                 rowList.Add(item?.ToString() ?? string.Empty);
             newList.Add(rowList);
@@ -46,10 +46,8 @@ public static class ExtensionMethods
     {
         FieldInfo? fi = enumConstant.GetType().GetField(enumConstant.ToString());
 
-        var aattr = fi?.GetCustomAttributes(typeof(DescriptionAttribute), false)
-                      as DescriptionAttribute[];
 
-        if (aattr != null && aattr.Length > 0)
+        if (fi?.GetCustomAttributes(typeof(DescriptionAttribute), false) is DescriptionAttribute[] aattr && aattr.Length > 0)
             return aattr[0].Description;
 
         return enumConstant.ToString();

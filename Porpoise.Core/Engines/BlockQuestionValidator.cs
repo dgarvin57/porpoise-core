@@ -32,7 +32,7 @@ public class BlockQuestionValidator
 
     public BlockQuestionValidator()
     {
-        _questionList = new ObjectListBase<Question>();
+        _questionList = [];
     }
 
     public BlockQuestionValidator(Survey survey)
@@ -64,7 +64,7 @@ public class BlockQuestionValidator
             .Where(q => q.BlkQstStatus == BlkQuestionStatusType.FirstQuestionInBlock)
             .ToList();
 
-        if (!firstQuestionsInBlocks.Any())
+        if (firstQuestionsInBlocks.Count == 0)
         {
             IsValid = false;
             return;
@@ -87,7 +87,8 @@ public class BlockQuestionValidator
     /// </summary>
     public bool IsQuestionListValid(ObjectListBase<Question> questions)
     {
-        if (questions == null) throw new ArgumentNullException(nameof(questions));
+        ArgumentNullException.ThrowIfNull(questions);
+
         if (questions.Count <= 1) return true;
 
         IsValid = true;

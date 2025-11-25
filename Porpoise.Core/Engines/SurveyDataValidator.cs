@@ -12,14 +12,9 @@ namespace Porpoise.Core.Engines;
 /// Detects added/removed questions and responses, and can auto-fix when requested.
 /// Critical for data integrity when opening or saving surveys.
 /// </summary>
-public class SurveyDataValidator
+public class SurveyDataValidator(Survey survey)
 {
-    private readonly Survey _survey;
-
-    public SurveyDataValidator(Survey survey)
-    {
-        _survey = survey ?? throw new ArgumentNullException(nameof(survey));
-    }
+    private readonly Survey _survey = survey ?? throw new ArgumentNullException(nameof(survey));
 
     public SurveyDataValidationResults DoesSurveyDataAndQuestionsMatch(ref string message, bool fix)
     {
@@ -44,7 +39,7 @@ public class SurveyDataValidator
     private SurveyDataValidationResults IsQuestionsChanged(ref string message, bool justRemoveQuestions)
     {
         var questionNumbers = _survey.QuestionList.Select(q => q.QstNumber).OrderBy(x => x).ToList();
-        var dataColumns = _survey.Data.DataList[0].Skip(1).OrderBy(x => x).ToList(); // Skip case number
+        var dataColumns = _survey.Data?.DataList?[0].Skip(1).OrderBy(x => x).ToList() ?? []; // Skip case number
 
         if (questionNumbers.SequenceEqual(dataColumns))
         {
@@ -57,7 +52,7 @@ public class SurveyDataValidator
             .Where(x => x != "#?SIM_WEIGHT/?#" && x != "WEIGHT" && x != "#?/MOVEMENT/?#")
             .ToList();
 
-        if (removedQuestions.Any())
+        if (removedQuestions.Count != 0)
         {
             if (!justRemoveQuestions)
             {
@@ -74,7 +69,7 @@ public class SurveyDataValidator
             message = "";
         }
 
-        if (addedQuestions.Any())
+        if (addedQuestions.Count != 0 && _survey.Data?.DataList != null && _survey.Data.DataList.Count > 0)
         {
             foreach (var qNum in addedQuestions)
             {
@@ -84,8 +79,8 @@ public class SurveyDataValidator
                 var newQuestion = new Question
                 {
                     QstNumber = qNum,
-                    DataFileCol = colIndex,
-                    Responses = _survey.Data.GetQuestionResponses(colIndex, new List<int>())
+                    DataFileCol = (short)colIndex,
+                    Responses = _survey.Data.GetQuestionResponses(colIndex, [])
                 };
 
                 _survey.QuestionList.Insert(colIndex - 1, newQuestion);
@@ -109,7 +104,7 @@ public class SurveyDataValidator
             var question = _survey.QuestionList[i];
             if (question.Responses == null || !question.Responses.Any()) continue;
 
-            var currentResponses = _survey.Data.GetUniqueResponsesForQuestion(i + 1, true, question.MissingValues).ToList();
+            var currentResponses = _survey.Data?.GetUniqueResponsesForQuestion(i + 1, true, question.MissingValues).ToList() ?? [];
             var definedResponses = question.Responses.Select(r => r.RespValue).ToList();
 
             if (currentResponses.Count < definedResponses.Count)
@@ -117,7 +112,7 @@ public class SurveyDataValidator
                 var missing = definedResponses.Except(currentResponses).ToList();
                 var stillMissing = missing.Where(m => !IsResponseExistsInBlock(question, _survey, m)).ToList();
 
-                if (stillMissing.Any())
+                if (stillMissing.Count != 0)
                 {
                     if (fix)
                     {
@@ -147,7 +142,7 @@ public class SurveyDataValidator
             }
         }
 
-        if (changes.Any())
+        if (changes.Count != 0)
         {
             var fixMsg = fix
                 ? "The response definitions have been automatically fixed to match the raw data. Review in Question Definition."
@@ -172,7 +167,7 @@ public class SurveyDataValidator
             return false;
 
         return blockQuestions.Any(q =>
-            survey.Data.GetUniqueResponsesForQuestion(q.DataFileCol, true, q.MissingValues).Contains(responseValue));
+            survey.Data?.GetUniqueResponsesForQuestion(q.DataFileCol, true, q.MissingValues).Contains(responseValue) == true);
     }
 }
 

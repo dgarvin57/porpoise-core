@@ -16,11 +16,11 @@ public class FullBlockEngine
 {
     private readonly Survey _survey;
     private readonly Question _dvQuestion;
-    private readonly ObjectListBase<Question> _questionsInBlock = new();
+    private readonly ObjectListBase<Question> _questionsInBlock = [];
 
     public Question DVQuestion => _dvQuestion;
     public DataTable DataTable { get; private set; } = new();
-    public List<CxIVIndex> IVIndexes { get; } = new();
+    public List<CxIVIndex> IVIndexes { get; } = [];
     public bool IsConsistent { get; private set; } = true;
     public string? ConsistencyMessage { get; private set; }
 
@@ -100,7 +100,7 @@ public class FullBlockEngine
 
             foreach (var resp in q.Responses)
             {
-                double percent = resp.ResultPercent * 100;
+                double percent = (double)resp.ResultPercent * 100;
 
                 switch (resp.IndexType)
                 {

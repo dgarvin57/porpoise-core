@@ -25,7 +25,7 @@ public class TwoBlockEngine
     public string? ErrorTitle { get; private set; }
     public string? ErrorMessageLong { get; private set; }
     public string? ErrorMessageShort { get; private set; }
-    public List<TwoBlockIndex> TwoBlockIndexes { get; } = new();
+    public List<TwoBlockIndex> TwoBlockIndexes { get; } = [];
 
     public TwoBlockEngine(Survey survey, Question dvQuestion, Question ivQuestion)
     {
@@ -94,7 +94,7 @@ public class TwoBlockEngine
 
     private void CreateTwoBlockIndexes()
     {
-        var indexList = new List<TwoBlockIndex>();
+        List<TwoBlockIndex> indexList = [];
 
         for (int i = 0; i < _block1Questions.Count; i++)
         {

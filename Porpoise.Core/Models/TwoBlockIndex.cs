@@ -41,7 +41,7 @@ public class TwoBlockIndex
     #region Public Methods
 
     // Color brown — retained for backward compatibility with old chart color logic
-    public static byte[] GetBrown() => new byte[] { 0x13, 0xBF, 0x42, 0xFE };
+    public static byte[] GetBrown() => [0x13, 0xBF, 0x42, 0xFE];
 
     #endregion
 }

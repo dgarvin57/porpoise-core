@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Porpoise.Core.Model
+namespace Porpoise.Core.Models
 {
     [Serializable]
     public class SurveySummaryList : List<SurveySummary>

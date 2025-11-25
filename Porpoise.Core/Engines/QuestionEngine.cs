@@ -17,7 +17,7 @@ public static class QuestionEngine
 {
     public static bool IsQuestionFilled(Question question)
     {
-        return question ?? throw new ArgumentNullException(nameof(question));
+        ArgumentNullException.ThrowIfNull(question);
 
         return question.DataFileCol > 0 &&
                (!string.IsNullOrWhiteSpace(question.QstNumber?.Trim()) ||
@@ -39,8 +39,7 @@ public static class QuestionEngine
             for (int i = 0; i < survey.QuestionList.Count; i++)
             {
                 var q = survey.QuestionList[i];
-                ChangeFields(currentQuestion, whatToChange, ref q, survey, i, forceApply, whatChanged);
-                survey.QuestionList[i] = q;
+                ChangeFields(currentQuestion, whatToChange, q, survey, i, forceApply, whatChanged);
             }
         }
         else if (applyTo == ChangesApplyTo.QuestionsInBlock && currentQuestion.BlkQstStatus != BlkQuestionStatusType.DiscreetQuestion)
@@ -51,8 +50,7 @@ public static class QuestionEngine
                 foreach (var q in blockQuestions)
                 {
                     int index = survey.QuestionList.IndexOf(q);
-                    ChangeFields(currentQuestion, whatToChange, ref q, survey, index, forceApply, whatChanged);
-                    survey.QuestionList[index] = q;
+                    ChangeFields(currentQuestion, whatToChange, q, survey, index, forceApply, whatChanged);
                 }
             }
         }
@@ -61,8 +59,7 @@ public static class QuestionEngine
             foreach (var q in selectedQuestions)
             {
                 int index = survey.QuestionList.IndexOf(q);
-                ChangeFields(currentQuestion, whatToChange, ref q, survey, index, forceApply, whatChanged);
-                survey.QuestionList[index] = q;
+                ChangeFields(currentQuestion, whatToChange, q, survey, index, forceApply, whatChanged);
             }
         }
         else
@@ -77,7 +74,7 @@ public static class QuestionEngine
     private static void ChangeFields(
         Question source,
         WhatToChange whatToChange,
-        ref Question target,
+        Question target,
         Survey survey,
         int questionIndex,
         bool forceApply,
@@ -223,7 +220,7 @@ public static class QuestionEngine
         // NumberOfPreferenceItems
         if (whatToChange.NumberOfPreferenceItems && target.NumberOfPreferenceItems != source.NumberOfPreferenceItems)
         {
-            changeLog.AddItem(new WhatChangedItem(WhatChangedEnum.NumberOfPreferenceItems, target.NumberOfPreferenceItems, source.NumberOfPreferenceItems));
+            changeLog.AddItem(new WhatChangedItem(WhatChangedEnum.NumberOfPreferenceItems, target.NumberOfPreferenceItems.ToString(), source.NumberOfPreferenceItems.ToString()));
             target.NumberOfPreferenceItems = source.NumberOfPreferenceItems;
         }
 
@@ -305,12 +302,12 @@ public static class QuestionEngine
 
     private static void SyncResponsesAndMissingValues(Question question, Survey survey, int questionIndex)
     {
-        var newResponses = new ObjectListBase<Response>();
-        var validResponses = survey.Data.GetUniqueResponsesForQuestion(questionIndex + 1, true, question.MissingValues);
+        ObjectListBase<Response> newResponses = [];
+        var validResponses = survey.Data?.GetUniqueResponsesForQuestion(questionIndex + 1, true, question.MissingValues) ?? [];
 
         foreach (int respValue in validResponses)
         {
-            var newResponse = new Response { RespValue = respValue };
+            Response newResponse = new() { RespValue = respValue };
 
             var existing = question.Responses.FirstOrDefault(r => r.RespValue == respValue);
             if (existing != null)
@@ -329,9 +326,9 @@ public static class QuestionEngine
     public static ObjectListBase<Question> GetQuestionsInBlock(Question question, ObjectListBase<Question> allQuestions)
     {
         if (question.BlkQstStatus == BlkQuestionStatusType.DiscreetQuestion)
-            return new ObjectListBase<Question>();
+            return [];
 
-        var block = new ObjectListBase<Question>();
+        ObjectListBase<Question> block = [];
         int index = allQuestions.IndexOf(question);
         int start = index;
         int end = index;
@@ -369,11 +366,11 @@ public static class QuestionEngine
         var allResponses = survey.GetAllResponsesForQuestion(question, true);
         int unweightedN = allResponses.Count;
 
-        survey.Data.GetResponseFrequencyAndTotalN(question);
+        survey.Data?.GetResponseFrequencyAndTotalN(question);
         CalculateStatisticsHelper(question, unweightedN);
     }
 
-    private static void CalculateStatisticsHelper(Question question, int unweightedN)
+    public static void CalculateStatisticsHelper(Question question, int unweightedN)
     {
         decimal positive = 0;
         decimal negative = 0;
@@ -399,10 +396,10 @@ public static class QuestionEngine
 
             decimal pVar = unweightedPercent * 100m;
             decimal qVar = 100m - pVar;
-            response.SamplingError = Math.Sqrt(pVar * qVar / unweightedN) * 1.96m;
+            response.SamplingError = Math.Sqrt((double)(pVar * qVar / unweightedN)) * 1.96;
         }
 
-        question.TotalIndex = Math.Round(positive - negative + 100, 0);
+        question.TotalIndex = (int)Math.Round(positive - negative + 100, 0);
     }
 
     public static bool IsTemplateXMLFilesExist(string path)
@@ -415,7 +412,7 @@ public static class QuestionEngine
     {
         var template = LegacyDataAccess.LoadXMLFileToList<Question>(path);
 
-        validTemplate = template != null && template.Count > 0 && template[0] is Question;
+        validTemplate = template != null && template.Count > 0 && template[0] is not null;
         errorMessage = validTemplate ? string.Empty :
             template == null ? "Unable to retrieve template for unknown reason." :
             template.Count == 0 ? "Template contains no question definitions" :
@@ -438,7 +435,7 @@ public static class QuestionEngine
             q.CreatedOn = DateTime.Now;
             q.CreatedBy = Environment.UserName;
             q.ModifiedBy = string.Empty;
-            q.ModifiedOn = null;
+            q.ModifiedOn = DateTime.MinValue;
 
             foreach (var r in q.Responses)
             {
@@ -446,7 +443,7 @@ public static class QuestionEngine
                 r.CreatedOn = DateTime.Now;
                 r.CreatedBy = Environment.UserName;
                 r.ModifiedBy = string.Empty;
-                r.ModifiedOn = null;
+                r.ModifiedOn = DateTime.MinValue;
                 r.IsDirty = false;
                 r.ResultFrequency = 0;
                 r.ResultPercent = 0;
@@ -475,7 +472,7 @@ public static class QuestionEngine
         }
     }
 
-    public static void DefaultResponseIndex(Question dvQuestion, List<Question> questionList)
+    public static void DefaultResponseIndex(Question dvQuestion, ObjectListBase<Question> questionList)
     {
         var blockQuestions = GetQuestionsInBlock(dvQuestion, questionList);
         if (blockQuestions == null) return;

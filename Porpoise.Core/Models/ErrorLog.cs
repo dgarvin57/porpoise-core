@@ -175,7 +175,7 @@ public class ErrorLog : ObjectBase
     }
 
     // Color orange
-    public static byte[] GetOrange() => new byte[] { 0xA1, 0xF2, 0xE7, 0xD6 };
+    public static byte[] GetOrange() => [0xA1, 0xF2, 0xE7, 0xD6];
 
     #endregion
 }
@@ -199,12 +199,7 @@ public class ErrorLogComparer : Comparer<ErrorLog>
 #endregion
 
 // Custom event args
-public class ErrorOnViewArgs : EventArgs
+public class ErrorOnViewArgs(ErrorLog e) : EventArgs
 {
-    public ErrorLog? ErrorLogObject { get; set; }
-
-    public ErrorOnViewArgs(ErrorLog e)
-    {
-        ErrorLogObject = e;
-    }
+    public ErrorLog? ErrorLogObject { get; set; } = e;
 }

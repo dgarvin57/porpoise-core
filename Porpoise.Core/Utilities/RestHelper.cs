@@ -1,15 +1,15 @@
 ﻿#nullable enable
 
 using System;
-using System.IO;
-using System.Net;
+using System.Net.Http;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Porpoise.Core.Utilities;
 
 /// <summary>
-/// Legacy REST helper used to call the old Porpoise licensing/auth web service.
-/// Uses HttpWebRequest + DataContractJsonSerializer (pre-HttpClient era).
+/// REST helper for calling the Porpoise licensing/auth web service.
+/// Modernized to use HttpClient (.NET 5+) instead of legacy WebRequest.
 /// </summary>
 public class RestHelper
 {
@@ -33,59 +33,66 @@ public class RestHelper
         _authToken = authToken;
     }
 
-    public string responseTime
+    public string ResponseTime
     {
         get => _responseTime;
         set => _responseTime = value;
     }
 
-    public string status
+    public string Status
     {
         get => _status;
         set => _status = value;
     }
 
-    public string message
+    public string Message
     {
         get => _message;
         set => _message = value;
     }
 
-    public string dateCreated
+    public string DateCreated
     {
         get => _dateCreated;
         set => _dateCreated = value;
     }
 
-    public string authToken
+    public string AuthToken
     {
         get => _authToken;
         set => _authToken = value;
     }
 
-    public bool enterpriseLicensed
+    public bool EnterpriseLicensed
     {
         get => _enterpriseLicensed;
         set => _enterpriseLicensed = value;
     }
 
-    public string enterpriseExpiry
+    public string EnterpriseExpiry
     {
         get => _enterpriseExpiry;
         set => _enterpriseExpiry = value;
     }
 
-    public int singleKeyLicensesAvailable
+    public int SingleKeyLicensesAvailable
     {
         get => _singleKeyLicensesAvailable;
         set => _singleKeyLicensesAvailable = value;
     }
 
-    public Task<RestHelper> GetMethodAsync(Uri address, string data) => MethodAsync(address, data, MethodType.GetMethod);
+    // Synchronous wrapper methods for backward compatibility
+    public static RestHelper GetMethod(Uri address, string? data)
+        => GetMethodAsync(address, data ?? string.Empty).GetAwaiter().GetResult();
 
-    public Task<RestHelper> PostMethodAsync(Uri address, string data) => MethodAsync(address, data, MethodType.PostMethod);
+    public static RestHelper PostMethod(Uri address, string data)
+        => PostMethodAsync(address, data).GetAwaiter().GetResult();
 
-    private async Task<RestHelper> MethodAsync(Uri address, string data, MethodType type)
+    public static Task<RestHelper> GetMethodAsync(Uri address, string data) => MethodAsync(address, data, MethodType.GetMethod);
+
+    public static Task<RestHelper> PostMethodAsync(Uri address, string data) => MethodAsync(address, data, MethodType.PostMethod);
+
+    private static async Task<RestHelper> MethodAsync(Uri address, string data, MethodType type)
     {
         using var httpClient = new HttpClient();
         HttpResponseMessage response;
@@ -104,7 +111,7 @@ public class RestHelper
         string result = await response.Content.ReadAsStringAsync();
 
         // Check for non-JSON response
-        if (!string.IsNullOrWhiteSpace(result) && result.TrimStart().StartsWith("{") == false)
+        if (!string.IsNullOrWhiteSpace(result) && result.TrimStart().StartsWith('{') == false)
         {
             var msg = result.Split('{');
             if (msg.Length > 0 && !string.IsNullOrWhiteSpace(msg[0]))

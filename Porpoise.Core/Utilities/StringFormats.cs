@@ -9,21 +9,23 @@ namespace Porpoise.Core.Utilities;
 /// Legacy utility class containing string formatting helpers from the original Porpoise app.
 /// Currently only contains PhoneNumber formatting (US 10-digit).
 /// </summary>
-public static class StringFormats
+public static partial class StringFormats
 {
+    [GeneratedRegex("^[0-9]*$")]
+    private static partial Regex DigitOnlyRegex();
+
     public static string PhoneNumber(string phone)
     {
         if (string.IsNullOrEmpty(phone)) return "";
 
-        if (phone.Contains("+")) return phone;
+        if (phone.Contains('+')) return phone;
 
         var cleanPhone = new StringBuilder();
 
         // Strip off all but digits (original VB used a regex per character — we preserve the logic)
-        var digitRegex = new Regex("^[0-9]*$");
         foreach (char c in phone)
         {
-            if (digitRegex.IsMatch(c.ToString()))
+            if (DigitOnlyRegex().IsMatch(c.ToString()))
                 cleanPhone.Append(c);
         }
 

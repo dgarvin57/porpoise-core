@@ -21,13 +21,13 @@ public static class SupportEngine
     public static string UnTranslate(string input)
         => LegacyDataAccess.TranslateBack(input);
 
-    public static string GetProjectFile(string path)
+    public static Survey? GetProjectFile(string path)
         => LegacyDataAccess.ReadProjectSurveyFile(path);
 
-    public static string GetSurveyFile(string path)
+    public static Survey? GetSurveyFile(string path)
         => LegacyDataAccess.ReadProjectSurveyFile(path);
 
-    public static List<List<string>> GetDataFile(string path)
+    public static List<List<string>>? GetDataFile(string path)
         => LegacyDataAccess.ReadDataFile(path);
 
     public static Survey? AlterSurveyString(string path, out string errorMessage)

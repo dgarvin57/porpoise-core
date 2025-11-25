@@ -22,9 +22,6 @@ namespace Porpoise.Core.Engines;
 /// • Stunning visual outputs: Normal Distribution + Venn Diagram overlays
 /// • Seamless integration with Select On, Select Plus, Pooling, and Trending
 /// 
-/// This isn't just "stats" — this is publication-grade behavioral analytics
-/// delivered instantly, with zero external dependencies.
-/// 
 /// Very few tools — then or now — have ever matched this depth and elegance.
 /// </summary>
 public sealed class VarCovar : IDisposable
@@ -33,7 +30,7 @@ public sealed class VarCovar : IDisposable
 
     private readonly Question _xDV;
     private readonly Question? _yIV;
-    private readonly List<VarCovarData> _vcData = new List<VarCovarData>();
+    private readonly List<VarCovarData> _vcData = [];
     private readonly SurveyData _surveyData;
     private readonly bool _simWeighted;
     private readonly bool _useStaticWeight;
@@ -70,8 +67,8 @@ public sealed class VarCovar : IDisposable
     private double _correlationSq;
     private string _statSig = string.Empty;
 
-    private double[] _rDist01 = Array.Empty<double>();
-    private double[] _rDist05 = Array.Empty<double>();
+    private double[] _rDist01 = [];
+    private double[] _rDist05 = [];
 
     #endregion
 
@@ -285,15 +282,15 @@ public sealed class VarCovar : IDisposable
 
     private void BuildDistLists()
     {
-        _rDist01 = new double[] { 0.9999, 0.99, 0.959, 0.917, 0.874, 0.834, 0.798, 0.765, 0.735, 0.708,
-                                  0.684, 0.661, 0.641, 0.623, 0.606, 0.59, 0.575, 0.561, 0.549, 0.537,
-                                  0.526, 0.515, 0.505, 0.496, 0.487, 0.479, 0.471, 0.463, 0.456, 0.449,
-                                  0.418, 0.393, 0.372, 0.354, 0.325, 0.303, 0.283, 0.267, 0.254 };
+        _rDist01 = [0.9999, 0.99, 0.959, 0.917, 0.874, 0.834, 0.798, 0.765, 0.735, 0.708,
+                    0.684, 0.661, 0.641, 0.623, 0.606, 0.59, 0.575, 0.561, 0.549, 0.537,
+                    0.526, 0.515, 0.505, 0.496, 0.487, 0.479, 0.471, 0.463, 0.456, 0.449,
+                    0.418, 0.393, 0.372, 0.354, 0.325, 0.303, 0.283, 0.267, 0.254];
 
-        _rDist05 = new double[] { 0.997, 0.95, 0.878, 0.811, 0.754, 0.707, 0.666, 0.632, 0.602, 0.576,
-                                  0.553, 0.532, 0.514, 0.497, 0.482, 0.468, 0.456, 0.444, 0.433, 0.423,
-                                  0.413, 0.404, 0.396, 0.388, 0.381, 0.374, 0.367, 0.361, 0.355, 0.349,
-                                  0.325, 0.304, 0.288, 0.273, 0.25, 0.232, 0.217, 0.205, 0.195 };
+        _rDist05 = [0.997, 0.95, 0.878, 0.811, 0.754, 0.707, 0.666, 0.632, 0.602, 0.576,
+                    0.553, 0.532, 0.514, 0.497, 0.482, 0.468, 0.456, 0.444, 0.433, 0.423,
+                    0.413, 0.404, 0.396, 0.388, 0.381, 0.374, 0.367, 0.361, 0.355, 0.349,
+                    0.325, 0.304, 0.288, 0.273, 0.25, 0.232, 0.217, 0.205, 0.195];
     }
 
     #endregion

@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Runtime.CompilerServices;
 
 namespace Porpoise.Core.Engines;
 
@@ -17,25 +18,26 @@ namespace Porpoise.Core.Engines;
 /// The legendary SurveyEngine — core of all survey loading, saving, data handling,
 /// template import, Orca import, and support/unlock features.
 /// </summary>
-public static class SurveyEngine
+public static partial class SurveyEngine
 {
     public static void SaveCrossTabDataToCSV(List<CrosstabItem> list, string path)
         => LegacyDataAccess.ExportListToCSV(list, path);
 
     public static bool LoadSurvey(Survey survey, string surveyPath, bool exported)
     {
-        if (survey == null) throw new ArgumentNullException(nameof(survey));
+        ArgumentNullException.ThrowIfNull(survey);
         if (string.IsNullOrWhiteSpace(surveyPath)) throw new ArgumentException("Survey path required.", nameof(surveyPath));
 
-        var originalSurveyPath = survey.SurveyPath;
-        var originalProjectFolder = survey.FullProjectFolder;
+        // Removed unnecessary assignment to originalSurveyPath
 
-        survey = LegacyDataAccess.Read(surveyPath) ?? throw new InvalidOperationException("Failed to read survey file.");
-        survey.SurveyPath = surveyPath;
+        // Use modern return pattern instead of ref
+        survey = LegacyDataAccess.Read(survey, surveyPath) ?? survey;
+        survey.SurveyPath = surveyPath ?? string.Empty;
 
         if (string.IsNullOrEmpty(survey.FullProjectFolder))
         {
-            survey.FullProjectFolder = IOUtils.GetFullProjectPathFromSurveyPath(surveyPath, survey.SurveyFolder, survey.SurveyFileName);
+            var fullPath = IOUtils.GetFullProjectPathFromSurveyPath(surveyPath ?? string.Empty, survey.SurveyFolder, survey.SurveyFileName);
+            survey.FullProjectFolder = fullPath ?? string.Empty;
         }
 
         if (!LoadSurveyData(survey, false, exported))
@@ -54,7 +56,7 @@ public static class SurveyEngine
             : Path.Combine(survey.FullProjectFolder, survey.SurveyFolder, survey.DataFileName);
 
         if (string.IsNullOrEmpty(dataPath))
-            throw new ArgumentNullException("Survey data file path is required.");
+            throw new ArgumentException("Survey data file path is required.", nameof(useOriginalDataPath));
 
         List<List<string>>? data;
 
@@ -64,8 +66,9 @@ public static class SurveyEngine
             {
                 var binaryPath = Path.Combine(survey.FullProjectFolder, survey.SurveyName,
                     Path.GetFileNameWithoutExtension(survey.DataFileName) + ".porpd");
-                survey.DataFileName = Path.GetFileName(binaryPath);
-                survey.Data.DataFilePath = binaryPath;
+                survey.DataFileName = Path.GetFileName(binaryPath) ?? "data.porpd";
+                if (survey.Data != null)
+                    survey.Data.DataFilePath = binaryPath;
                 data = LegacyDataAccess.ReadSurveyDataFromBinary(binaryPath);
             }
             else
@@ -93,7 +96,7 @@ public static class SurveyEngine
         survey.Data ??= new SurveyData();
         survey.Data.DataList = data;
         survey.Data.DataFilePath = dataPath;
-        survey.DataFileName = Path.GetFileName(dataPath);
+        survey.DataFileName = Path.GetFileName(dataPath) ?? "data.csv";
 
         if (!survey.Data.IsAllResponsesNumeric()) return false;
         if (!survey.Data.IsAllCasesInteger()) return false;
@@ -110,8 +113,9 @@ public static class SurveyEngine
         if (!File.Exists(newFile)) throw new FileNotFoundException("New data file not found.", newFile);
         if (!File.Exists(surveyPath)) throw new FileNotFoundException("Survey file not found.", surveyPath);
 
-        var survey = LegacyDataAccess.Read(surveyPath) ?? throw new InvalidOperationException("Failed to load survey.");
-        var originalDataPath = survey.Data.DataFilePath;
+        var survey = new Survey();
+        survey = LegacyDataAccess.Read(survey, surveyPath) ?? survey;
+        var originalDataPath = survey.Data?.DataFilePath ?? string.Empty;
 
         survey.OrigDataFilePath = newFile;
         survey.FullProjectFolder = fullProjectPath;
@@ -119,20 +123,23 @@ public static class SurveyEngine
         if (!LoadSurveyData(survey, true, false))
             return false;
 
-        var backupPath = Path.Combine(Path.GetDirectoryName(originalDataPath)!,
-            "Copy of " + Path.GetFileName(originalDataPath));
-        File.Copy(originalDataPath, backupPath, true);
-        File.Delete(originalDataPath);
+        if (!string.IsNullOrEmpty(originalDataPath))
+        {
+            var backupPath = Path.Combine(Path.GetDirectoryName(originalDataPath)!,
+                "Copy of " + Path.GetFileName(originalDataPath));
+            File.Copy(originalDataPath, backupPath, true);
+            File.Delete(originalDataPath);
+        }
 
         return SaveSurvey(survey, exported);
     }
 
     public static bool LoadDataIntoQuestions(Survey survey, string? orcaXmlPath)
     {
-        if (survey.Data == null)
-            throw new ArgumentNullException("Survey data is required.");
+        if (survey?.Data == null)
+            throw new ArgumentException("Survey data is required.", nameof(survey));
 
-        survey.QuestionList ??= new ObjectListBase<Question>();
+        survey.QuestionList ??= [];
         survey.QuestionList.Clear();
 
         for (int i = 1; i < survey.Data.DataList[0].Count; i++)
@@ -142,7 +149,7 @@ public static class SurveyEngine
 
             var question = new Question
             {
-                DataFileCol = i,
+                DataFileCol = (short)i,
                 QstNumber = survey.Data.DataList[0][i],
                 QstLabel = ""
             };
@@ -156,9 +163,9 @@ public static class SurveyEngine
 
             question.DataType = responses.Count <= 12 ? QuestionDataType.Nominal : QuestionDataType.Interval;
 
-            if (question.QstNumber.Contains("a"))
+            if (question.QstNumber.Contains('a'))
                 question.BlkQstStatus = BlkQuestionStatusType.FirstQuestionInBlock;
-            else if (Regex.IsMatch(question.QstNumber, @"[0-9][a-zA-Z]", RegexOptions.IgnoreCase))
+            else if (ContinuationQuestionRegex().IsMatch(question.QstNumber))
                 question.BlkQstStatus = BlkQuestionStatusType.ContinuationQuestion;
             else
                 question.BlkQstStatus = BlkQuestionStatusType.DiscreetQuestion;
@@ -188,7 +195,7 @@ public static class SurveyEngine
 
             foreach (var resp in question.Responses)
             {
-                var orcaResp = orcaVar.UniqueResponses.Find(r => r.RespValue == resp.RespValue);
+                var orcaResp = orcaVar.UniqueResponses.Find(r => r.RespValue == resp.RespValue.ToString());
                 if (orcaResp != null)
                     resp.Label = orcaResp.Label;
             }
@@ -202,13 +209,16 @@ public static class SurveyEngine
 
             foreach (var orcaResp in v.UniqueResponses)
             {
-                if (survey.Data.MissingResponseValues.Contains(orcaResp.RespValue)) continue;
-                if (porpoiseQuestion.Responses.Any(r => r.RespValue == orcaResp.RespValue)) continue;
+                // Parse the string RespValue to int
+                if (!int.TryParse(orcaResp.RespValue, out int respValueInt)) continue;
+                
+                if (survey.Data?.MissingResponseValues.Contains(respValueInt) == true) continue;
+                if (porpoiseQuestion.Responses.Any(r => r.RespValue == respValueInt)) continue;
 
                 porpoiseQuestion.Responses.Add(new Response
                 {
-                    RespValue = orcaResp.RespValue,
-                    Label = orcaResp.Label
+                    RespValue = respValueInt,
+                    Label = orcaResp.Label ?? string.Empty
                 });
             }
         }
@@ -250,12 +260,12 @@ public static class SurveyEngine
                 if (er != null)
                 {
                     er.IndexType = tr.IndexType;
-                    er.Label = tr.Label;
+                    er.Label = tr.Label ?? string.Empty;
                 }
             }
         }
 
-        int totalQuestions = survey.Data.DataList[0].Count - 1;
+        int totalQuestions = survey.Data?.DataList?[0].Count - 1 ?? 0;
         message = matched > 0
             ? $"Template successfully applied. Matched {matched} of {totalQuestions} questions."
             : $"Template '{templateFileName}' was not applied — no matching questions found.";
@@ -263,9 +273,10 @@ public static class SurveyEngine
 
     public static bool SaveSurvey(Survey survey, bool exporting)
     {
-        if (string.IsNullOrEmpty(survey.FullProjectFolder)) throw new ArgumentNullException("Project folder required.");
-        if (string.IsNullOrEmpty(survey.SurveyName)) throw new ArgumentNullException("Survey name required.");
-        if (string.IsNullOrEmpty(survey.DataFileName)) throw new ArgumentNullException("Data file name required.");
+        if (string.IsNullOrEmpty(survey.FullProjectFolder)) throw new ArgumentException("Project folder required.", nameof(survey));
+        if (string.IsNullOrEmpty(survey.SurveyName)) throw new ArgumentException("Survey name required.", nameof(survey));
+        if (string.IsNullOrEmpty(survey.DataFileName)) throw new ArgumentException("Data file name required.", nameof(survey));
+        if (survey.Data == null) throw new ArgumentException("Survey data required.", nameof(survey));
 
         survey.Data.RemoveWeightsFromDataList();
         survey.Data.RemoveMovementColumn();
@@ -351,8 +362,8 @@ public static class SurveyEngine
 
         if (shortMsg)
         {
-            var q1 = data.SelectPlusQ1?.QstLabel.Length > 5 ? data.SelectPlusQ1.QstLabel.Substring(0, 5) : data.SelectPlusQ1?.QstLabel ?? "N/A";
-            var q2 = data.SelectPlusQ2?.QstLabel.Length > 5 ? data.SelectPlusQ2.QstLabel.Substring(0, 5) : data.SelectPlusQ2?.QstLabel ?? "N/A";
+            var q1 = data.SelectPlusQ1?.QstLabel.Length > 5 ? data.SelectPlusQ1.QstLabel[..5] : data.SelectPlusQ1?.QstLabel ?? "N/A";
+            var q2 = data.SelectPlusQ2?.QstLabel.Length > 5 ? data.SelectPlusQ2.QstLabel[..5] : data.SelectPlusQ2?.QstLabel ?? "N/A";
             var movement = data.SelectPlusCondition switch
             {
                 SelectPlusConditionType.GoesPositive => "Go+",
@@ -389,4 +400,7 @@ public static class SurveyEngine
 
     public static OrcaExport? GetOrcaExportInterfaceFile(string path)
         => LegacyDataAccess.GetOrcaExportInterfaceFile(path);
+
+    [GeneratedRegex(@"[0-9][a-zA-Z]", RegexOptions.IgnoreCase)]
+    private static partial Regex ContinuationQuestionRegex();
 }

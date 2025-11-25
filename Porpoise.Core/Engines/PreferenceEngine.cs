@@ -20,7 +20,7 @@ public class PreferenceEngine
     private readonly Question? _ivQuestion;
 
     private readonly ObjectListBase<Question> _questionsInBlock;
-    private readonly List<List<decimal>> _arrPref = new();
+    private readonly List<List<decimal>> _arrPref = [];
 
     public Question DVQuestion => _dvQuestion;
     public Question? IVQuestion => _ivQuestion;
@@ -140,16 +140,19 @@ public class PreferenceEngine
             table.Columns.Add(r.Label, typeof(decimal));
 
         // Save current select state
-        var originalSelectOn = _survey.Data.SelectOn;
-        var originalSelectedQuestion = _survey.Data.SelectedQuestion?.Clone();
+        var originalSelectOn = _survey.Data?.SelectOn ?? false;
+        var originalSelectedQuestion = _survey.Data?.SelectedQuestion?.Clone();
 
         try
         {
+            if (_survey.Data == null) return;
+
             for (int respIndex = 0; respIndex < _ivQuestion.Responses.Count; respIndex++)
             {
-                var selectedResponse = _ivQuestion.Responses[respIndex].Clone();
-                var tempQuestion = _ivQuestion.Clone();
-                tempQuestion.Responses = new ObjectListBase<Response> { selectedResponse };
+                var selectedResponse = (Response)_ivQuestion.Responses[respIndex].Clone();
+                var tempQuestion = (Question)_ivQuestion.Clone();
+                tempQuestion.Responses = [];
+                tempQuestion.Responses.Add(selectedResponse);
 
                 _survey.Data.SelectedQuestion = tempQuestion;
                 _survey.Data.SelectOn = true;
@@ -186,8 +189,11 @@ public class PreferenceEngine
         finally
         {
             // Restore original state
-            _survey.Data.SelectOn = originalSelectOn;
-            _survey.Data.SelectedQuestion = (Question?)originalSelectedQuestion;
+            if (_survey.Data != null)
+            {
+                _survey.Data.SelectOn = originalSelectOn;
+                _survey.Data.SelectedQuestion = (Question?)originalSelectedQuestion;
+            }
         }
 
         CrosstabDataTable = table;
@@ -212,7 +218,7 @@ public class PreferenceEngine
 
         // Initialize matrix
         for (int i = 0; i < itemCount; i++)
-            _arrPref.Add(Enumerable.Repeat(0m, itemCount + 3).ToList());
+            _arrPref.Add([.. Enumerable.Repeat(0m, itemCount + 3)]);
 
         // Count pairwise wins
         for (int q = 0; q < _questionsInBlock.Count; q++)
@@ -280,47 +286,47 @@ public class PreferenceEngine
 
     private decimal CountPossibleWinsForItem(int itemIndex, int itemCount)
     {
-        var questions = itemCount switch
+        int[] questions = itemCount switch
         {
             4 => itemIndex switch
             {
-                0 => new[] { 0, 1, 2 },
-                1 => new[] { 0, 3, 4 },
-                2 => new[] { 1, 3, 5 },
-                3 => new[] { 2, 4, 5 },
-                _ => Array.Empty<int>()
+                0 => [0, 1, 2],
+                1 => [0, 3, 4],
+                2 => [1, 3, 5],
+                3 => [2, 4, 5],
+                _ => []
             },
             5 => itemIndex switch
             {
-                0 => new[] { 0, 1, 2, 3 },
-                1 => new[] { 0, 4, 5, 6 },
-                2 => new[] { 1, 4, 7, 8 },
-                3 => new[] { 2, 5, 7, 9 },
-                4 => new[] { 3, 6, 8, 9 },
-                _ => Array.Empty<int>()
+                0 => [0, 1, 2, 3],
+                1 => [0, 4, 5, 6],
+                2 => [1, 4, 7, 8],
+                3 => [2, 5, 7, 9],
+                4 => [3, 6, 8, 9],
+                _ => []
             },
             6 => itemIndex switch
             {
-                0 => new[] { 0, 1, 2, 3, 4 },
-                1 => new[] { 0, 5, 6, 7, 8 },
-                2 => new[] { 1, 5, 9, 10, 11 },
-                3 => new[] { 2, 6, 9, 12, 13 },
-                4 => new[] { 3, 7, 10, 12, 14 },
-                5 => new[] { 4, 8, 11, 13, 14 },
-                _ => Array.Empty<int>()
+                0 => [0, 1, 2, 3, 4],
+                1 => [0, 5, 6, 7, 8],
+                2 => [1, 5, 9, 10, 11],
+                3 => [2, 6, 9, 12, 13],
+                4 => [3, 7, 10, 12, 14],
+                5 => [4, 8, 11, 13, 14],
+                _ => []
             },
-            _ => Array.Empty<int>()
+            _ => []
         };
 
-        return questions.Sum(qi => CountPossibleWins(_questionsInBlock[qi]));
+        return questions.Sum(qi => CountPossibleWins(_survey, _questionsInBlock[qi]));
     }
 
     private static int GetResponseFrequency(Question q, int respValue)
-        => q.Responses.FirstOrDefault(r => r.RespValue == respValue)?.ResultFrequency ?? 0;
+        => (int)(q.Responses.FirstOrDefault(r => r.RespValue == respValue)?.ResultFrequency ?? 0);
 
-    private static decimal CountPossibleWins(Question q)
+    private static decimal CountPossibleWins(Survey survey, Question q)
     {
-        QuestionEngine.CalculateQuestionAndResponseStatistics(q.Survey!, q);
-        return q.Responses.Sum(r => r.ResultFrequency);
+        QuestionEngine.CalculateQuestionAndResponseStatistics(survey, q);
+        return (decimal)q.Responses.Sum(r => r.ResultFrequency);
     }
 }

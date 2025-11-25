@@ -37,8 +37,8 @@ public class Question : ObjectBase
     private bool _isPreferenceBlock;
     private bool _isPreferenceBlockType;
     private int _numberOfPreferenceItems;
-    private ObjectListBase<PreferenceItem> _preferenceItems = new();
-    private ObjectListBase<Response> _responses = new();
+    private ObjectListBase<PreferenceItem> _preferenceItems = [];
+    private ObjectListBase<Response> _responses = [];
     private bool? _preserveDifferentResponsesInPreferenceBlock;
     private int _totalIndex;
     private int _totalN;
@@ -133,7 +133,7 @@ public class Question : ObjectBase
     {
         get
         {
-            var list = new List<int>();
+            List<int> list = [];
             if (int.TryParse(_missValue1, out int v1)) list.Add(v1);
             if (int.TryParse(_missValue2, out int v2)) list.Add(v2);
             if (int.TryParse(_missValue3, out int v3)) list.Add(v3);
@@ -214,7 +214,7 @@ public class Question : ObjectBase
                 if (_preferenceItems is not null)
                     _preferenceItems.IsDirtyChanged -= PreferenceItems_IsDirtyChanged;
 
-                _preferenceItems = value ?? new ObjectListBase<PreferenceItem>();
+                _preferenceItems = value ?? [];
 
                 if (_preferenceItems is not null)
                     _preferenceItems.IsDirtyChanged += PreferenceItems_IsDirtyChanged;
@@ -235,7 +235,7 @@ public class Question : ObjectBase
                 if (_responses is not null)
                     _responses.IsDirtyChanged -= Responses_IsDirtyChanged;
 
-                _responses = value ?? new ObjectListBase<Response>();
+                _responses = value ?? [];
 
                 if (_responses is not null)
                     _responses.IsDirtyChanged += Responses_IsDirtyChanged;
@@ -300,7 +300,7 @@ public class Question : ObjectBase
 
     #region Clone
 
-    public new Question Clone() => new Question
+    public new Question Clone() => new()
     {
         Id = Id,
         QstNumber = QstNumber,
@@ -328,10 +328,9 @@ public class Question : ObjectBase
         UseAlternatePosNegLabels = UseAlternatePosNegLabels,
         AlternatePosLabel = AlternatePosLabel,
         AlternateNegLabel = AlternateNegLabel,
-        _responses = new ObjectListBase<Response>(_responses.Select(r => (Response)r.Clone())),
-        _preferenceItems = new ObjectListBase<PreferenceItem>(_preferenceItems.Select(p => (PreferenceItem)p.Clone()))
+        _responses = [.. _responses.Select(r => (Response)r.Clone())],
+        _preferenceItems = [.. _preferenceItems.Select(p => (PreferenceItem)p.Clone())]
     };
-
 
     #endregion
 

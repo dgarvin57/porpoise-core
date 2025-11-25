@@ -16,13 +16,13 @@ public class ProfileEngine
     private readonly Survey _survey;
     private readonly Question _dvQuestion;
 
-    public List<ProfileItem> Percentages { get; } = new();
+    public List<ProfileItem> Percentages { get; } = [];
 
     public ProfileEngine(Survey survey, Question dvQuestion, Response response)
     {
         _survey = survey ?? throw new ArgumentNullException(nameof(survey));
         _dvQuestion = dvQuestion ?? throw new ArgumentNullException(nameof(dvQuestion));
-        if (response == null) throw new ArgumentNullException(nameof(response));
+        ArgumentNullException.ThrowIfNull(response);
 
         CreateProfileList(response);
     }
@@ -40,6 +40,9 @@ public class ProfileEngine
                 "This should never happen and is a bug. Please contact Porpoise Support.");
         }
 
+        if (_survey.Data == null)
+            throw new InvalidOperationException("Survey data is required for profile analysis.");
+
         var profileList = new List<ProfileItem>();
 
         foreach (var ivQuestion in _survey.QuestionList.Where(q => q.VariableType == QuestionVariableType.Independent))
@@ -48,7 +51,7 @@ public class ProfileEngine
             if (ivQuestion.Id == _dvQuestion.Id)
                 continue;
 
-            var crosstab = new Crosstab(_survey.Data, _dvQuestion, ivQuestion, includeWeights: true, includeBase: true);
+            var crosstab = new Crosstab(_survey.Data, _dvQuestion, ivQuestion, showCount: false, onProfileTab: true);
             var percentages = crosstab.GetProfilePercentages(responsePos);
 
             if (percentages != null)

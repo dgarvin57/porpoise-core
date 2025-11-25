@@ -57,7 +57,7 @@ public class SurveySummary : ObjectBase
     #region Public Methods
 
     // Color black — legacy licensing obfuscation
-    public static byte[] GetBlack() => new byte[] { 0xBA, 0x3F, 0x23, 0x8E };
+    public static byte[] GetBlack() => [0xBA, 0x3F, 0x23, 0x8E];
 
     #endregion
 }
