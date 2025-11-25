@@ -13,20 +13,29 @@
   <!-- Exclude Application and UI layers (WIP - have WinForms dependencies) -->
   <ItemGroup>
     <Compile Remove="Application\**\*.cs" />
+    <Compile Remove="Application\UseCases\**" />
+    <Compile Remove="Calculators\**" />
+    <Compile Remove="Contracts\**" />
+    <Compile Remove="Exceptions\**" />
+    <Compile Remove="Services\**" />
     <Compile Remove="UI\**\*.cs" />
+    <Compile Remove="Web\**" />
+    <EmbeddedResource Remove="Application\UseCases\**" />
+    <EmbeddedResource Remove="Calculators\**" />
+    <EmbeddedResource Remove="Contracts\**" />
+    <EmbeddedResource Remove="Exceptions\**" />
+    <EmbeddedResource Remove="Services\**" />
+    <EmbeddedResource Remove="Web\**" />
+    <None Remove="Application\UseCases\**" />
+    <None Remove="Calculators\**" />
+    <None Remove="Contracts\**" />
+    <None Remove="Exceptions\**" />
+    <None Remove="Services\**" />
+    <None Remove="Web\**" />
     <Compile Remove="Utilities\OpenInWord.cs" />
     <None Include="Application\**\*.cs" />
     <None Include="UI\**\*.cs" />
     <None Include="Utilities\OpenInWord.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Application\UseCases\" />
-    <Folder Include="Contracts\" />
-    <Folder Include="Calculators\" />
-    <Folder Include="Exceptions\" />
-    <Folder Include="Web\" />
-    <Folder Include="Services\" />
   </ItemGroup>
 
   <ItemGroup>
