@@ -10,6 +10,8 @@ using System.Linq;
 
 namespace Porpoise.Core.Engines;
 
+#pragma warning disable CA1416 // Platform compatibility
+
 /// <summary>
 /// Core project-level operations: save, load, export, import, name validation.
 /// This is the "Project" brain — everything project-wide flows through here.
@@ -234,3 +236,4 @@ public static class ProjectEngine
         return false;
     }
 }
+#pragma warning restore CA1416
