@@ -122,7 +122,7 @@ namespace Porpoise.Core.DataAccess
         /// </summary>
         /// <param name="filepath"></param>
         /// <returns></returns>
-        public static CPFileInfo? ReadFile(string filepath)
+        public static PorpoiseFileInfo? ReadFile(string filepath)
         {
             using var fs = new FileStream(filepath, FileMode.Open);
             var getBytes = new byte[25];
@@ -135,7 +135,7 @@ namespace Porpoise.Core.DataAccess
             {
                 // File has Porpoise header
                 if (header.Contains("PORPOISE_BIN")) {
-                    CPFileInfo? fileInfo = ReadFromBinary(filepath);
+                    PorpoiseFileInfo? fileInfo = ReadFromBinary(filepath);
                     return fileInfo;
                 }
             }
@@ -158,7 +158,7 @@ namespace Porpoise.Core.DataAccess
         }
 
         // Read from a given binary filepath and return a string
-        public static CPFileInfo? ReadFromBinary(string filePath)
+        public static PorpoiseFileInfo? ReadFromBinary(string filePath)
         {
             // Validate passed parameters
             if (!ValidateReadParameters(filePath)) return null;
@@ -174,7 +174,7 @@ namespace Porpoise.Core.DataAccess
         }
 
         // Read from a given text filepath and return a string
-        public static CPFileInfo? ReadFromText(string filePath)
+        public static PorpoiseFileInfo? ReadFromText(string filePath)
         {
             // Validate passed parameters
             if (!ValidateReadParameters(filePath)) return null;
@@ -301,14 +301,14 @@ namespace Porpoise.Core.DataAccess
         }
 
         // From content string, build file info object
-        private static CPFileInfo BuildFileInfo(string content)
+        private static PorpoiseFileInfo BuildFileInfo(string content)
         {
             // Build file info object
             var header = content.Substring(0, 25);
             if (header.Contains("PORPOISE_"))
             {
                 // This file has a header
-                return new CPFileInfo
+                return new PorpoiseFileInfo
                 {
                     FileType = header.Substring(0, 12) == "PORPOISE_BIN" ? PFileType.Binary : PFileType.Text,
                     Exported = header.Substring(13, 12) == "EXPORTFILE=T",
@@ -318,7 +318,7 @@ namespace Porpoise.Core.DataAccess
             else
             {
                 // No header; treat as normal text file
-                return new CPFileInfo
+                return new PorpoiseFileInfo
                 {
                     FileType = PFileType.Text,
                     Exported = false,

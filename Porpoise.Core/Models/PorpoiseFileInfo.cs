@@ -1,11 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Porpoise.Core.DataAccess
+namespace Porpoise.Core.Models
 {
-    public class CPFileInfo
+    public class PorpoiseFileInfo
     {
         public PFileType FileType { get; set; }
         public bool Exported { get; set; }
@@ -18,4 +18,3 @@ namespace Porpoise.Core.DataAccess
         Text
     }
 }
-
