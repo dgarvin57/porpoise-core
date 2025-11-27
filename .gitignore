@@ -33,3 +33,6 @@ packages/
 # Rider / other IDEs
 .idea/
 *.iml
+
+# macOS
+.DS_Store
