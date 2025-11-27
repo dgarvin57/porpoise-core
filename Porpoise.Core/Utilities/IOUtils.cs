@@ -190,14 +190,16 @@ public static class IOUtils
         FileSystem.RenameFile(oldName, newName);
     }
 
+    //TODO: Re-implement image handling for web version
     // Load image file without locking it
-    public static Image GetImageUsingFileStream(string filepath)
+    public static string GetImageUsingFileStream(string filepath)
     {
         using var fs = new FileStream(filepath, FileMode.Open, FileAccess.Read);
-        var tmpImage = Image.FromStream(fs);
-        var returnImage = new Bitmap(tmpImage);
-        tmpImage.Dispose();
-        return returnImage;
+        // var tmpImage = Image.FromStream(fs);
+        // var returnImage = new Bitmap(tmpImage);
+//        tmpImage.Dispose();
+        //return returnImage;
+        return "Not implemented for web version";
     }
 
     // Create data folder where writable data is to be installed, such as ApplicationErrors.xml

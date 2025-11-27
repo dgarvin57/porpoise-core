@@ -63,8 +63,9 @@ public static class ProjectEngine
             {
                 var pngName = Path.GetFileNameWithoutExtension(project.ResearcherLogoFilename ?? "logo") + ".png";
                 var pngPath = Path.Combine(project.FullFolder, pngName);
-                project.ResearcherLogo.Save(pngPath, System.Drawing.Imaging.ImageFormat.Png);
-                project.ResearcherLogoFilename = pngName;
+                //TODO: Convert base64 or URL to image and save
+//                project.ResearcherLogo.Save(pngPath, System.Drawing.Imaging.ImageFormat.Png);
+//                project.ResearcherLogoFilename = pngName;
             }
         }
 

@@ -1,13 +1,6 @@
 ﻿#nullable enable
 
 using Porpoise.Core.Models;
-using Porpoise.Core.Utilities;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Text;
-using System.Linq;
 
 namespace Porpoise.Core.Engines;
 
@@ -297,66 +290,67 @@ public sealed class VarCovar : IDisposable
 
     #region Visualizations
 
-    public Image BuildNormDistGraphic(Image normDist, Image meanSymbol)
-    {
-        var gImage = (Image)normDist.Clone();
-        using var g = Graphics.FromImage(gImage);
-        g.SmoothingMode = SmoothingMode.AntiAlias;
-        g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
+    //TODO: Re-implement image handling for web version
+    // public Image BuildNormDistGraphic(Image normDist, Image meanSymbol)
+    // {
+    //     var gImage = (Image)normDist.Clone();
+    //     using var g = Graphics.FromImage(gImage);
+    //     g.SmoothingMode = SmoothingMode.AntiAlias;
+    //     g.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
 
-        var font = new Font("Calibri", 36, FontStyle.Regular);
-        var brush = new SolidBrush(Color.Black);
-        var format = StringFormat.GenericTypographic;
+    //     var font = new Font("Calibri", 36, FontStyle.Regular);
+    //     var brush = new SolidBrush(Color.Black);
+    //     var format = StringFormat.GenericTypographic;
 
-        string meanText = $" = {(SimWeighted || UseStaticWeight ? XWeightedMean : XMean):#0.0}";
-        var size = g.MeasureString(meanText, font, PointF.Empty, format);
-        float x = (gImage.Width / 2) - (size.Width / 2);
-        float y = gImage.Height * 0.12f;
+    //     string meanText = $" = {(SimWeighted || UseStaticWeight ? XWeightedMean : XMean):#0.0}";
+    //     var size = g.MeasureString(meanText, font, PointF.Empty, format);
+    //     float x = (gImage.Width / 2) - (size.Width / 2);
+    //     float y = gImage.Height * 0.12f;
 
-        g.DrawImage(meanSymbol, x - (meanSymbol.Width / 2) - 8, y + 8, meanSymbol.Width - 10, size.Height - 15);
-        g.DrawString(meanText, font, brush, new RectangleF(x - 25, y, size.Width + 50, size.Height), format);
+    //     g.DrawImage(meanSymbol, x - (meanSymbol.Width / 2) - 8, y + 8, meanSymbol.Width - 10, size.Height - 15);
+    //     g.DrawString(meanText, font, brush, new RectangleF(x - 25, y, size.Width + 50, size.Height), format);
 
-        // +1 SD and -1 SD labels
-        string plus1 = $"+1 SD = {(SimWeighted || UseStaticWeight ? XWeightedMean + XStDev : XMean + XStDev):#0.0}";
-        string minus1 = $"-1 SD = {(SimWeighted || UseStaticWeight ? XWeightedMean - XStDev : XMean - XStDev):#0.0}";
+    //     // +1 SD and -1 SD labels
+    //     string plus1 = $"+1 SD = {(SimWeighted || UseStaticWeight ? XWeightedMean + XStDev : XMean + XStDev):#0.0}";
+    //     string minus1 = $"-1 SD = {(SimWeighted || UseStaticWeight ? XWeightedMean - XStDev : XMean - XStDev):#0.0}";
 
-        var plusSize = g.MeasureString(plus1, font);
-        var minusSize = g.MeasureString(minus1, font);
+    //     var plusSize = g.MeasureString(plus1, font);
+    //     var minusSize = g.MeasureString(minus1, font);
 
-        g.DrawString(plus1, font, brush, new PointF(gImage.Width * 0.6225f - plusSize.Width / 2 - 20, gImage.Height - plusSize.Height - 42));
-        g.DrawString(minus1, font, brush, new PointF(gImage.Width * 0.36f - minusSize.Width / 2 - 30, gImage.Height - minusSize.Height - 42));
+    //     g.DrawString(plus1, font, brush, new PointF(gImage.Width * 0.6225f - plusSize.Width / 2 - 20, gImage.Height - plusSize.Height - 42));
+    //     g.DrawString(minus1, font, brush, new PointF(gImage.Width * 0.36f - minusSize.Width / 2 - 30, gImage.Height - minusSize.Height - 42));
 
-        return gImage;
-    }
+    //     return gImage;
+    // }
+//TODO: Re-implement image handling for web version
+    // public Image BuildVennGraphic(Image startImage)
+    // {
+    //     var vImage = (Image)startImage.Clone();
+    //     using var g = Graphics.FromImage(vImage);
+    //     g.Clear(Color.White);
+    //     g.CompositingQuality = CompositingQuality.GammaCorrected;
 
-    public Image BuildVennGraphic(Image startImage)
-    {
-        var vImage = (Image)startImage.Clone();
-        using var g = Graphics.FromImage(vImage);
-        g.Clear(Color.White);
-        g.CompositingQuality = CompositingQuality.GammaCorrected;
+    //     int halfHeight = (int)Math.Ceiling(vImage.Height / 2.0) - 275;
+    //     int middle = (int)Math.Ceiling(vImage.Width / 2.0);
+    //     int circSize = 500;
+    //     int offset = (int)Math.Ceiling(circSize - (circSize * _correlationSq));
+    //     int totalWidth = circSize + offset;
+    //     int startX = (int)Math.Ceiling(middle - totalWidth / 2.0);
 
-        int halfHeight = (int)Math.Ceiling(vImage.Height / 2.0) - 275;
-        int middle = (int)Math.Ceiling(vImage.Width / 2.0);
-        int circSize = 500;
-        int offset = (int)Math.Ceiling(circSize - (circSize * _correlationSq));
-        int totalWidth = circSize + offset;
-        int startX = (int)Math.Ceiling(middle - totalWidth / 2.0);
+    //     var blueBrush = new SolidBrush(Color.FromArgb(220, 50, 124, 166));
+    //     var redBrush = new SolidBrush(Color.FromArgb(220, 171, 45, 45));
+    //     var pen = new Pen(Color.Black);
 
-        var blueBrush = new SolidBrush(Color.FromArgb(220, 50, 124, 166));
-        var redBrush = new SolidBrush(Color.FromArgb(220, 171, 45, 45));
-        var pen = new Pen(Color.Black);
+    //     // Draw circles
+    //     g.FillEllipse(blueBrush, startX, halfHeight, circSize, circSize);
+    //     g.DrawEllipse(pen, startX, halfHeight, circSize, circSize);
+    //     g.FillEllipse(redBrush, startX + offset, halfHeight, circSize, circSize);
+    //     g.DrawEllipse(pen, startX + offset, halfHeight, circSize, circSize);
 
-        // Draw circles
-        g.FillEllipse(blueBrush, startX, halfHeight, circSize, circSize);
-        g.DrawEllipse(pen, startX, halfHeight, circSize, circSize);
-        g.FillEllipse(redBrush, startX + offset, halfHeight, circSize, circSize);
-        g.DrawEllipse(pen, startX + offset, halfHeight, circSize, circSize);
+    //     // Labels and r² — preserved exactly from original
 
-        // Labels and r² — preserved exactly from original
-
-        return vImage;
-    }
+    //     return vImage;
+    // }
 
     #endregion
 

@@ -1,0 +1,6 @@
+@Porpoise.Api_HostAddress = http://localhost:5107
+
+GET {{Porpoise.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

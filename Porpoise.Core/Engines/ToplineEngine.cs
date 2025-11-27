@@ -28,7 +28,9 @@ public class ToplineEngine : IDisposable
     private readonly string _clientName;
     private readonly string _researcherName;
     private readonly string _researcherSubName;
-    private readonly Image _smallPorpoiseLogo;
+    private readonly string _smallPorpoiseLogo;
+    //TODO: Re-implement image handling for web version
+    // private readonly Image _smallPorpoiseLogo;
     private readonly string _basePorpoiseDir;
 
     private readonly BackgroundWorker _bgWorker;
@@ -49,8 +51,11 @@ public class ToplineEngine : IDisposable
     private static extern bool SetForegroundWindow(IntPtr hWnd);
 #pragma warning restore SYSLIB1054
 
+    //TODO: Implement Image handling for web version
+    // public ToplineEngine(Project project, Survey survey, string clientName, string researcherName,
+    //     string researcherSubName, Image smallPorpoiseLogo, string basePorpoiseDir)
     public ToplineEngine(Project project, Survey survey, string clientName, string researcherName,
-        string researcherSubName, Image smallPorpoiseLogo, string basePorpoiseDir)
+        string researcherSubName, string smallPorpoiseLogo, string basePorpoiseDir)
     {
         _project = project ?? throw new ArgumentNullException(nameof(project));
         _survey = survey ?? throw new ArgumentNullException(nameof(survey));

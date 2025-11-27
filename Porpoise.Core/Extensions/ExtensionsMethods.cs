@@ -6,6 +6,8 @@ using System.ComponentModel;
 using System.Data;
 using System.Linq;
 using System.Reflection;
+using System.Text;
+using System.Xml.Serialization;
 
 namespace Porpoise.Core.Extensions;
 
@@ -60,4 +62,36 @@ public static class ExtensionMethods
     {
         return Convert.ToInt32(enumVal);
     }
+
+        public static string XmlSerializeObject<T>(this T toSerialize)
+        {
+            ArgumentNullException.ThrowIfNull(toSerialize);
+            var serializer = new XmlSerializer(toSerialize.GetType());
+            var sb = new StringBuilder();
+
+            using (TextWriter writer = new StringWriter(sb))
+            {
+                serializer.Serialize(writer, toSerialize);
+            }
+
+            return sb.ToString();
+        }
+
+        public static T XmlDeserializeFromString<T>(this string objectData)
+        {
+            return (T)XmlDeserializeFromString(objectData, typeof(T));
+        }
+
+        public static object XmlDeserializeFromString(this string objectData, Type type)
+        {
+            var serializer = new XmlSerializer(type);
+            object? result;
+
+            using (TextReader reader = new StringReader(objectData))
+            {
+                result = serializer.Deserialize(reader);
+            }
+
+            return result ?? throw new InvalidOperationException("Deserialization returned null");
+        }
 }

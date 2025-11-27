@@ -17,7 +17,10 @@ namespace Porpoise.Core.Models
         private string? _clientName;
         private string? _researcherLabel;
         private string? _researcherSubLabel;
-        private Image? _researcherLogo;
+        // Legacy WinForms: public Image? ResearcherLogo { get; set; }
+        // Web version: use URL or base64
+        private string? _researcherLogo = null;
+        //private Image? _researcherLogo;
         private string? _researcherLogoFilename;
         private string? _researcherLogoPath;
         private ObjectListBase<Survey>? _surveyList;
@@ -88,11 +91,17 @@ namespace Porpoise.Core.Models
         }
 
         [XmlIgnore]
-        public Image? ResearcherLogo
-        {
-            get => _researcherLogo;
+        // Legacy WinForms: public Image? ResearcherLogo { get; set; }
+        // Web version: use URL or base64
+        public string? ResearcherLogo { 
+            get => _researcherLogo; 
             set => SetProperty(ref _researcherLogo, value, nameof(ResearcherLogo));
         }
+        // public Image? ResearcherLogo
+        // {
+        //     get => _researcherLogo;
+        //     set => SetProperty(ref _researcherLogo, value, nameof(ResearcherLogo));
+        // }
 
         public string? ResearcherLogoFilename
         {

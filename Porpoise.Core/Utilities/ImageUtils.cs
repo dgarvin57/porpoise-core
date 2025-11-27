@@ -1,85 +1,60 @@
-﻿#nullable enable
+// Porpoise.Core/Utilities/ImageUtils.cs
+#nullable enable
 
-using System;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
+using SkiaSharp;
 
 namespace Porpoise.Core.Utilities;
 
 /// <summary>
-/// High-quality image resizing with alignment control.
-/// Used for researcher logos, client logos, and report thumbnails.
+/// Modern, cross-platform image resizing — works on Mac, Linux, Windows, web
+/// Replaces old System.Drawing version
 /// </summary>
 public static class ImageUtils
 {
-    public static Bitmap ResizeImage(Image sourceImage, int targetWidth, int targetHeight,
+    public enum ImageVertAlign { Top, Middle, Bottom }
+    public enum ImageHorizAlign { Left, Middle, Right }
+
+    public static byte[]? ResizeImage(byte[] sourceBytes, int targetWidth, int targetHeight,
         ImageVertAlign verticalAlign = ImageVertAlign.Middle,
         ImageHorizAlign horizontalAlign = ImageHorizAlign.Middle)
     {
-        ArgumentNullException.ThrowIfNull(sourceImage);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(targetWidth);
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(targetHeight);
+        if (sourceBytes == null || sourceBytes.Length == 0) return null;
 
-        using var source = new Bitmap(sourceImage);
-        var dest = new Bitmap(targetWidth, targetHeight, PixelFormat.Format32bppArgb);
+        using var original = SKBitmap.Decode(sourceBytes);
+        if (original == null) return null;
 
-        double sourceRatio = (double)source.Width / source.Height;
-        double destRatio = (double)dest.Width / dest.Height;
+        using var resized = new SKBitmap(targetWidth, targetHeight, original.ColorType, original.AlphaType);
+        using var canvas = new SKCanvas(resized);
+        canvas.Clear(SKColors.Transparent);
 
-        int newX = 0, newY = 0;
-        int newWidth = dest.Width;
-        int newHeight = dest.Height;
+        float scale = Math.Min((float)targetWidth / original.Width, (float)targetHeight / original.Height);
+        int newWidth = (int)(original.Width * scale);
+        int newHeight = (int)(original.Height * scale);
 
-        if (Math.Abs(destRatio - sourceRatio) < 0.0001) // Same aspect ratio
+        int x = horizontalAlign switch
         {
-            // No change needed
-        }
-        else if (destRatio > sourceRatio) // Destination is wider → letterboxed vertically
+            ImageHorizAlign.Left => 10,
+            ImageHorizAlign.Right => targetWidth - newWidth - 10,
+            _ => (targetWidth - newWidth) / 2
+        };
+
+        int y = verticalAlign switch
         {
-            newWidth = (int)Math.Floor(sourceRatio * newHeight);
-            newX = horizontalAlign switch
-            {
-                ImageHorizAlign.Left => 3,
-                ImageHorizAlign.Middle => (dest.Width - newWidth) / 2,
-                ImageHorizAlign.Right => dest.Width - newWidth - 3,
-                _ => newX
-            };
-        }
-        else // Destination is taller → letterboxed horizontally
+            ImageVertAlign.Top => 10,
+            ImageVertAlign.Bottom => targetHeight - newHeight - 10,
+            _ => (targetHeight - newHeight) / 2
+        };
+
+        using var paint = new SKPaint
         {
-            newHeight = (int)Math.Floor(newWidth / sourceRatio);
-            newY = verticalAlign switch
-            {
-                ImageVertAlign.Top => 3,
-                ImageVertAlign.Middle => (dest.Height - newHeight) / 2,
-                ImageVertAlign.Bottom => dest.Height - newHeight - 3,
-                _ => newY
-            };
-        }
+            IsAntialias = true,
+            FilterQuality = SKFilterQuality.High
+        };
 
-        using var graphics = Graphics.FromImage(dest);
-        graphics.CompositingQuality = CompositingQuality.HighQuality;
-        graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-        graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
-        graphics.SmoothingMode = SmoothingMode.AntiAlias;
+        canvas.DrawBitmap(original, SKRect.Create(x, y, newWidth, newHeight), paint);
 
-        graphics.DrawImage(source, newX, newY, newWidth, newHeight);
-
-        return dest;
+        using var image = SKImage.FromBitmap(resized);
+        using var data = image.Encode(SKEncodedImageFormat.Png, 100);
+        return data.ToArray();
     }
-}
-
-public enum ImageVertAlign
-{
-    Top,
-    Middle,
-    Bottom
-}
-
-public enum ImageHorizAlign
-{
-    Left,
-    Middle,
-    Right
 }

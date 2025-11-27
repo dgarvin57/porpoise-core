@@ -1,7 +1,5 @@
 ﻿#nullable enable
 
-using System.Drawing;
-
 namespace Porpoise.Core.Models;
 
 /// <summary>
@@ -10,7 +8,7 @@ namespace Porpoise.Core.Models;
 /// </summary>
 public class KeyItem : ObjectBase
 {
-    private Image? _keyImage;
+//    private Image? _keyImage;
     private string _title = string.Empty;
     private string _details = string.Empty;
     private int _qtyRemaining;
@@ -18,11 +16,12 @@ public class KeyItem : ObjectBase
     private KeyType _type = KeyType.None;
     private bool _shorten;
 
-    public Image? KeyImage
-    {
-        get => _keyImage;
-        set => SetProperty(ref _keyImage, value, nameof(KeyImage));
-    }
+//TODO: Re-implement image handling for web version
+//    public Image? KeyImage
+//    {
+//        get => _keyImage;
+//        set => SetProperty(ref _keyImage, value, nameof(KeyImage));
+//    }
 
     public string Title
     {
@@ -60,10 +59,12 @@ public class KeyItem : ObjectBase
         set => SetProperty(ref _shorten, value, nameof(Shorten));
     }
 
-    public void SetKeyType(string emailId, KeyType keyType, Image? parmKeyImage, int qtyLeft, string parmDetails, bool shortMsg)
+    //TODO: Re-implement image handling for web version
+    // public void SetKeyType(string emailId, KeyType keyType, Image? parmKeyImage, int qtyLeft, string parmDetails, bool shortMsg)
+    public void SetKeyType(string emailId, KeyType keyType, string parmKeyImage, int qtyLeft, string parmDetails, bool shortMsg)
     {
         _type = keyType;
-        _keyImage = parmKeyImage;
+//        _keyImage = parmKeyImage;
         _qtyRemaining = qtyLeft;
         _details = "";
         _shorten = shortMsg;

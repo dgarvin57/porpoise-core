@@ -1,13 +1,8 @@
 ﻿#nullable enable
 
-using System;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Drawing;
-using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 using Porpoise.Core.Models;
 
 namespace Porpoise.Core.Engines;
@@ -25,7 +20,8 @@ public class SurveyNotesEngine : IDisposable
     private readonly Survey _survey;
     private readonly string _clientName;
     private readonly string _researcherName;
-    private readonly Image _smallPorpoiseLogo;
+    //TODO: Re-implement image handling for web version
+//    private readonly Image _smallPorpoiseLogo;
     private readonly string _basePorpoiseDir;
 
     private readonly BackgroundWorker _bgWorker;
@@ -47,12 +43,15 @@ public class SurveyNotesEngine : IDisposable
     private static extern bool SetForegroundWindow(IntPtr hWnd);
 #pragma warning restore SYSLIB1054
 
-    public SurveyNotesEngine(Survey survey, string clientName, string researcherName, Image smallPorpoiseLogo, string basePorpoiseDir)
+//TODO: To enable Word report generation, install Microsoft.Office.Interop.Word NuGet package
+//TODO: Reimplement Image researcher logo handling for web version
+//    public SurveyNotesEngine(Survey survey, string clientName, Image? researcherName, Image smallPorpoiseLogo, string basePorpoiseDir)
+    public SurveyNotesEngine(Survey survey, string clientName, string researcherName, string basePorpoiseDir)
     {
         _survey = survey ?? throw new ArgumentNullException(nameof(survey));
         _clientName = clientName ?? "";
         _researcherName = researcherName ?? "";
-        _smallPorpoiseLogo = smallPorpoiseLogo ?? throw new ArgumentNullException(nameof(smallPorpoiseLogo));
+//        _smallPorpoiseLogo = smallPorpoiseLogo ?? throw new ArgumentNullException(nameof(smallPorpoiseLogo));
         _basePorpoiseDir = basePorpoiseDir ?? throw new ArgumentNullException(nameof(basePorpoiseDir));
 
         _bgWorker = new BackgroundWorker
