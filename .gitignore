@@ -5,3 +5,15 @@
 # Coverage
 CoverageReport/
 **/TestResults/
+
+# Build outputs
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+
+# User-specific files
+appsettings.json
+!appsettings.json.template
+*.user
