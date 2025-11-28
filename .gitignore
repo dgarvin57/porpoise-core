@@ -38,4 +38,7 @@ appsettings.*.json
 *.iml
 
 # macOS
-.DS_Store
+.DS_StoreCoverageReport/
+**/TestResults/
+**/*.vsp
+**/*.psess

@@ -1,0 +1,68 @@
+### Survey CRUD API Endpoints
+### Base URL: http://localhost:5000
+
+### Get all surveys
+GET http://localhost:5000/api/surveys
+
+###
+
+### Get survey by ID
+GET http://localhost:5000/api/surveys/3fa85f64-5717-4562-b3fc-2c963f66afa6
+
+###
+
+### Get survey by name
+GET http://localhost:5000/api/surveys/name/Demo 2015
+
+###
+
+### Search surveys by name (partial match)
+GET http://localhost:5000/api/surveys/search?term=Demo
+
+###
+
+### Get surveys by status (0=Initial, 1=InProgress, 2=Complete)
+GET http://localhost:5000/api/surveys/status/0
+
+###
+
+### Create new survey
+POST http://localhost:5000/api/surveys
+Content-Type: application/json
+
+{
+  "surveyName": "My New Survey",
+  "status": 0,
+  "lockStatus": 0,
+  "unlockKeyType": 0,
+  "errorsExist": false,
+  "surveyNotes": "This is a test survey"
+}
+
+###
+
+### Update existing survey
+PUT http://localhost:5000/api/surveys/3fa85f64-5717-4562-b3fc-2c963f66afa6
+Content-Type: application/json
+
+{
+  "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "surveyName": "Updated Survey Name",
+  "status": 1,
+  "lockStatus": 0,
+  "unlockKeyType": 0,
+  "errorsExist": false,
+  "surveyNotes": "Updated notes"
+}
+
+###
+
+### Delete survey
+DELETE http://localhost:5000/api/surveys/3fa85f64-5717-4562-b3fc-2c963f66afa6
+
+###
+
+### Get survey statistics
+GET http://localhost:5000/api/surveys/3fa85f64-5717-4562-b3fc-2c963f66afa6/stats
+
+###

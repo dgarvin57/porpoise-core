@@ -1,0 +1,104 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "test: all",
+      "command": "dotnet",
+      "type": "process",
+      "args": ["test"],
+      "problemMatcher": "$msCompile",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "test: Core",
+      "command": "dotnet",
+      "type": "process",
+      "args": ["test", "Porpoise.Core.Tests/Porpoise.Core.Tests.csproj"],
+      "problemMatcher": "$msCompile",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "group": "test"
+    },
+    {
+      "label": "test: DataAccess",
+      "command": "dotnet",
+      "type": "process",
+      "args": ["test", "Porpoise.DataAccess.Tests/Porpoise.DataAccess.Tests.csproj"],
+      "problemMatcher": "$msCompile",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "group": "test"
+    },
+    {
+      "label": "test: all with coverage",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "test",
+        "--collect:XPlat Code Coverage"
+      ],
+      "problemMatcher": "$msCompile",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "group": "test"
+    },
+    {
+      "label": "coverage: generate report",
+      "type": "shell",
+      "command": "export PATH=\"$PATH:/Users/dgarvin/.dotnet/tools\" && dotnet test --collect:\"XPlat Code Coverage\" && reportgenerator -reports:\"**/TestResults/**/coverage.cobertura.xml\" -targetdir:\"CoverageReport\" -reporttypes:\"Html;TextSummary\" 2>&1 | grep -v \"does not exist (any more)\" && cat CoverageReport/Summary.txt",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "group": "test"
+    },
+    {
+      "label": "coverage: open report",
+      "type": "shell",
+      "command": "open CoverageReport/index.html",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "never"
+      },
+      "group": "test"
+    },
+    {
+      "label": "test: watch",
+      "command": "dotnet",
+      "type": "process",
+      "args": ["watch", "test"],
+      "problemMatcher": "$msCompile",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "group": "test",
+      "isBackground": true
+    },
+    {
+      "label": "build: all",
+      "command": "dotnet",
+      "type": "process",
+      "args": ["build"],
+      "problemMatcher": "$msCompile",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    }
+  ]
+}

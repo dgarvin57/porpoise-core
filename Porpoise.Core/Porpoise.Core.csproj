@@ -14,10 +14,38 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Application\**\*.cs" />
+    <Compile Remove="Application\Services\**\*.cs" />
+    <Compile Remove="Application\Interfaces\IAlertMessageBoxShell.cs" />
+    <Compile Remove="Application\Interfaces\IApplicationShell.cs" />
+    <Compile Remove="Application\Interfaces\IApplyChangesShell.cs" />
+    <Compile Remove="Application\Interfaces\ICreateSurveyWizardShell.cs" />
+    <Compile Remove="Application\Interfaces\IEulaShell.cs" />
+    <Compile Remove="Application\Interfaces\IInfoShell.cs" />
+    <Compile Remove="Application\Interfaces\IMainShell.cs" />
+    <Compile Remove="Application\Interfaces\IOptionsShell.cs" />
+    <Compile Remove="Application\Interfaces\IPoolTrendSetupShell.cs" />
+    <Compile Remove="Application\Interfaces\IProgressShell.cs" />
+    <Compile Remove="Application\Interfaces\IProjectInfoShell.cs" />
+    <Compile Remove="Application\Interfaces\IQuestionDefinitionShell.cs" />
+    <Compile Remove="Application\Interfaces\ISelectPlusShell.cs" />
+    <Compile Remove="Application\Interfaces\ISelectShell.cs" />
     <Compile Remove="UI\**\*.cs" />
     <Compile Remove="Utilities\OpenInWord.cs" />
-    <None Include="Application\**\*.cs" />
+    <None Include="Application\Services\**\*.cs" />
+    <None Include="Application\Interfaces\IAlertMessageBoxShell.cs" />
+    <None Include="Application\Interfaces\IApplicationShell.cs" />
+    <None Include="Application\Interfaces\IApplyChangesShell.cs" />
+    <None Include="Application\Interfaces\ICreateSurveyWizardShell.cs" />
+    <None Include="Application\Interfaces\IEulaShell.cs" />
+    <None Include="Application\Interfaces\IInfoShell.cs" />
+    <None Include="Application\Interfaces\IMainShell.cs" />
+    <None Include="Application\Interfaces\IOptionsShell.cs" />
+    <None Include="Application\Interfaces\IPoolTrendSetupShell.cs" />
+    <None Include="Application\Interfaces\IProgressShell.cs" />
+    <None Include="Application\Interfaces\IProjectInfoShell.cs" />
+    <None Include="Application\Interfaces\IQuestionDefinitionShell.cs" />
+    <None Include="Application\Interfaces\ISelectPlusShell.cs" />
+    <None Include="Application\Interfaces\ISelectShell.cs" />
     <None Include="UI\**\*.cs" />
     <None Include="Utilities\OpenInWord.cs" />
   </ItemGroup>

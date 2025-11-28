@@ -1,0 +1,183 @@
+#nullable enable
+
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Linq;
+using System.Threading.Tasks;
+using Dapper;
+using Porpoise.Core.Application.Interfaces;
+using Porpoise.Core.Models;
+using Porpoise.DataAccess.Context;
+
+namespace Porpoise.DataAccess.Repositories;
+
+/// <summary>
+/// Survey repository implementation using Dapper.
+/// Pure SQL, full control, no surprises.
+/// </summary>
+public class SurveyRepository : Repository<Survey>, ISurveyRepository
+{
+    protected override string TableName => "Surveys";
+
+    public SurveyRepository(DapperContext context) : base(context) { }
+
+    public async Task<Survey?> GetByNameAsync(string surveyName)
+    {
+        const string sql = @"
+            SELECT * FROM Surveys 
+            WHERE SurveyName = @SurveyName";
+        
+        using var connection = _context.CreateConnection();
+        return await connection.QueryFirstOrDefaultAsync<Survey>(sql, new { SurveyName = surveyName });
+    }
+
+    public async Task<IEnumerable<Survey>> GetByStatusAsync(SurveyStatus status)
+    {
+        const string sql = @"
+            SELECT * FROM Surveys 
+            WHERE Status = @Status";
+        
+        using var connection = _context.CreateConnection();
+        return await connection.QueryAsync<Survey>(sql, new { Status = (int)status });
+    }
+
+    public async Task<IEnumerable<Survey>> SearchByNameAsync(string searchTerm)
+    {
+        const string sql = @"
+            SELECT * FROM Surveys 
+            WHERE SurveyName LIKE @SearchTerm";
+        
+        using var connection = _context.CreateConnection();
+        return await connection.QueryAsync<Survey>(sql, new { SearchTerm = $"%{searchTerm}%" });
+    }
+
+    public async Task<IEnumerable<Survey>> GetByDateRangeAsync(DateTime startDate, DateTime endDate)
+    {
+        const string sql = @"
+            SELECT * FROM Surveys 
+            WHERE CreatedDate >= @StartDate 
+            AND CreatedDate <= @EndDate";
+        
+        using var connection = _context.CreateConnection();
+        return await connection.QueryAsync<Survey>(sql, new { StartDate = startDate, EndDate = endDate });
+    }
+
+    public async Task<int> GetQuestionCountAsync(Guid surveyId)
+    {
+        const string sql = @"
+            SELECT COUNT(*) FROM Questions 
+            WHERE SurveyId = @SurveyId";
+        
+        using var connection = _context.CreateConnection();
+        return await connection.ExecuteScalarAsync<int>(sql, new { SurveyId = surveyId });
+    }
+
+    public async Task<int> GetResponseCountAsync(Guid surveyId)
+    {
+        const string sql = @"
+            SELECT COUNT(*) FROM SurveyResponses 
+            WHERE SurveyId = @SurveyId";
+        
+        using var connection = _context.CreateConnection();
+        return await connection.ExecuteScalarAsync<int>(sql, new { SurveyId = surveyId });
+    }
+
+    public async Task<bool> SurveyNameExistsAsync(string surveyName, Guid? excludeSurveyId = null)
+    {
+        var sql = excludeSurveyId.HasValue
+            ? "SELECT COUNT(1) FROM Surveys WHERE SurveyName = @SurveyName AND Id != @ExcludeSurveyId"
+            : "SELECT COUNT(1) FROM Surveys WHERE SurveyName = @SurveyName";
+        
+        using var connection = _context.CreateConnection();
+        var count = await connection.ExecuteScalarAsync<int>(sql, new { SurveyName = surveyName, ExcludeSurveyId = excludeSurveyId });
+        return count > 0;
+    }
+
+    public override async Task<Survey> AddAsync(Survey survey)
+    {
+        const string sql = @"
+            INSERT INTO Surveys (
+                Id, SurveyName, Status, LockStatus, UnlockKeyName, UnlockKeyType,
+                SaveAlteredString, SurveyFileName, DataFileName, OrigDataFilePath,
+                SurveyPath, SurveyFolder, FullProjectFolder, ErrorsExist, SurveyNotes,
+                CreatedDate, ModifiedDate
+            ) VALUES (
+                @Id, @SurveyName, @Status, @LockStatus, @UnlockKeyName, @UnlockKeyType,
+                @SaveAlteredString, @SurveyFileName, @DataFileName, @OrigDataFilePath,
+                @SurveyPath, @SurveyFolder, @FullProjectFolder, @ErrorsExist, @SurveyNotes,
+                @CreatedDate, @ModifiedDate
+            )";
+        
+        survey.Id = Guid.NewGuid();
+        
+        using var connection = _context.CreateConnection();
+        await connection.ExecuteAsync(sql, new
+        {
+            survey.Id,
+            survey.SurveyName,
+            Status = (int)survey.Status,
+            LockStatus = (int)survey.LockStatus,
+            survey.UnlockKeyName,
+            UnlockKeyType = (int)survey.UnlockKeyType,
+            survey.SaveAlteredString,
+            survey.SurveyFileName,
+            survey.DataFileName,
+            survey.OrigDataFilePath,
+            survey.SurveyPath,
+            survey.SurveyFolder,
+            survey.FullProjectFolder,
+            survey.ErrorsExist,
+            survey.SurveyNotes,
+            CreatedDate = DateTime.UtcNow,
+            ModifiedDate = DateTime.UtcNow
+        });
+        
+        return survey;
+    }
+
+    public override async Task<Survey> UpdateAsync(Survey survey)
+    {
+        const string sql = @"
+            UPDATE Surveys SET
+                SurveyName = @SurveyName,
+                Status = @Status,
+                LockStatus = @LockStatus,
+                UnlockKeyName = @UnlockKeyName,
+                UnlockKeyType = @UnlockKeyType,
+                SaveAlteredString = @SaveAlteredString,
+                SurveyFileName = @SurveyFileName,
+                DataFileName = @DataFileName,
+                OrigDataFilePath = @OrigDataFilePath,
+                SurveyPath = @SurveyPath,
+                SurveyFolder = @SurveyFolder,
+                FullProjectFolder = @FullProjectFolder,
+                ErrorsExist = @ErrorsExist,
+                SurveyNotes = @SurveyNotes,
+                ModifiedDate = @ModifiedDate
+            WHERE Id = @Id";
+        
+        using var connection = _context.CreateConnection();
+        await connection.ExecuteAsync(sql, new
+        {
+            survey.Id,
+            survey.SurveyName,
+            Status = (int)survey.Status,
+            LockStatus = (int)survey.LockStatus,
+            survey.UnlockKeyName,
+            UnlockKeyType = (int)survey.UnlockKeyType,
+            survey.SaveAlteredString,
+            survey.SurveyFileName,
+            survey.DataFileName,
+            survey.OrigDataFilePath,
+            survey.SurveyPath,
+            survey.SurveyFolder,
+            survey.FullProjectFolder,
+            survey.ErrorsExist,
+            survey.SurveyNotes,
+            ModifiedDate = DateTime.UtcNow
+        });
+        
+        return survey;
+    }
+}

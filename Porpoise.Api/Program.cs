@@ -1,13 +1,54 @@
 // Porpoise.Api/Program.cs — NO SWAGGER, JUST PURE API
+using Porpoise.Api.Mocks;
+using Porpoise.Core.Application.Interfaces;
 using Porpoise.Core.Data;
 using Porpoise.Core.Engines;
 using Porpoise.Core.Models;
 using Porpoise.Core.Services;
+using Porpoise.DataAccess.Context;
+using Porpoise.DataAccess.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddCors(options =>
     options.AddDefaultPolicy(p => p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
+
+// Register Data Access Layer (with option to use in-memory for testing)
+var useInMemory = builder.Configuration.GetValue<bool>("UseInMemoryDatabase");
+
+if (useInMemory)
+{
+    // Use in-memory repository for testing without MySQL
+    var inMemoryRepo = new InMemorySurveyRepository();
+    
+    // Seed with sample data
+    await inMemoryRepo.AddAsync(new Survey 
+    { 
+        SurveyName = "Demo Survey 2024", 
+        Status = SurveyStatus.Verified,
+        SurveyNotes = "Sample survey for testing"
+    });
+    await inMemoryRepo.AddAsync(new Survey 
+    { 
+        SurveyName = "Customer Satisfaction Q4", 
+        Status = SurveyStatus.Initial,
+        SurveyNotes = "Q4 customer feedback"
+    });
+    
+    builder.Services.AddSingleton<ISurveyRepository>(inMemoryRepo);
+    Console.WriteLine("✅ Using IN-MEMORY database (no MySQL required)");
+}
+else
+{
+    // Use real Dapper + MySQL
+    var connectionString = builder.Configuration.GetConnectionString("PorpoiseDatabase") 
+        ?? throw new InvalidOperationException("Connection string 'PorpoiseDatabase' not found");
+    
+    builder.Services.AddSingleton(new DapperContext(connectionString));
+    builder.Services.AddScoped<ISurveyRepository, SurveyRepository>();
+    builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+    Console.WriteLine("✅ Using MYSQL database");
+}
 
 // Register AI service
 builder.Services.AddHttpClient<AIInsightsService>();
@@ -452,6 +493,191 @@ Provide data-driven insights about patterns, notable findings, and implications:
     catch (Exception ex)
     {
         return Results.Problem(ex.Message);
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SURVEY CRUD API ENDPOINTS (Using DataAccess Layer)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// GET /api/surveys - Get all surveys
+app.MapGet("/api/surveys", async (ISurveyRepository repo) =>
+{
+    try
+    {
+        var surveys = await repo.GetAllAsync();
+        return Results.Ok(surveys);
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem($"Error retrieving surveys: {ex.Message}");
+    }
+});
+
+// GET /api/surveys/{id} - Get survey by ID
+app.MapGet("/api/surveys/{id:guid}", async (Guid id, ISurveyRepository repo) =>
+{
+    try
+    {
+        var survey = await repo.GetByIdAsync(id);
+        return survey is null ? Results.NotFound($"Survey with ID {id} not found") : Results.Ok(survey);
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem($"Error retrieving survey: {ex.Message}");
+    }
+});
+
+// GET /api/surveys/name/{name} - Get survey by name
+app.MapGet("/api/surveys/name/{name}", async (string name, ISurveyRepository repo) =>
+{
+    try
+    {
+        var survey = await repo.GetByNameAsync(name);
+        return survey is null ? Results.NotFound($"Survey '{name}' not found") : Results.Ok(survey);
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem($"Error retrieving survey: {ex.Message}");
+    }
+});
+
+// GET /api/surveys/search?term={term} - Search surveys by name
+app.MapGet("/api/surveys/search", async (string term, ISurveyRepository repo) =>
+{
+    try
+    {
+        var surveys = await repo.SearchByNameAsync(term);
+        return Results.Ok(surveys);
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem($"Error searching surveys: {ex.Message}");
+    }
+});
+
+// GET /api/surveys/status/{status} - Get surveys by status
+app.MapGet("/api/surveys/status/{status:int}", async (int status, ISurveyRepository repo) =>
+{
+    try
+    {
+        var surveys = await repo.GetByStatusAsync((SurveyStatus)status);
+        return Results.Ok(surveys);
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem($"Error retrieving surveys by status: {ex.Message}");
+    }
+});
+
+// POST /api/surveys - Create new survey
+app.MapPost("/api/surveys", async (Survey survey, ISurveyRepository repo) =>
+{
+    try
+    {
+        // Validate survey name
+        survey.ValidateSurveyName();
+        
+        // Check if name already exists
+        if (await repo.SurveyNameExistsAsync(survey.SurveyName))
+        {
+            return Results.Conflict($"Survey with name '{survey.SurveyName}' already exists");
+        }
+
+        var created = await repo.AddAsync(survey);
+        return Results.Created($"/api/surveys/{created.Id}", created);
+    }
+    catch (ArgumentException ex)
+    {
+        return Results.BadRequest(ex.Message);
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem($"Error creating survey: {ex.Message}");
+    }
+});
+
+// PUT /api/surveys/{id} - Update existing survey
+app.MapPut("/api/surveys/{id:guid}", async (Guid id, Survey survey, ISurveyRepository repo) =>
+{
+    try
+    {
+        // Ensure ID matches
+        if (id != survey.Id)
+        {
+            return Results.BadRequest("Survey ID mismatch");
+        }
+
+        // Check if survey exists
+        if (!await repo.ExistsAsync(id))
+        {
+            return Results.NotFound($"Survey with ID {id} not found");
+        }
+
+        // Validate survey name
+        survey.ValidateSurveyName();
+
+        // Check if name already exists (excluding current survey)
+        if (await repo.SurveyNameExistsAsync(survey.SurveyName, id))
+        {
+            return Results.Conflict($"Another survey with name '{survey.SurveyName}' already exists");
+        }
+
+        var updated = await repo.UpdateAsync(survey);
+        return Results.Ok(updated);
+    }
+    catch (ArgumentException ex)
+    {
+        return Results.BadRequest(ex.Message);
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem($"Error updating survey: {ex.Message}");
+    }
+});
+
+// DELETE /api/surveys/{id} - Delete survey
+app.MapDelete("/api/surveys/{id:guid}", async (Guid id, ISurveyRepository repo) =>
+{
+    try
+    {
+        if (!await repo.ExistsAsync(id))
+        {
+            return Results.NotFound($"Survey with ID {id} not found");
+        }
+
+        var deleted = await repo.DeleteAsync(id);
+        return deleted ? Results.NoContent() : Results.Problem("Failed to delete survey");
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem($"Error deleting survey: {ex.Message}");
+    }
+});
+
+// GET /api/surveys/{id}/stats - Get survey statistics
+app.MapGet("/api/surveys/{id:guid}/stats", async (Guid id, ISurveyRepository repo) =>
+{
+    try
+    {
+        if (!await repo.ExistsAsync(id))
+        {
+            return Results.NotFound($"Survey with ID {id} not found");
+        }
+
+        var questionCount = await repo.GetQuestionCountAsync(id);
+        var responseCount = await repo.GetResponseCountAsync(id);
+
+        return Results.Ok(new
+        {
+            SurveyId = id,
+            QuestionCount = questionCount,
+            ResponseCount = responseCount
+        });
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem($"Error retrieving survey stats: {ex.Message}");
     }
 });
 

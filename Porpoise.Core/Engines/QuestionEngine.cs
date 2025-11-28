@@ -346,11 +346,20 @@ public static class QuestionEngine
         // Find end
         for (int i = index; i < allQuestions.Count; i++)
         {
+            // Don't end the block on the starting FirstQuestion itself
+            if (i == start && i == index && allQuestions[i].BlkQstStatus == BlkQuestionStatusType.FirstQuestionInBlock)
+                continue;
+                
             if (allQuestions[i].BlkQstStatus == BlkQuestionStatusType.FirstQuestionInBlock ||
-                allQuestions[i].BlkQstStatus == BlkQuestionStatusType.DiscreetQuestion ||
-                i == allQuestions.Count - 1)
+                allQuestions[i].BlkQstStatus == BlkQuestionStatusType.DiscreetQuestion)
             {
-                end = i == allQuestions.Count - 1 ? i : i - 1;
+                end = i - 1;
+                break;
+            }
+            
+            if (i == allQuestions.Count - 1)
+            {
+                end = i;
                 break;
             }
         }
