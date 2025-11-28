@@ -33,7 +33,7 @@ CREATE TABLE Projects (
 -- Create Surveys table matching C# Survey model
 CREATE TABLE Surveys (
     Id CHAR(36) PRIMARY KEY,
-    ProjectId CHAR(36) NOT NULL,
+    ProjectId CHAR(36) NULL,
     SurveyName VARCHAR(255) NOT NULL,
     Status INT NOT NULL DEFAULT 0,
     LockStatus INT NOT NULL DEFAULT 0,
