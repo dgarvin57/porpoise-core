@@ -1,10 +1,11 @@
 using Dapper;
+using Porpoise.Core.Application.Interfaces;
 using Porpoise.Core.Models;
 using Porpoise.DataAccess.Context;
 
 namespace Porpoise.DataAccess.Repositories;
 
-public class ProjectRepository : Repository<Project>
+public class ProjectRepository : Repository<Project>, IProjectRepository
 {
     protected override string TableName => "Projects";
 

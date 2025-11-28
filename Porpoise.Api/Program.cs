@@ -46,6 +46,7 @@ else
     
     builder.Services.AddSingleton(new DapperContext(connectionString));
     builder.Services.AddScoped<ISurveyRepository, SurveyRepository>();
+    builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
     builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
     Console.WriteLine("✅ Using MYSQL database");
 }

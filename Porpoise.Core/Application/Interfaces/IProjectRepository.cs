@@ -1,0 +1,30 @@
+using Porpoise.Core.Models;
+
+namespace Porpoise.Core.Application.Interfaces;
+
+/// <summary>
+/// Repository interface for Project-specific operations.
+/// Extends base repository with project-related queries.
+/// </summary>
+public interface IProjectRepository : IRepository<Project>
+{
+    /// <summary>
+    /// Get a project by its name.
+    /// </summary>
+    Task<Project?> GetByNameAsync(string projectName);
+
+    /// <summary>
+    /// Get all projects for a specific client.
+    /// </summary>
+    Task<IEnumerable<Project>> GetByClientAsync(string clientName);
+
+    /// <summary>
+    /// Get a project with all its associated surveys loaded.
+    /// </summary>
+    Task<Project?> GetProjectWithSurveysAsync(Guid projectId);
+
+    /// <summary>
+    /// Get all surveys associated with a specific project.
+    /// </summary>
+    Task<IEnumerable<Survey>> GetSurveysByProjectIdAsync(Guid projectId);
+}
