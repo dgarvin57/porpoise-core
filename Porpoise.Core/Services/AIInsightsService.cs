@@ -118,19 +118,22 @@ Respondents: {caseCount}{questionsText}
 Comment on sample size, survey complexity, and any initial observations about the research scope.";
     }
 
-    public async Task<string> CallAIAPI(string prompt)
+    /// <summary>
+    /// Call AI API with custom prompt and optional temperature control
+    /// </summary>
+    public async Task<string> CallAIAPI(string prompt, double temperature = 0.7)
     {
         if (_provider == "openai")
         {
-            return await CallOpenAI(prompt);
+            return await CallOpenAI(prompt, temperature);
         }
         else
         {
-            return await CallAnthropic(prompt);
+            return await CallAnthropic(prompt, temperature);
         }
     }
 
-    private async Task<string> CallOpenAI(string prompt)
+    private async Task<string> CallOpenAI(string prompt, double temperature)
     {
         var request = new
         {
@@ -140,8 +143,8 @@ Comment on sample size, survey complexity, and any initial observations about th
                 new { role = "system", content = "You are a professional survey research analyst." },
                 new { role = "user", content = prompt }
             },
-            max_tokens = 200,
-            temperature = 0.7
+            max_tokens = 500,
+            temperature = temperature
         };
 
         var requestJson = JsonSerializer.Serialize(request);
@@ -164,12 +167,13 @@ Comment on sample size, survey complexity, and any initial observations about th
             .GetString() ?? "Unable to generate insights.";
     }
 
-    private async Task<string> CallAnthropic(string prompt)
+    private async Task<string> CallAnthropic(string prompt, double temperature)
     {
         var request = new
         {
             model = "claude-3-haiku-20240307", // Fast and cost-effective
-            max_tokens = 200,
+            max_tokens = 500,
+            temperature = temperature,
             messages = new[]
             {
                 new { role = "user", content = prompt }
