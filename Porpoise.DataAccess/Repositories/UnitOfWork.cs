@@ -20,11 +20,13 @@ public class UnitOfWork : IUnitOfWork
     private bool _disposed;
 
     public ISurveyRepository Surveys { get; }
+    public ProjectRepository Projects { get; }
 
-    public UnitOfWork(DapperContext context, ISurveyRepository surveyRepository)
+    public UnitOfWork(DapperContext context, ISurveyRepository surveyRepository, ProjectRepository projectRepository)
     {
         _context = context;
         Surveys = surveyRepository;
+        Projects = projectRepository;
     }
 
     public async Task BeginTransactionAsync()

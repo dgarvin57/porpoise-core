@@ -98,12 +98,12 @@ public class SurveyRepository : Repository<Survey>, ISurveyRepository
     {
         const string sql = @"
             INSERT INTO Surveys (
-                Id, SurveyName, Status, LockStatus, UnlockKeyName, UnlockKeyType,
+                Id, ProjectId, SurveyName, Status, LockStatus, UnlockKeyName, UnlockKeyType,
                 SaveAlteredString, SurveyFileName, DataFileName, OrigDataFilePath,
                 SurveyPath, SurveyFolder, FullProjectFolder, ErrorsExist, SurveyNotes,
                 CreatedDate, ModifiedDate
             ) VALUES (
-                @Id, @SurveyName, @Status, @LockStatus, @UnlockKeyName, @UnlockKeyType,
+                @Id, @ProjectId, @SurveyName, @Status, @LockStatus, @UnlockKeyName, @UnlockKeyType,
                 @SaveAlteredString, @SurveyFileName, @DataFileName, @OrigDataFilePath,
                 @SurveyPath, @SurveyFolder, @FullProjectFolder, @ErrorsExist, @SurveyNotes,
                 @CreatedDate, @ModifiedDate
@@ -115,6 +115,7 @@ public class SurveyRepository : Repository<Survey>, ISurveyRepository
         await connection.ExecuteAsync(sql, new
         {
             survey.Id,
+            ProjectId = survey.ProjectId?.ToString(),
             survey.SurveyName,
             Status = (int)survey.Status,
             LockStatus = (int)survey.LockStatus,
@@ -140,6 +141,7 @@ public class SurveyRepository : Repository<Survey>, ISurveyRepository
     {
         const string sql = @"
             UPDATE Surveys SET
+                ProjectId = @ProjectId,
                 SurveyName = @SurveyName,
                 Status = @Status,
                 LockStatus = @LockStatus,
@@ -161,6 +163,7 @@ public class SurveyRepository : Repository<Survey>, ISurveyRepository
         await connection.ExecuteAsync(sql, new
         {
             survey.Id,
+            ProjectId = survey.ProjectId?.ToString(),
             survey.SurveyName,
             Status = (int)survey.Status,
             LockStatus = (int)survey.LockStatus,

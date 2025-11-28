@@ -4,10 +4,36 @@ DROP TABLE IF EXISTS SurveyResponses;
 DROP TABLE IF EXISTS Responses;
 DROP TABLE IF EXISTS Questions;
 DROP TABLE IF EXISTS Surveys;
+DROP TABLE IF EXISTS Projects;
+
+-- Create Projects table matching C# Project model
+CREATE TABLE Projects (
+    Id CHAR(36) PRIMARY KEY,
+    ProjectName VARCHAR(255) NOT NULL,
+    ClientName VARCHAR(255),
+    ResearcherLabel VARCHAR(255),
+    ResearcherSubLabel VARCHAR(255),
+    ResearcherLogo TEXT,
+    ResearcherLogoFilename VARCHAR(255),
+    ResearcherLogoPath VARCHAR(500),
+    BaseProjectFolder VARCHAR(500),
+    ProjectFolder VARCHAR(500),
+    FullFolder VARCHAR(500),
+    FullPath VARCHAR(500),
+    FileName VARCHAR(255),
+    IsExported BOOLEAN NOT NULL DEFAULT FALSE,
+    CreatedBy VARCHAR(100) NOT NULL,
+    CreatedOn DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    ModifiedBy VARCHAR(100),
+    ModifiedOn DATETIME(6),
+    INDEX idx_project_name (ProjectName),
+    INDEX idx_client_name (ClientName)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Create Surveys table matching C# Survey model
 CREATE TABLE Surveys (
     Id CHAR(36) PRIMARY KEY,
+    ProjectId CHAR(36) NOT NULL,
     SurveyName VARCHAR(255) NOT NULL,
     Status INT NOT NULL DEFAULT 0,
     LockStatus INT NOT NULL DEFAULT 0,
@@ -24,6 +50,8 @@ CREATE TABLE Surveys (
     SurveyNotes TEXT,
     CreatedDate DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     ModifiedDate DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    FOREIGN KEY (ProjectId) REFERENCES Projects(Id) ON DELETE CASCADE,
+    INDEX idx_project_id (ProjectId),
     INDEX idx_survey_name (SurveyName),
     INDEX idx_status (Status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
