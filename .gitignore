@@ -29,6 +29,9 @@ packages/
 *.pfx
 *.snk
 *.key
+appsettings.json
+appsettings.*.json
+!appsettings.Development.json
 
 # Rider / other IDEs
 .idea/
