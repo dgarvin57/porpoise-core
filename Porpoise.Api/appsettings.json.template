@@ -9,5 +9,8 @@
   "AI": {
     "Provider": "anthropic",
     "ApiKey": ""
+  },
+  "ConnectionStrings": {
+    "PorpoiseDb": "Server=localhost;Port=3306;Database=porpoise_dev;User=root;Password=YOUR_PASSWORD_HERE;CharSet=utf8mb4;"
   }
 }

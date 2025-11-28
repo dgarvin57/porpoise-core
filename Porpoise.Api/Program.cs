@@ -41,8 +41,8 @@ if (useInMemory)
 else
 {
     // Use real Dapper + MySQL
-    var connectionString = builder.Configuration.GetConnectionString("PorpoiseDatabase") 
-        ?? throw new InvalidOperationException("Connection string 'PorpoiseDatabase' not found");
+    var connectionString = builder.Configuration.GetConnectionString("PorpoiseDb") 
+        ?? throw new InvalidOperationException("Connection string 'PorpoiseDb' not found");
     
     builder.Services.AddSingleton(new DapperContext(connectionString));
     builder.Services.AddScoped<ISurveyRepository, SurveyRepository>();
