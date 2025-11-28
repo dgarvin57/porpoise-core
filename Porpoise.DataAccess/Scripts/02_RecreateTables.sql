@@ -32,7 +32,7 @@ CREATE TABLE Surveys (
 CREATE TABLE Questions (
     Id CHAR(36) PRIMARY KEY,
     SurveyId CHAR(36) NOT NULL,
-    QstNumber INT NOT NULL,
+    QstNumber VARCHAR(50) NOT NULL,
     QstLabel VARCHAR(255),
     DataFileColumn INT,
     VariableType VARCHAR(50),
@@ -50,9 +50,9 @@ CREATE TABLE Questions (
 CREATE TABLE Responses (
     Id CHAR(36) PRIMARY KEY,
     QuestionId CHAR(36) NOT NULL,
-    RespValue DOUBLE NOT NULL,
+    RespValue INT NOT NULL,
     Label VARCHAR(500),
-    Percentage DOUBLE,
+    Percentage DECIMAL(10,4),
     Frequency INT,
     IndexType VARCHAR(50),
     CreatedDate DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),

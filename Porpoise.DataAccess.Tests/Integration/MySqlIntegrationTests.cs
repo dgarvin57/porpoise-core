@@ -276,4 +276,84 @@ public class MySqlIntegrationTests : IAsyncLifetime
         // Assert
         exists.Should().BeFalse(); // Should return false because we excluded the only matching survey
     }
+
+    [Fact]
+    public async Task GetAllAsync_ShouldReturnAllSurveys()
+    {
+        // Arrange
+        var prefix = $"GetAll{Guid.NewGuid().ToString().Substring(0, 8)}";
+        var survey1 = await _repository.AddAsync(new Survey { SurveyName = $"{prefix}_1", Status = SurveyStatus.Initial });
+        var survey2 = await _repository.AddAsync(new Survey { SurveyName = $"{prefix}_2", Status = SurveyStatus.Initial });
+        var survey3 = await _repository.AddAsync(new Survey { SurveyName = $"{prefix}_3", Status = SurveyStatus.Initial });
+        _createdSurveyIds.AddRange(new[] { survey1.Id, survey2.Id, survey3.Id });
+
+        // Act
+        var results = await _repository.GetAllAsync();
+
+        // Assert
+        var ourSurveys = results.Where(s => s.SurveyName.StartsWith(prefix)).ToList();
+        ourSurveys.Should().HaveCount(3);
+    }
+
+    [Fact]
+    public async Task GetByDateRangeAsync_ShouldReturnSurveysInRange()
+    {
+        // Arrange
+        var prefix = $"DateRange{Guid.NewGuid().ToString().Substring(0, 8)}";
+        var now = DateTime.UtcNow;
+        
+        // Create surveys (they'll have CreatedDate set to current time)
+        var survey1 = await _repository.AddAsync(new Survey { SurveyName = $"{prefix}_1", Status = SurveyStatus.Initial });
+        _createdSurveyIds.Add(survey1.Id);
+        
+        await Task.Delay(100); // Small delay to ensure different timestamps
+        
+        var survey2 = await _repository.AddAsync(new Survey { SurveyName = $"{prefix}_2", Status = SurveyStatus.Initial });
+        _createdSurveyIds.Add(survey2.Id);
+
+        // Act - Query for surveys created in the last minute
+        var startDate = now.AddMinutes(-1);
+        var endDate = now.AddMinutes(1);
+        var results = await _repository.GetByDateRangeAsync(startDate, endDate);
+
+        // Assert
+        var ourSurveys = results.Where(s => s.SurveyName.StartsWith(prefix)).ToList();
+        ourSurveys.Should().HaveCountGreaterThanOrEqualTo(2);
+    }
+
+    [Fact]
+    public async Task GetQuestionCountAsync_ShouldReturnZero_WhenNoQuestions()
+    {
+        // Arrange
+        var survey = await _repository.AddAsync(new Survey 
+        { 
+            SurveyName = $"No Questions {Guid.NewGuid()}",
+            Status = SurveyStatus.Initial 
+        });
+        _createdSurveyIds.Add(survey.Id);
+
+        // Act
+        var count = await _repository.GetQuestionCountAsync(survey.Id);
+
+        // Assert
+        count.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task GetResponseCountAsync_ShouldReturnZero_WhenNoResponses()
+    {
+        // Arrange
+        var survey = await _repository.AddAsync(new Survey 
+        { 
+            SurveyName = $"No Responses {Guid.NewGuid()}",
+            Status = SurveyStatus.Initial 
+        });
+        _createdSurveyIds.Add(survey.Id);
+
+        // Act
+        var count = await _repository.GetResponseCountAsync(survey.Id);
+
+        // Assert
+        count.Should().Be(0);
+    }
 }
