@@ -145,22 +145,6 @@ public class ProjectModelTests
     }
 
     [Fact]
-    public void IsDirty_ReturnsTrueWhenSurveyListDirty()
-    {
-        // Arrange
-        var project = new Project();
-        var survey = new Survey { SurveyName = "Test Survey" };
-        project.SurveyList = new ObjectListBase<Survey> { survey };
-        project.MarkClean();
-
-        // Act
-        survey.SurveyName = "Modified Survey";
-
-        // Assert
-        project.IsDirty.Should().BeTrue();
-    }
-
-    [Fact]
     public void MarkClean_ClearsDirtyFlag()
     {
         // Arrange
@@ -268,5 +252,396 @@ public class ProjectModelTests
         // Assert
         project.SurveyListSummary.Should().HaveCount(1);
         project.SurveyListSummary![0].SurveyName.Should().Be("Summary 1");
+    }
+
+    [Fact]
+    public void SummarizeSurveyList_CreatesCorrectSummaries()
+    {
+        // Arrange
+        var project = new Project();
+        var survey1 = new Survey
+        {
+            Id = Guid.NewGuid(),
+            SurveyName = "Survey 1",
+            SurveyFileName = "survey1.porps",
+            SurveyFolder = "folder1"
+        };
+        var survey2 = new Survey
+        {
+            Id = Guid.NewGuid(),
+            SurveyName = "Survey 2",
+            SurveyFileName = "survey2.porps",
+            SurveyFolder = "folder2"
+        };
+        project.SurveyList = new ObjectListBase<Survey> { survey1, survey2 };
+
+        // Act
+        project.SummarizeSurveyList();
+
+        // Assert
+        project.SurveyListSummary.Should().NotBeNull();
+        project.SurveyListSummary.Should().HaveCount(2);
+        project.SurveyListSummary![0].Id.Should().Be(survey1.Id);
+        project.SurveyListSummary[0].SurveyName.Should().Be("Survey 1");
+        project.SurveyListSummary[1].Id.Should().Be(survey2.Id);
+        project.SurveyListSummary[1].SurveyName.Should().Be("Survey 2");
+    }
+
+    [Fact]
+    public void SummarizeSurveyList_HandlesNullSurveyList()
+    {
+        // Arrange
+        var project = new Project();
+        project.SurveyList = null;
+
+        // Act
+        project.SummarizeSurveyList();
+
+        // Assert - should not throw
+        project.SurveyListSummary.Should().BeNull();
+    }
+
+    [Fact]
+    public void MarkClean_ClearsSurveyListDirtyFlags()
+    {
+        // Arrange
+        var project = new Project();
+        var survey = new Survey { SurveyName = "Test" };
+        project.SurveyList = new ObjectListBase<Survey> { survey };
+        project.MarkClean(); // Mark everything clean first
+        
+        // Modify a survey
+        survey.SurveyName = "Modified";
+
+        // Act
+        project.MarkClean();
+
+        // Assert
+        project.IsDirty.Should().BeFalse();
+        survey.IsDirty.Should().BeFalse();
+    }
+
+    [Fact]
+    public void GetSurveyFromSurveyList_ReturnsMatchingSurvey()
+    {
+        // Arrange
+        var project = new Project();
+        var surveyId = Guid.NewGuid();
+        var survey = new Survey { Id = surveyId, SurveyName = "Target Survey" };
+        project.SurveyList = new ObjectListBase<Survey>
+        {
+            new Survey { Id = Guid.NewGuid(), SurveyName = "Other Survey" },
+            survey
+        };
+
+        // Act
+        var result = project.GetSurveyFromSurveyList(surveyId);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.Id.Should().Be(surveyId);
+        result.SurveyName.Should().Be("Target Survey");
+    }
+
+    [Fact]
+    public void GetSurveyFromSurveyList_ReturnsNullWhenNotFound()
+    {
+        // Arrange
+        var project = new Project();
+        project.SurveyList = new ObjectListBase<Survey>
+        {
+            new Survey { Id = Guid.NewGuid(), SurveyName = "Survey 1" }
+        };
+
+        // Act
+        var result = project.GetSurveyFromSurveyList(Guid.NewGuid());
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public void GetSurveyFromSurveyList_ReturnsNullWhenSurveyListNull()
+    {
+        // Arrange
+        var project = new Project();
+        project.SurveyList = null;
+
+        // Act
+        var result = project.GetSurveyFromSurveyList(Guid.NewGuid());
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public void SaveSurveyInSurveyList_UpdatesExistingSurvey()
+    {
+        // Arrange
+        var project = new Project();
+        var surveyId = Guid.NewGuid();
+        var originalSurvey = new Survey { Id = surveyId, SurveyName = "Original" };
+        project.SurveyList = new ObjectListBase<Survey> { originalSurvey };
+
+        var updatedSurvey = new Survey { Id = surveyId, SurveyName = "Updated" };
+
+        // Act
+        var result = project.SaveSurveyInSurveyList(updatedSurvey);
+
+        // Assert
+        result.Should().BeTrue();
+        project.SurveyList[0].SurveyName.Should().Be("Updated");
+    }
+
+    [Fact]
+    public void SaveSurveyInSurveyList_ReturnsFalseWhenSurveyNotFound()
+    {
+        // Arrange
+        var project = new Project();
+        project.SurveyList = new ObjectListBase<Survey>
+        {
+            new Survey { Id = Guid.NewGuid(), SurveyName = "Existing" }
+        };
+        var newSurvey = new Survey { Id = Guid.NewGuid(), SurveyName = "New" };
+
+        // Act
+        var result = project.SaveSurveyInSurveyList(newSurvey);
+
+        // Assert
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public void SaveSurveyInSurveyList_ReturnsFalseWhenSurveyListNull()
+    {
+        // Arrange
+        var project = new Project();
+        project.SurveyList = null;
+        var survey = new Survey { Id = Guid.NewGuid() };
+
+        // Act
+        var result = project.SaveSurveyInSurveyList(survey);
+
+        // Assert
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public void SaveSurveyInSurveyList_ReturnsFalseWhenSurveyNull()
+    {
+        // Arrange
+        var project = new Project();
+        project.SurveyList = new ObjectListBase<Survey>();
+
+        // Act
+        var result = project.SaveSurveyInSurveyList(null!);
+
+        // Assert
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public void IsMoreThanOneUnlockedSurvey_ReturnsTrueWhenMultipleUnlocked()
+    {
+        // Arrange
+        var project = new Project();
+        project.SurveyList = new ObjectListBase<Survey>
+        {
+            new Survey { LockStatus = LockStatusType.Unlocked },
+            new Survey { LockStatus = LockStatusType.Unlocked }
+        };
+
+        // Act
+        var result = project.IsMoreThanOneUnlockedSurvey();
+
+        // Assert
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public void IsMoreThanOneUnlockedSurvey_ReturnsFalseWhenOnlyOneUnlocked()
+    {
+        // Arrange
+        var project = new Project();
+        project.SurveyList = new ObjectListBase<Survey>
+        {
+            new Survey { LockStatus = LockStatusType.Unlocked },
+            new Survey { LockStatus = LockStatusType.Locked }
+        };
+
+        // Act
+        var result = project.IsMoreThanOneUnlockedSurvey();
+
+        // Assert
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public void IsMoreThanOneUnlockedSurvey_ReturnsFalseWhenLessThanTwoSurveys()
+    {
+        // Arrange
+        var project = new Project();
+        project.SurveyList = new ObjectListBase<Survey>
+        {
+            new Survey { LockStatus = LockStatusType.Unlocked }
+        };
+
+        // Act
+        var result = project.IsMoreThanOneUnlockedSurvey();
+
+        // Assert
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public void IsMoreThanOneUnlockedSurvey_ReturnsFalseWhenSurveyListNull()
+    {
+        // Arrange
+        var project = new Project();
+        project.SurveyList = null;
+
+        // Act
+        var result = project.IsMoreThanOneUnlockedSurvey();
+
+        // Assert
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public void ValidateProjectName_ThrowsWhenNull()
+    {
+        // Arrange
+        var project = new Project();
+
+        // Act
+        var act = () => project.ValidateProjectName();
+
+        // Assert
+        act.Should().Throw<ArgumentNullException>()
+            .WithMessage("*Project name is required*");
+    }
+
+    [Fact]
+    public void ValidateProjectName_ThrowsWhenEmpty()
+    {
+        // Arrange
+        var project = new Project { ProjectName = "" };
+
+        // Act
+        var act = () => project.ValidateProjectName();
+
+        // Assert
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void ValidateProjectName_SucceedsWithValidName()
+    {
+        // Arrange
+        var project = new Project { ProjectName = "Valid Project Name" };
+
+        // Act
+        var act = () => project.ValidateProjectName();
+
+        // Assert
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void ValidateClientName_ThrowsWhenNull()
+    {
+        // Arrange
+        var project = new Project();
+
+        // Act
+        var act = () => project.ValidateClientName();
+
+        // Assert
+        act.Should().Throw<ArgumentNullException>()
+            .WithMessage("*Client name is required*");
+    }
+
+    [Fact]
+    public void ValidateClientName_SucceedsWithValidName()
+    {
+        // Arrange
+        var project = new Project { ClientName = "Acme Corp" };
+
+        // Act
+        var act = () => project.ValidateClientName();
+
+        // Assert
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void ValidateFullPath_ThrowsWhenNull()
+    {
+        // Arrange
+        var project = new Project();
+
+        // Act
+        var act = () => project.ValidateFullPath();
+
+        // Assert
+        act.Should().Throw<ArgumentNullException>()
+            .WithMessage("*Full project path is required*");
+    }
+
+    [Fact]
+    public void ValidateFullPath_SucceedsWithValidPath()
+    {
+        // Arrange
+        var project = new Project { FullPath = "/valid/path/project.porp" };
+
+        // Act
+        var act = () => project.ValidateFullPath();
+
+        // Assert
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void ValidateProjectFolder_ThrowsWhenNull()
+    {
+        // Arrange
+        var project = new Project();
+
+        // Act
+        var act = () => project.ValidateProjectFolder();
+
+        // Assert
+        act.Should().Throw<ArgumentNullException>()
+            .WithMessage("*Project folder is required*");
+    }
+
+    [Fact]
+    public void ValidateProjectFolder_SucceedsWithValidFolder()
+    {
+        // Arrange
+        var project = new Project { ProjectFolder = "project-folder" };
+
+        // Act
+        var act = () => project.ValidateProjectFolder();
+
+        // Assert
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void MarkAsOld_MarksSurveysAsOld()
+    {
+        // Arrange
+        var project = new Project();
+        var survey1 = new Survey { SurveyName = "Survey 1" };
+        var survey2 = new Survey { SurveyName = "Survey 2" };
+        project.SurveyList = new ObjectListBase<Survey> { survey1, survey2 };
+
+        // Act
+        project.MarkAsOld();
+
+        // Assert
+        survey1.IsNew.Should().BeFalse();
+        survey2.IsNew.Should().BeFalse();
     }
 }

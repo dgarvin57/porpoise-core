@@ -220,6 +220,7 @@ namespace Porpoise.Core.Models
         public override void MarkClean()
         {
             SurveyList?.ForEach(s => s.MarkClean());
+            SurveyList?.MarkClean();
             base.MarkClean();
         }
 

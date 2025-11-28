@@ -374,4 +374,226 @@ public class ProjectRepositoryIntegrationTests : IAsyncLifetime
         retrieved.IsExported.Should().BeTrue();
         retrieved.FileName.Should().Be("project.porp");
     }
+
+    [Fact]
+    public async Task GetByNameAsync_NonExistentProject_ReturnsNull()
+    {
+        // Act
+        var result = await _repository.GetByNameAsync("This Project Does Not Exist 999");
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetByClientAsync_NonExistentClient_ReturnsEmpty()
+    {
+        // Act
+        var results = await _repository.GetByClientAsync("Non Existent Client 999");
+
+        // Assert
+        results.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetSurveysByProjectIdAsync_ProjectWithNoSurveys_ReturnsEmpty()
+    {
+        // Arrange
+        var project = new Project
+        {
+            ProjectName = "Empty Project",
+            CreatedBy = "test_user",
+            CreatedOn = DateTime.UtcNow
+        };
+        var addedProject = await _repository.AddAsync(project);
+        _testProjectIds.Add(addedProject.Id);
+
+        // Act
+        var results = await _repository.GetSurveysByProjectIdAsync(addedProject.Id);
+
+        // Assert
+        results.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetProjectWithSurveysAsync_ProjectWithNoSurveys_ReturnsProjectWithEmptyList()
+    {
+        // Arrange
+        var project = new Project
+        {
+            ProjectName = "Solo Project",
+            CreatedBy = "test_user",
+            CreatedOn = DateTime.UtcNow
+        };
+        var addedProject = await _repository.AddAsync(project);
+        _testProjectIds.Add(addedProject.Id);
+
+        // Act
+        var result = await _repository.GetProjectWithSurveysAsync(addedProject.Id);
+
+        // Assert
+        result.Should().NotBeNull();
+        result!.ProjectName.Should().Be("Solo Project");
+        result.SurveyList.Should().NotBeNull();
+        result.SurveyList.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task UpdateAsync_MultipleUpdates_PersistsChanges()
+    {
+        // Arrange
+        var project = new Project
+        {
+            ProjectName = "Original",
+            ClientName = "Original Client",
+            CreatedBy = "test_user",
+            CreatedOn = DateTime.UtcNow
+        };
+        var added = await _repository.AddAsync(project);
+        _testProjectIds.Add(added.Id);
+
+        // Act - First update
+        added.ProjectName = "First Update";
+        await _repository.UpdateAsync(added);
+
+        // Act - Second update
+        added.ProjectName = "Second Update";
+        added.ClientName = "Updated Client";
+        await _repository.UpdateAsync(added);
+
+        // Assert
+        var retrieved = await _repository.GetByIdAsync(added.Id);
+        retrieved.Should().NotBeNull();
+        retrieved!.ProjectName.Should().Be("Second Update");
+        retrieved.ClientName.Should().Be("Updated Client");
+    }
+
+    [Fact]
+    public async Task DeleteAsync_NonExistentProject_ReturnsFalse()
+    {
+        // Arrange
+        var nonExistentId = Guid.NewGuid();
+
+        // Act
+        var result = await _repository.DeleteAsync(nonExistentId);
+
+        // Assert
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task AddAsync_WithMinimalData_Succeeds()
+    {
+        // Arrange - Only required fields (ProjectName is required in DB)
+        var project = new Project
+        {
+            ProjectName = "Minimal Test Project",
+            CreatedBy = "test_user",
+            CreatedOn = DateTime.UtcNow
+        };
+
+        // Act
+        var result = await _repository.AddAsync(project);
+        _testProjectIds.Add(result.Id);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Id.Should().NotBe(Guid.Empty);
+
+        var retrieved = await _repository.GetByIdAsync(result.Id);
+        retrieved.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task GetAllAsync_WithMultipleProjects_ReturnsAllInOrder()
+    {
+        // Arrange
+        var project1 = new Project
+        {
+            ProjectName = "Alpha Project",
+            CreatedBy = "test_user",
+            CreatedOn = DateTime.UtcNow.AddDays(-2)
+        };
+        var project2 = new Project
+        {
+            ProjectName = "Beta Project",
+            CreatedBy = "test_user",
+            CreatedOn = DateTime.UtcNow.AddDays(-1)
+        };
+        var project3 = new Project
+        {
+            ProjectName = "Gamma Project",
+            CreatedBy = "test_user",
+            CreatedOn = DateTime.UtcNow
+        };
+
+        var added1 = await _repository.AddAsync(project1);
+        var added2 = await _repository.AddAsync(project2);
+        var added3 = await _repository.AddAsync(project3);
+        _testProjectIds.Add(added1.Id);
+        _testProjectIds.Add(added2.Id);
+        _testProjectIds.Add(added3.Id);
+
+        // Act
+        var results = await _repository.GetAllAsync();
+
+        // Assert
+        results.Should().HaveCountGreaterThanOrEqualTo(3);
+        results.Should().Contain(p => p.Id == added1.Id);
+        results.Should().Contain(p => p.Id == added2.Id);
+        results.Should().Contain(p => p.Id == added3.Id);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_NullableFieldsToNull_UpdatesSuccessfully()
+    {
+        // Arrange
+        var project = new Project
+        {
+            ProjectName = "Test Project",
+            ClientName = "Test Client",
+            ResearcherLabel = "Test Researcher",
+            CreatedBy = "test_user",
+            CreatedOn = DateTime.UtcNow
+        };
+        var added = await _repository.AddAsync(project);
+        _testProjectIds.Add(added.Id);
+
+        // Act - Set nullable fields to null
+        added.ResearcherLabel = null;
+        await _repository.UpdateAsync(added);
+
+        // Assert
+        var retrieved = await _repository.GetByIdAsync(added.Id);
+        retrieved.Should().NotBeNull();
+        retrieved!.ResearcherLabel.Should().BeNull();
+        retrieved.ProjectName.Should().Be("Test Project");
+    }
+
+    [Fact]
+    public async Task GetProjectWithSurveysAsync_NonExistentProject_ReturnsNull()
+    {
+        // Arrange
+        var nonExistentId = Guid.NewGuid();
+
+        // Act
+        var result = await _repository.GetProjectWithSurveysAsync(nonExistentId);
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetSurveysByProjectIdAsync_NonExistentProject_ReturnsEmpty()
+    {
+        // Arrange
+        var nonExistentId = Guid.NewGuid();
+
+        // Act
+        var results = await _repository.GetSurveysByProjectIdAsync(nonExistentId);
+
+        // Assert
+        results.Should().BeEmpty();
+    }
 }
+
