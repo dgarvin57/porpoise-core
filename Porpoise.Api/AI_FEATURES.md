@@ -4,7 +4,7 @@
 
 Porpoise now includes AI-powered insights that **explain** your statistical calculations in plain English. The AI doesn't replace your statistical engines - it makes them more accessible.
 
-**Note:** This documentation describes the AI features in the Porpoise application. The AI service used is **OpenAI GPT-4o-mini**. This is separate from the AI assistant (Claude Sonnet 4.5 by Anthropic) used for development help.
+**Note:** This documentation describes the AI features in the Porpoise application. The AI service used is **Claude Sonnet**. This is the same engine but separate from the AI assistant (Claude Sonnet 4.5 by Anthropic) used for development help.
 
 ## How It Works
 
@@ -18,7 +18,24 @@ API Response → Numbers + Natural language insights
 
 ## Setup
 
-### Option 1: Using OpenAI (Recommended)
+### Option 1: Using Claude Sonnet
+
+1. Get an API key from [Claude](https://console.anthropic.com/settings/keys)
+
+2. Set the environment variable:
+   ```bash
+   export OPENAI_API_KEY="sk-your-key-here"
+   ```
+
+3. Or add to `appsettings.json`:
+   ```json
+  "AI": {
+    "Provider": "anthropic",
+    "ApiKey": "sk-your-key-here"
+  }
+   ```
+
+### Option 2: Using OpenAI (Recommended)
 
 1. Get an API key from [OpenAI](https://platform.openai.com/api-keys)
 
@@ -36,7 +53,7 @@ API Response → Numbers + Natural language insights
    }
    ```
 
-### Option 2: Without AI (Fallback Mode)
+### Option 3: Without AI (Fallback Mode)
 
 If no API key is configured, the service automatically provides rule-based summaries instead. No setup needed!
 
