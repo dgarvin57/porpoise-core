@@ -2,6 +2,7 @@
 
 using FluentAssertions;
 using Porpoise.Core.Models;
+using Porpoise.Core.Services;
 using Porpoise.DataAccess.Context;
 using Porpoise.DataAccess.Repositories;
 
@@ -17,6 +18,7 @@ public class MySqlIntegrationTests : IAsyncLifetime
 {
     private readonly DapperContext _context;
     private readonly SurveyRepository _repository;
+    private readonly TenantContext _tenantContext;
     private readonly List<Guid> _createdSurveyIds = new();
 
     public MySqlIntegrationTests()
@@ -26,7 +28,8 @@ public class MySqlIntegrationTests : IAsyncLifetime
             ?? "Server=localhost;Port=3306;Database=porpoise_dev;User=root;Password=Dg5901%1;CharSet=utf8mb4;";
         
         _context = new DapperContext(connectionString);
-        _repository = new SurveyRepository(_context);
+        _tenantContext = new TenantContext { TenantId = 1, TenantKey = "demo-tenant" };
+        _repository = new SurveyRepository(_context, _tenantContext);
     }
 
     public Task InitializeAsync() => Task.CompletedTask;

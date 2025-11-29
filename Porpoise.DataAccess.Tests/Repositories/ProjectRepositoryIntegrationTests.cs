@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Porpoise.Core.Models;
+using Porpoise.Core.Services;
 using Porpoise.DataAccess.Context;
 using Porpoise.DataAccess.Repositories;
 
@@ -10,12 +11,14 @@ public class ProjectRepositoryIntegrationTests : IAsyncLifetime
 {
     private readonly DapperContext _context;
     private readonly ProjectRepository _repository;
+    private readonly TenantContext _tenantContext;
     private readonly List<Guid> _testProjectIds = new();
 
     public ProjectRepositoryIntegrationTests()
     {
         _context = new DapperContext("Server=localhost;Port=3306;Database=porpoise_dev;User=root;Password=Dg5901%1;CharSet=utf8mb4;");
-        _repository = new ProjectRepository(_context);
+        _tenantContext = new TenantContext { TenantId = 1, TenantKey = "demo-tenant" };
+        _repository = new ProjectRepository(_context, _tenantContext);
     }
 
     public Task InitializeAsync() => Task.CompletedTask;
@@ -237,7 +240,7 @@ public class ProjectRepositoryIntegrationTests : IAsyncLifetime
         _testProjectIds.Add(addedProject.Id);
 
         // Add surveys
-        var surveyRepo = new SurveyRepository(_context);
+        var surveyRepo = new SurveyRepository(_context, _tenantContext);
         var survey1 = new Survey
         {
             ProjectId = addedProject.Id,
@@ -279,7 +282,7 @@ public class ProjectRepositoryIntegrationTests : IAsyncLifetime
         _testProjectIds.Add(addedProject.Id);
 
         // Add surveys
-        var surveyRepo = new SurveyRepository(_context);
+        var surveyRepo = new SurveyRepository(_context, _tenantContext);
         var survey1 = new Survey
         {
             ProjectId = addedProject.Id,
@@ -317,7 +320,7 @@ public class ProjectRepositoryIntegrationTests : IAsyncLifetime
         };
         var addedProject = await _repository.AddAsync(project);
 
-        var surveyRepo = new SurveyRepository(_context);
+        var surveyRepo = new SurveyRepository(_context, _tenantContext);
         var survey = new Survey
         {
             ProjectId = addedProject.Id,

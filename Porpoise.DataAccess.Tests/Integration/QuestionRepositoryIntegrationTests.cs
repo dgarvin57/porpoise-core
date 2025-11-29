@@ -3,6 +3,7 @@
 using Dapper;
 using FluentAssertions;
 using Porpoise.Core.Models;
+using Porpoise.Core.Services;
 using Porpoise.DataAccess.Context;
 using Porpoise.DataAccess.Repositories;
 
@@ -18,6 +19,7 @@ public class QuestionRepositoryIntegrationTests : IAsyncLifetime
     private readonly DapperContext _context;
     private readonly SurveyRepository _surveyRepository;
     private readonly QuestionRepository _questionRepository;
+    private readonly TenantContext _tenantContext;
     private readonly List<Guid> _createdSurveyIds = new();
     private readonly List<Guid> _createdQuestionIds = new();
 
@@ -27,7 +29,8 @@ public class QuestionRepositoryIntegrationTests : IAsyncLifetime
             ?? "Server=localhost;Port=3306;Database=porpoise_dev;User=root;Password=Dg5901%1;CharSet=utf8mb4;";
         
         _context = new DapperContext(connectionString);
-        _surveyRepository = new SurveyRepository(_context);
+        _tenantContext = new TenantContext { TenantId = 1, TenantKey = "demo-tenant" };
+        _surveyRepository = new SurveyRepository(_context, _tenantContext);
         _questionRepository = new QuestionRepository(_context);
     }
 

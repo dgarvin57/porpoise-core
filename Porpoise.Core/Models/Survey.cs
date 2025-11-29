@@ -21,6 +21,7 @@ public class Survey : ObjectBase
 
     private Guid _id = Guid.NewGuid();
     private Guid? _projectId;
+    private int _tenantId;
     private string _surveyName = string.Empty;
     private SurveyStatus _status = SurveyStatus.Initial;
     private LockStatusType _lockStatus = LockStatusType.Locked;
@@ -64,6 +65,12 @@ public class Survey : ObjectBase
     {
         get => _projectId;
         set => SetProperty(ref _projectId, value, nameof(ProjectId));
+    }
+
+    public int TenantId
+    {
+        get => _tenantId;
+        set => SetProperty(ref _tenantId, value, nameof(TenantId));
     }
 
     public string SurveyName

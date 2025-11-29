@@ -13,6 +13,7 @@ namespace Porpoise.Core.Models
         #region Fields
 
         private Guid _id = Guid.NewGuid();
+        private int _tenantId;
         private string? _projectName;
         private string? _clientName;
         private string? _researcherLabel;
@@ -64,6 +65,12 @@ namespace Porpoise.Core.Models
         {
             get => _id;
             set => SetProperty(ref _id, value, nameof(Id));
+        }
+
+        public int TenantId
+        {
+            get => _tenantId;
+            set => SetProperty(ref _tenantId, value, nameof(TenantId));
         }
 
         public string? ProjectName

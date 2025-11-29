@@ -1,6 +1,7 @@
 using Dapper;
 using Porpoise.Core.Application.Interfaces;
 using Porpoise.Core.Models;
+using Porpoise.Core.Services;
 using Porpoise.DataAccess.Context;
 
 namespace Porpoise.DataAccess.Repositories;
@@ -8,59 +9,72 @@ namespace Porpoise.DataAccess.Repositories;
 public class ProjectRepository : Repository<Project>, IProjectRepository
 {
     protected override string TableName => "Projects";
+    private readonly TenantContext _tenantContext;
 
-    public ProjectRepository(DapperContext context) : base(context)
+    public ProjectRepository(DapperContext context, TenantContext tenantContext) : base(context)
     {
+        _tenantContext = tenantContext;
     }
 
     public override async Task<Project?> GetByIdAsync(Guid id)
     {
         const string sql = @"
-            SELECT * FROM Projects WHERE Id = @Id";
+            SELECT * FROM Projects 
+            WHERE Id = @Id AND TenantId = @TenantId";
 
         using var connection = _context.CreateConnection();
-        return await connection.QuerySingleOrDefaultAsync<Project>(sql, new { Id = id.ToString() });
+        return await connection.QuerySingleOrDefaultAsync<Project>(sql, 
+            new { Id = id.ToString(), TenantId = _tenantContext.TenantId });
     }
 
     public override async Task<IEnumerable<Project>> GetAllAsync()
     {
-        const string sql = "SELECT * FROM Projects ORDER BY ProjectName";
+        const string sql = @"
+            SELECT * FROM Projects 
+            WHERE TenantId = @TenantId 
+            ORDER BY ProjectName";
 
         using var connection = _context.CreateConnection();
-        return await connection.QueryAsync<Project>(sql);
+        return await connection.QueryAsync<Project>(sql, new { TenantId = _tenantContext.TenantId });
     }
 
     public async Task<Project?> GetByNameAsync(string projectName)
     {
         const string sql = @"
             SELECT * FROM Projects 
-            WHERE ProjectName = @ProjectName";
+            WHERE ProjectName = @ProjectName 
+            AND TenantId = @TenantId";
 
         using var connection = _context.CreateConnection();
-        return await connection.QuerySingleOrDefaultAsync<Project>(sql, new { ProjectName = projectName });
+        return await connection.QuerySingleOrDefaultAsync<Project>(sql, 
+            new { ProjectName = projectName, TenantId = _tenantContext.TenantId });
     }
 
     public async Task<IEnumerable<Project>> GetByClientAsync(string clientName)
     {
         const string sql = @"
             SELECT * FROM Projects 
-            WHERE ClientName = @ClientName
+            WHERE ClientName = @ClientName 
+            AND TenantId = @TenantId
             ORDER BY ProjectName";
 
         using var connection = _context.CreateConnection();
-        return await connection.QueryAsync<Project>(sql, new { ClientName = clientName });
+        return await connection.QueryAsync<Project>(sql, 
+            new { ClientName = clientName, TenantId = _tenantContext.TenantId });
     }
 
     public override async Task<Project> AddAsync(Project project)
     {
+        project.TenantId = _tenantContext.TenantId;
+        
         const string sql = @"
             INSERT INTO Projects (
-                Id, ProjectName, ClientName, ResearcherLabel, ResearcherSubLabel,
+                Id, TenantId, ProjectName, ClientName, ResearcherLabel, ResearcherSubLabel,
                 ResearcherLogo, ResearcherLogoFilename, ResearcherLogoPath,
                 BaseProjectFolder, ProjectFolder, FullFolder, FullPath, FileName,
                 IsExported, CreatedBy, CreatedOn
             ) VALUES (
-                @Id, @ProjectName, @ClientName, @ResearcherLabel, @ResearcherSubLabel,
+                @Id, @TenantId, @ProjectName, @ClientName, @ResearcherLabel, @ResearcherSubLabel,
                 @ResearcherLogo, @ResearcherLogoFilename, @ResearcherLogoPath,
                 @BaseProjectFolder, @ProjectFolder, @FullFolder, @FullPath, @FileName,
                 @IsExported, @CreatedBy, @CreatedOn
@@ -70,6 +84,7 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
         await connection.ExecuteAsync(sql, new
         {
             Id = project.Id.ToString(),
+            project.TenantId,
             project.ProjectName,
             project.ClientName,
             project.ResearcherLabel,
@@ -137,10 +152,13 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
 
     public override async Task<bool> DeleteAsync(Guid id)
     {
-        const string sql = "DELETE FROM Projects WHERE Id = @Id";
+        const string sql = @"
+            DELETE FROM Projects 
+            WHERE Id = @Id AND TenantId = @TenantId";
 
         using var connection = _context.CreateConnection();
-        var affected = await connection.ExecuteAsync(sql, new { Id = id.ToString() });
+        var affected = await connection.ExecuteAsync(sql, 
+            new { Id = id.ToString(), TenantId = _tenantContext.TenantId });
         return affected > 0;
     }
 
@@ -150,11 +168,12 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
     public async Task<Project?> GetProjectWithSurveysAsync(Guid projectId)
     {
         const string sql = @"
-            SELECT * FROM Projects WHERE Id = @ProjectId;
-            SELECT * FROM Surveys WHERE ProjectId = @ProjectId ORDER BY SurveyName;";
+            SELECT * FROM Projects WHERE Id = @ProjectId AND TenantId = @TenantId;
+            SELECT * FROM Surveys WHERE ProjectId = @ProjectId AND TenantId = @TenantId ORDER BY SurveyName;";
 
         using var connection = _context.CreateConnection();
-        using var multi = await connection.QueryMultipleAsync(sql, new { ProjectId = projectId.ToString() });
+        using var multi = await connection.QueryMultipleAsync(sql, 
+            new { ProjectId = projectId.ToString(), TenantId = _tenantContext.TenantId });
 
         var project = await multi.ReadSingleOrDefaultAsync<Project>();
         if (project != null)
@@ -173,10 +192,12 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
     {
         const string sql = @"
             SELECT * FROM Surveys 
-            WHERE ProjectId = @ProjectId
+            WHERE ProjectId = @ProjectId 
+            AND TenantId = @TenantId
             ORDER BY SurveyName";
 
         using var connection = _context.CreateConnection();
-        return await connection.QueryAsync<Survey>(sql, new { ProjectId = projectId.ToString() });
+        return await connection.QueryAsync<Survey>(sql, 
+            new { ProjectId = projectId.ToString(), TenantId = _tenantContext.TenantId });
     }
 }

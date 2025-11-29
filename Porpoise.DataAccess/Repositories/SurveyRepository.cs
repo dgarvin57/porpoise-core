@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Dapper;
 using Porpoise.Core.Application.Interfaces;
 using Porpoise.Core.Models;
+using Porpoise.Core.Services;
 using Porpoise.DataAccess.Context;
 
 namespace Porpoise.DataAccess.Repositories;
@@ -19,37 +20,47 @@ namespace Porpoise.DataAccess.Repositories;
 public class SurveyRepository : Repository<Survey>, ISurveyRepository
 {
     protected override string TableName => "Surveys";
+    private readonly TenantContext _tenantContext;
 
-    public SurveyRepository(DapperContext context) : base(context) { }
+    public SurveyRepository(DapperContext context, TenantContext tenantContext) : base(context) 
+    {
+        _tenantContext = tenantContext;
+    }
 
     public async Task<Survey?> GetByNameAsync(string surveyName)
     {
         const string sql = @"
             SELECT * FROM Surveys 
-            WHERE SurveyName = @SurveyName";
+            WHERE SurveyName = @SurveyName 
+            AND TenantId = @TenantId";
         
         using var connection = _context.CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<Survey>(sql, new { SurveyName = surveyName });
+        return await connection.QueryFirstOrDefaultAsync<Survey>(sql, 
+            new { SurveyName = surveyName, TenantId = _tenantContext.TenantId });
     }
 
     public async Task<IEnumerable<Survey>> GetByStatusAsync(SurveyStatus status)
     {
         const string sql = @"
             SELECT * FROM Surveys 
-            WHERE Status = @Status";
+            WHERE Status = @Status 
+            AND TenantId = @TenantId";
         
         using var connection = _context.CreateConnection();
-        return await connection.QueryAsync<Survey>(sql, new { Status = (int)status });
+        return await connection.QueryAsync<Survey>(sql, 
+            new { Status = (int)status, TenantId = _tenantContext.TenantId });
     }
 
     public async Task<IEnumerable<Survey>> SearchByNameAsync(string searchTerm)
     {
         const string sql = @"
             SELECT * FROM Surveys 
-            WHERE SurveyName LIKE @SearchTerm";
+            WHERE SurveyName LIKE @SearchTerm 
+            AND TenantId = @TenantId";
         
         using var connection = _context.CreateConnection();
-        return await connection.QueryAsync<Survey>(sql, new { SearchTerm = $"%{searchTerm}%" });
+        return await connection.QueryAsync<Survey>(sql, 
+            new { SearchTerm = $"%{searchTerm}%", TenantId = _tenantContext.TenantId });
     }
 
     public async Task<IEnumerable<Survey>> GetByDateRangeAsync(DateTime startDate, DateTime endDate)
@@ -57,10 +68,12 @@ public class SurveyRepository : Repository<Survey>, ISurveyRepository
         const string sql = @"
             SELECT * FROM Surveys 
             WHERE CreatedDate >= @StartDate 
-            AND CreatedDate <= @EndDate";
+            AND CreatedDate <= @EndDate 
+            AND TenantId = @TenantId";
         
         using var connection = _context.CreateConnection();
-        return await connection.QueryAsync<Survey>(sql, new { StartDate = startDate, EndDate = endDate });
+        return await connection.QueryAsync<Survey>(sql, 
+            new { StartDate = startDate, EndDate = endDate, TenantId = _tenantContext.TenantId });
     }
 
     public async Task<int> GetQuestionCountAsync(Guid surveyId)
@@ -105,14 +118,16 @@ public class SurveyRepository : Repository<Survey>, ISurveyRepository
 
     public override async Task<Survey> AddAsync(Survey survey)
     {
+        survey.TenantId = _tenantContext.TenantId;
+        
         const string sql = @"
             INSERT INTO Surveys (
-                Id, ProjectId, SurveyName, Status, LockStatus, UnlockKeyName, UnlockKeyType,
+                Id, ProjectId, TenantId, SurveyName, Status, LockStatus, UnlockKeyName, UnlockKeyType,
                 SaveAlteredString, SurveyFileName, DataFileName, OrigDataFilePath,
                 SurveyPath, SurveyFolder, FullProjectFolder, ErrorsExist, SurveyNotes,
                 CreatedDate, ModifiedDate
             ) VALUES (
-                @Id, @ProjectId, @SurveyName, @Status, @LockStatus, @UnlockKeyName, @UnlockKeyType,
+                @Id, @ProjectId, @TenantId, @SurveyName, @Status, @LockStatus, @UnlockKeyName, @UnlockKeyType,
                 @SaveAlteredString, @SurveyFileName, @DataFileName, @OrigDataFilePath,
                 @SurveyPath, @SurveyFolder, @FullProjectFolder, @ErrorsExist, @SurveyNotes,
                 @CreatedDate, @ModifiedDate
@@ -125,6 +140,7 @@ public class SurveyRepository : Repository<Survey>, ISurveyRepository
         {
             survey.Id,
             ProjectId = survey.ProjectId?.ToString(),
+            survey.TenantId,
             survey.SurveyName,
             Status = (int)survey.Status,
             LockStatus = (int)survey.LockStatus,

@@ -1,4 +1,5 @@
 // Porpoise.Api/Program.cs — NO SWAGGER, JUST PURE API
+using Porpoise.Api.Middleware;
 using Porpoise.Api.Mocks;
 using Porpoise.Core.Application.Interfaces;
 using Porpoise.Core.Models;
@@ -13,7 +14,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
-        policy.WithOrigins("http://localhost:5173")
+        policy.WithOrigins("http://localhost:5173", "http://localhost:5174")
               .AllowAnyHeader()
               .AllowAnyMethod()
     )
@@ -54,6 +55,12 @@ else
         ?? throw new InvalidOperationException("Connection string 'PorpoiseDb' not found");
     
     builder.Services.AddSingleton(new DapperContext(connectionString));
+    
+    // Register TenantContext as scoped (per-request)
+    builder.Services.AddScoped<TenantContext>();
+    
+    // Register repositories with tenant support
+    builder.Services.AddScoped<ITenantRepository, TenantRepository>();
     builder.Services.AddScoped<ISurveyRepository, SurveyRepository>();
     builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
     builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();
@@ -78,7 +85,12 @@ builder.Services.AddSingleton<AIInsightsService>(sp =>
 
 var app = builder.Build();
 
+// CORS must come first to handle preflight requests
 app.UseCors();
+
+// Add tenant middleware (after CORS, before MapControllers)
+app.UseMiddleware<TenantMiddleware>();
+
 app.MapControllers();
 
 // ═══════════════════════════════════════════════════════════════════════════════

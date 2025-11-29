@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Porpoise.Core.Models;
+using Porpoise.Core.Services;
 using Porpoise.DataAccess.Context;
 using Porpoise.DataAccess.Repositories;
 using Xunit;
@@ -15,15 +16,17 @@ public class ProjectSurveyRelationshipTests : IDisposable
     private readonly DapperContext _context;
     private readonly ProjectRepository _projectRepository;
     private readonly SurveyRepository _surveyRepository;
+    private readonly TenantContext _tenantContext;
 
     public ProjectSurveyRelationshipTests()
     {
         var connectionString = Environment.GetEnvironmentVariable("PORPOISE_TEST_CONNECTION") 
-            ?? "Server=localhost;Port=3306;Database=porpoise;Uid=porpoise;Pwd=P0rp01se!;AllowUserVariables=True;UseAffectedRows=False";
+            ?? "Server=localhost;Port=3306;Database=porpoise_dev;User=root;Password=Dg5901%1;CharSet=utf8mb4;";
         
         _context = new DapperContext(connectionString);
-        _projectRepository = new ProjectRepository(_context);
-        _surveyRepository = new SurveyRepository(_context);
+        _tenantContext = new TenantContext { TenantId = 1, TenantKey = "demo-tenant" };
+        _projectRepository = new ProjectRepository(_context, _tenantContext);
+        _surveyRepository = new SurveyRepository(_context, _tenantContext);
     }
 
     [Fact(Skip = "Requires MySQL database")]
