@@ -74,7 +74,21 @@ namespace Porpoise.Core.DataAccess
         /// <returns>Deserialized Project object</returns>
         public static Project ReadProject(string path)
         {
-            return ReadEncryptedFile<Project>(path);
+            var pFile = ReadFile(path) ?? throw new InvalidOperationException("Failed to read project file.");
+            if (pFile.FileType == PFileType.Binary)
+            {
+                var fileText = Uncolorize(pFile.Content);
+                // DEBUG: Write decrypted XML to disk for inspection
+                var debugPath = Path.Combine(Path.GetDirectoryName(path) ?? "", Path.GetFileNameWithoutExtension(path) + "_decrypted.xml");
+                File.WriteAllText(debugPath, fileText);
+                var preview = fileText.Length > 100 ? fileText.Substring(0, 100) : fileText;
+                Console.WriteLine($"[PorpoiseFileEncryption] First 100 bytes of decrypted XML: {preview}");
+                return fileText.XmlDeserializeFromString<Project>();
+            }
+            else
+            {
+                throw new NotSupportedException("Text Porpoise project files are not supported.");
+            }
         }
 
         /// <summary>

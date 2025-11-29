@@ -1,8 +1,6 @@
 // Porpoise.Api/Program.cs — NO SWAGGER, JUST PURE API
 using Porpoise.Api.Mocks;
 using Porpoise.Core.Application.Interfaces;
-using Porpoise.Core.Data;
-using Porpoise.Core.Engines;
 using Porpoise.Core.Models;
 using Porpoise.Core.Services;
 using Porpoise.DataAccess.Context;
@@ -12,6 +10,14 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddCors(options =>
     options.AddDefaultPolicy(p => p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
+
+builder.Services.AddCors(options =>
+    options.AddDefaultPolicy(policy =>
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+    )
+);
 
 // Add controllers
 builder.Services.AddControllers();
@@ -50,7 +56,12 @@ else
     builder.Services.AddSingleton(new DapperContext(connectionString));
     builder.Services.AddScoped<ISurveyRepository, SurveyRepository>();
     builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
+    builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();
+    builder.Services.AddScoped<IResponseRepository, ResponseRepository>();
+    builder.Services.AddScoped<ISurveyDataRepository, SurveyDataRepository>();
+    builder.Services.AddScoped<ProjectRepository>(); // UnitOfWork needs concrete type
     builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+    builder.Services.AddScoped<SurveyPersistenceService>();
     Console.WriteLine("✅ Using MYSQL database");
 }
 

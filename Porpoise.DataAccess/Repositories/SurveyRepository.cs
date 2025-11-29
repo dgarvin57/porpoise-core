@@ -75,12 +75,21 @@ public class SurveyRepository : Repository<Survey>, ISurveyRepository
 
     public async Task<int> GetResponseCountAsync(Guid surveyId)
     {
+        // Get the SurveyData and count rows in DataList (minus header row)
         const string sql = @"
-            SELECT COUNT(*) FROM SurveyResponses 
+            SELECT DataList 
+            FROM SurveyData 
             WHERE SurveyId = @SurveyId";
         
         using var connection = _context.CreateConnection();
-        return await connection.ExecuteScalarAsync<int>(sql, new { SurveyId = surveyId });
+        var dataListJson = await connection.ExecuteScalarAsync<string>(sql, new { SurveyId = surveyId });
+        
+        if (string.IsNullOrEmpty(dataListJson))
+            return 0;
+        
+        // Deserialize and count rows (subtract 1 for header row)
+        var dataList = System.Text.Json.JsonSerializer.Deserialize<List<List<string>>>(dataListJson);
+        return dataList != null && dataList.Count > 1 ? dataList.Count - 1 : 0;
     }
 
     public async Task<bool> SurveyNameExistsAsync(string surveyName, Guid? excludeSurveyId = null)

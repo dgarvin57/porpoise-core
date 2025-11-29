@@ -90,7 +90,7 @@ public class ResponseRepository : Repository<Response>, IResponseRepository
         await connection.ExecuteAsync(sql, new { QuestionId = questionId });
     }
 
-    public override async Task<Response> AddAsync(Response response)
+    public async Task<Response> AddAsync(Response response, Guid questionId)
     {
         const string sql = @"
             INSERT INTO Responses (
@@ -107,7 +107,7 @@ public class ResponseRepository : Repository<Response>, IResponseRepository
         await connection.ExecuteAsync(sql, new
         {
             response.Id,
-            QuestionId = Guid.Empty, // Will be set by caller
+            QuestionId = questionId,
             response.RespValue,
             Label = response.Label ?? string.Empty,
             Percentage = response.ResultPercent,
@@ -118,6 +118,12 @@ public class ResponseRepository : Repository<Response>, IResponseRepository
         });
         
         return response;
+    }
+
+    public override async Task<Response> AddAsync(Response response)
+    {
+        // Fallback for base interface - requires QuestionId to be set externally
+        return await AddAsync(response, Guid.Empty);
     }
 
     public override async Task<Response> UpdateAsync(Response response)

@@ -32,4 +32,9 @@ public interface IResponseRepository : IRepository<Response>
     /// Delete all responses for a question.
     /// </summary>
     Task DeleteByQuestionIdAsync(Guid questionId);
+
+    /// <summary>
+    /// Add a response with explicit question ID.
+    /// </summary>
+    Task<Response> AddAsync(Response response, Guid questionId);
 }

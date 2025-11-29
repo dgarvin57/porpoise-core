@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Porpoise Project Import</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; }
+        .container { max-width: 500px; margin: auto; padding: 2em; border: 1px solid #ccc; border-radius: 8px; }
+        label { display: block; margin-top: 1em; }
+        input[type="file"] { margin-bottom: 1em; }
+        button { margin-top: 1em; padding: 0.5em 1.5em; font-size: 1em; }
+        #result { margin-top: 2em; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Import Porpoise Project</h2>
+        <form id="importForm">
+            <label for="projectFile">Project file (.porp):</label>
+            <input type="file" id="projectFile" name="projectFile" accept=".porp" required>
+
+            <label for="surveyFile">Survey file (.porps):</label>
+            <input type="file" id="surveyFile" name="surveyFile" accept=".porps">
+
+            <label for="dataFile">Data file (.porpd):</label>
+            <input type="file" id="dataFile" name="dataFile" accept=".porpd">
+
+            <button type="submit">Import Project</button>
+        </form>
+        <div id="result"></div>
+    </div>
+    <script>
+        document.getElementById('importForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const form = e.target;
+            const formData = new FormData();
+            const projectFile = form.projectFile.files[0];
+            const surveyFile = form.surveyFile.files[0];
+            const dataFile = form.dataFile.files[0];
+            if (projectFile) formData.append('projectFile', projectFile);
+            if (surveyFile) formData.append('surveyFile', surveyFile);
+            if (dataFile) formData.append('dataFile', dataFile);
+            
+            document.getElementById('result').textContent = 'Uploading...';
+            try {
+                const response = await fetch('/api/import/project', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                document.getElementById('result').textContent = JSON.stringify(result, null, 2);
+            } catch (err) {
+                document.getElementById('result').textContent = 'Error: ' + err;
+            }
+        });
+    </script>
+</body>
+</html>

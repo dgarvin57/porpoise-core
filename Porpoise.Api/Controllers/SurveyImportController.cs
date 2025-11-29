@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
+using System.IO.Compression;
 using Porpoise.Core.Application.Interfaces;
 using Porpoise.Core.Data;
 using Porpoise.Core.Models;
+using Porpoise.Core.Services;
 
 namespace Porpoise.Api.Controllers;
 
@@ -10,14 +12,112 @@ namespace Porpoise.Api.Controllers;
 public class SurveyImportController : ControllerBase
 {
     private readonly ISurveyRepository _surveyRepository;
+    private readonly SurveyPersistenceService? _persistenceService;
     private readonly IWebHostEnvironment _environment;
 
     public SurveyImportController(
         ISurveyRepository surveyRepository,
-        IWebHostEnvironment environment)
+        IWebHostEnvironment environment,
+        SurveyPersistenceService? persistenceService = null)
     {
         _surveyRepository = surveyRepository;
         _environment = environment;
+        _persistenceService = persistenceService;
+    }
+
+    /// <summary>
+    /// Helper method to import surveys from a directory containing .porp, .porps, and .porpd files
+    /// </summary>
+    private async Task<(List<object> ImportedSurveys, List<string> Errors, List<string> ReferencedFiles)> ImportSurveysFromDirectory(string directory, string projectFilePath)
+    {
+        var importedSurveys = new List<object>();
+        var errors = new List<string>();
+        var referencedFiles = new List<string>();
+
+        // Load the project to get survey references
+        var project = ProjectLoader.LoadProjectOnly(projectFilePath);
+        
+        if (project.SurveyListSummary == null || project.SurveyListSummary.Count == 0)
+        {
+            errors.Add("Project file contains no survey references");
+            return (importedSurveys, errors, referencedFiles);
+        }
+
+        // List all referenced survey/data filenames
+        foreach (var surveySummary in project.SurveyListSummary)
+        {
+            referencedFiles.Add($"Survey: {surveySummary.SurveyFileName}");
+            referencedFiles.Add($"Data: {surveySummary.SurveyFileName.Replace(".porps", ".porpd")}");
+        }
+
+        // Import each survey referenced in the project
+        foreach (var surveySummary in project.SurveyListSummary)
+        {
+            try
+            {
+                var projectFolder = Path.GetDirectoryName(projectFilePath) ?? directory;
+                string? expectedSurveyPath = null;
+                if (!string.IsNullOrEmpty(surveySummary.SurveyFolder))
+                {
+                    if (Path.IsPathRooted(surveySummary.SurveyFolder))
+                    {
+                        expectedSurveyPath = Path.Combine(surveySummary.SurveyFolder, surveySummary.SurveyFileName);
+                    }
+                    else
+                    {
+                        expectedSurveyPath = Path.Combine(projectFolder, surveySummary.SurveyFolder, surveySummary.SurveyFileName);
+                    }
+                }
+                else
+                {
+                    expectedSurveyPath = Path.Combine(projectFolder, surveySummary.SurveyFileName);
+                }
+
+                string fallbackSurveyPath = Path.Combine(projectFolder, surveySummary.SurveyFileName);
+                string surveyPath = System.IO.File.Exists(expectedSurveyPath) ? expectedSurveyPath : (System.IO.File.Exists(fallbackSurveyPath) ? fallbackSurveyPath : expectedSurveyPath);
+                var dataPath = surveyPath.Replace(".porps", ".porpd");
+
+                if (!System.IO.File.Exists(surveyPath))
+                {
+                    errors.Add($"Survey file not found: {surveySummary.SurveyFileName}\nTried: {expectedSurveyPath}\nAlso tried: {fallbackSurveyPath}");
+                    continue;
+                }
+
+                // Load the survey
+                var (survey, _, data) = ProjectLoader.LoadProject(
+                    surveyPath,
+                    projectFilePath,
+                    System.IO.File.Exists(dataPath) ? dataPath : surveyPath
+                );
+
+                survey.Data = data;
+
+                // Save using persistence service if available, otherwise use basic repository
+                Survey savedSurvey;
+                if (_persistenceService != null)
+                {
+                    savedSurvey = await _persistenceService.SaveSurveyWithDetailsAsync(survey, project);
+                }
+                else
+                {
+                    savedSurvey = await _surveyRepository.AddAsync(survey);
+                }
+
+                importedSurveys.Add(new
+                {
+                    SurveyId = savedSurvey.Id,
+                    SurveyName = savedSurvey.SurveyName,
+                    QuestionCount = savedSurvey.QuestionList?.Count ?? 0,
+                    ResponseCount = data?.DataList?.Count - 1 ?? 0
+                });
+            }
+            catch (Exception ex)
+            {
+                errors.Add($"Error importing {surveySummary.SurveyFileName}: {ex.Message}");
+            }
+        }
+
+        return (importedSurveys, errors, referencedFiles);
     }
 
     /// <summary>
@@ -65,8 +165,16 @@ public class SurveyImportController : ControllerBase
             // Link data to survey
             survey.Data = data;
 
-            // Save to database (if not using in-memory mode)
-            var savedSurvey = await _surveyRepository.AddAsync(survey);
+            // Save using persistence service if available, otherwise use basic repository
+            Survey savedSurvey;
+            if (_persistenceService != null)
+            {
+                savedSurvey = await _persistenceService.SaveSurveyWithDetailsAsync(survey, project);
+            }
+            else
+            {
+                savedSurvey = await _surveyRepository.AddAsync(survey);
+            }
 
             // Clean up temp files
             System.IO.File.Delete(tempSurveyPath);
@@ -90,6 +198,84 @@ public class SurveyImportController : ControllerBase
     }
 
     /// <summary>
+    /// Import all surveys from a .porp project file
+    /// Reads the project file and imports all referenced surveys
+    /// </summary>
+    [HttpPost("project")]
+    public async Task<IActionResult> ImportProjectFile(
+        [FromForm] IFormFile projectFile,
+        [FromForm] IFormFile? surveyFile,
+        [FromForm] IFormFile? dataFile)
+    {
+        try
+        {
+            if (projectFile == null || projectFile.Length == 0)
+                return BadRequest("Project file (.porp) is required");
+
+
+            // Save project file temporarily
+            var tempProjectPath = Path.Combine(Path.GetTempPath(), projectFile.FileName);
+            using (var stream = new FileStream(tempProjectPath, FileMode.Create))
+            {
+                await projectFile.CopyToAsync(stream);
+            }
+
+            // Save survey file if provided
+            if (surveyFile != null && surveyFile.Length > 0)
+            {
+                var tempSurveyPath = Path.Combine(Path.GetTempPath(), surveyFile.FileName);
+                using (var stream = new FileStream(tempSurveyPath, FileMode.Create))
+                {
+                    await surveyFile.CopyToAsync(stream);
+                }
+            }
+
+            // Save data file if provided
+            if (dataFile != null && dataFile.Length > 0)
+            {
+                var tempDataPath = Path.Combine(Path.GetTempPath(), dataFile.FileName);
+                using (var stream = new FileStream(tempDataPath, FileMode.Create))
+                {
+                    await dataFile.CopyToAsync(stream);
+                }
+            }
+
+            // List all *.porp* files in temp directory for troubleshooting
+            var tempDir = Path.GetDirectoryName(tempProjectPath) ?? Path.GetTempPath();
+            var porpFiles = Directory.GetFiles(tempDir, "*.porp*").Select(Path.GetFileName).ToList();
+            Console.WriteLine("PORP-related files in temp directory:");
+            foreach (var file in porpFiles)
+            {
+                Console.WriteLine($" - {file}");
+            }
+
+            // Import surveys using shared helper method
+            var (importedSurveys, errors, referencedFiles) = await ImportSurveysFromDirectory(tempDir, tempProjectPath);
+
+            // Load project metadata for response
+            var project = ProjectLoader.LoadProjectOnly(tempProjectPath);
+
+            // Clean up temp project file
+            System.IO.File.Delete(tempProjectPath);
+
+            return Ok(new
+            {
+                Message = $"Imported {importedSurveys.Count} of {project.SurveyListSummary?.Count ?? 0} surveys",
+                ProjectName = project.ProjectName,
+                ClientName = project.ClientName,
+                TempPorpFiles = porpFiles,
+                ReferencedFiles = referencedFiles,
+                ImportedSurveys = importedSurveys,
+                Errors = errors.Count > 0 ? errors : null
+            });
+        }
+        catch (Exception ex)
+        {
+            return Problem($"Error importing project: {ex.Message}");
+        }
+    }
+
+    /// <summary>
     /// Import a .porpz archive file (compressed survey package)
     /// </summary>
     [HttpPost("porpz")]
@@ -100,23 +286,69 @@ public class SurveyImportController : ControllerBase
             if (porpzFile == null || porpzFile.Length == 0)
                 return BadRequest("PORPZ file is required");
 
-            // TODO: Implement .porpz extraction and import
-            // .porpz files are typically compressed archives containing:
-            // - .porps (survey definition)
-            // - .porpd (response data)
-            // - .porp (project metadata)
-            // This will require zip extraction logic
-
-            return StatusCode(501, new
+            // Save the uploaded .porpz file to a temp location
+            var tempZipPath = Path.Combine(Path.GetTempPath(), porpzFile.FileName);
+            using (var stream = new FileStream(tempZipPath, FileMode.Create))
             {
-                Message = "PORPZ import not yet implemented",
+                await porpzFile.CopyToAsync(stream);
+            }
+
+            // Create a temp directory for extraction
+            var extractDir = Path.Combine(Path.GetTempPath(), Path.GetFileNameWithoutExtension(tempZipPath) + "_extract");
+            if (Directory.Exists(extractDir))
+                Directory.Delete(extractDir, true);
+            Directory.CreateDirectory(extractDir);
+
+            // Extract the zip file
+            ZipFile.ExtractToDirectory(tempZipPath, extractDir);
+
+            // List extracted files
+            var extractedFiles = Directory.GetFiles(extractDir, "*", SearchOption.AllDirectories)
+                .Select(f => Path.GetRelativePath(extractDir, f)).ToList();
+
+            // Find the .porp project file
+            var projectFile = Directory.GetFiles(extractDir, "*.porp", SearchOption.AllDirectories).FirstOrDefault();
+            if (projectFile == null)
+            {
+                Directory.Delete(extractDir, true);
+                System.IO.File.Delete(tempZipPath);
+                return BadRequest("No .porp project file found in archive");
+            }
+
+            // Use the same import logic as /project endpoint
+            var (importedSurveys, errors, referencedFiles) = await ImportSurveysFromDirectory(extractDir, projectFile);
+
+            // Load project metadata
+            var project = ProjectLoader.LoadProjectOnly(projectFile);
+
+            // Clean up
+            System.IO.File.Delete(tempZipPath);
+            Directory.Delete(extractDir, true);
+
+            return Ok(new
+            {
+                Message = $"Imported {importedSurveys.Count} of {project.SurveyListSummary?.Count ?? 0} surveys from PORPZ archive",
                 FileName = porpzFile.FileName,
-                FileSize = porpzFile.Length
+                ProjectName = project.ProjectName,
+                ClientName = project.ClientName,
+                ExtractedFiles = extractedFiles,
+                ReferencedFiles = referencedFiles,
+                ImportedSurveys = importedSurveys,
+                Errors = errors.Count > 0 ? errors : null
             });
         }
         catch (Exception ex)
         {
             return Problem($"Error importing PORPZ file: {ex.Message}");
+        }
+        finally
+        {
+            // Clean up extraction directory if it exists
+            var extractDir = Path.Combine(Path.GetTempPath(), Path.GetFileNameWithoutExtension(porpzFile.FileName) + "_extract");
+            if (Directory.Exists(extractDir))
+            {
+                try { Directory.Delete(extractDir, true); } catch { }
+            }
         }
     }
 

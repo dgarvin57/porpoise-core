@@ -37,4 +37,9 @@ public interface IQuestionRepository : IRepository<Question>
     /// Delete all questions for a survey.
     /// </summary>
     Task DeleteBySurveyIdAsync(Guid surveyId);
+
+    /// <summary>
+    /// Add a question with explicit survey ID.
+    /// </summary>
+    Task<Question> AddAsync(Question question, Guid surveyId);
 }

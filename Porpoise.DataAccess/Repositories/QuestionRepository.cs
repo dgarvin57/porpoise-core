@@ -74,7 +74,7 @@ public class QuestionRepository : Repository<Question>, IQuestionRepository
         await connection.ExecuteAsync(sql, new { SurveyId = surveyId });
     }
 
-    public override async Task<Question> AddAsync(Question question)
+    public async Task<Question> AddAsync(Question question, Guid surveyId)
     {
         const string sql = @"
             INSERT INTO Questions (
@@ -91,7 +91,7 @@ public class QuestionRepository : Repository<Question>, IQuestionRepository
         await connection.ExecuteAsync(sql, new
         {
             question.Id,
-            SurveyId = Guid.Empty, // Will be set by caller
+            SurveyId = surveyId,
             QstNumber = question.QstNumber ?? string.Empty,
             QstLabel = question.QstLabel ?? string.Empty,
             DataFileColumn = question.DataFileCol,
@@ -103,6 +103,12 @@ public class QuestionRepository : Repository<Question>, IQuestionRepository
         });
         
         return question;
+    }
+
+    public override async Task<Question> AddAsync(Question question)
+    {
+        // Fallback for base interface - requires SurveyId to be set externally
+        return await AddAsync(question, Guid.Empty);
     }
 
     public override async Task<Question> UpdateAsync(Question question)

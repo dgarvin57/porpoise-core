@@ -43,4 +43,17 @@ public static class ProjectLoader
         
         return PorpoiseFileEncryption.ReadSurvey(surveyPath);
     }
+
+    /// <summary>
+    /// Loads only the project metadata from a .porp file
+    /// </summary>
+    /// <param name="projectPath">Path to the project file</param>
+    /// <returns>Deserialized Project object with survey references</returns>
+    public static Project LoadProjectOnly(string projectPath)
+    {
+        if (!File.Exists(projectPath))
+            throw new FileNotFoundException($"Project file not found: {projectPath}");
+        
+        return PorpoiseFileEncryption.ReadProject(projectPath);
+    }
 }
