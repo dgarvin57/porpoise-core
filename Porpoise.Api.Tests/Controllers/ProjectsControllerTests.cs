@@ -46,7 +46,7 @@ namespace Porpoise.Api.Tests.Controllers
         public async Task GetProjectById_ReturnsNotFound_WhenProjectDoesNotExist()
         {
             // Arrange
-            _mockProjectRepository.Setup(repo => repo.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Project)null);
+            _mockProjectRepository.Setup(repo => repo.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(null as Project);
 
             // Act
             var result = await _controller.GetProjectById(Guid.NewGuid());
@@ -106,7 +106,7 @@ namespace Porpoise.Api.Tests.Controllers
         public async Task UpdateProject_ReturnsNotFound_WhenProjectDoesNotExist()
         {
             // Arrange
-            _mockProjectRepository.Setup(repo => repo.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Project)null);
+            _mockProjectRepository.Setup(repo => repo.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(null as Project);
 
             // Act
             var result = await _controller.UpdateProject(Guid.NewGuid(), new Project());
@@ -136,7 +136,7 @@ namespace Porpoise.Api.Tests.Controllers
         public async Task DeleteProject_ReturnsNotFound_WhenProjectDoesNotExist()
         {
             // Arrange
-            _mockProjectRepository.Setup(repo => repo.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync((Project)null);
+            _mockProjectRepository.Setup(repo => repo.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(null as Project);
 
             // Act
             var result = await _controller.DeleteProject(Guid.NewGuid());

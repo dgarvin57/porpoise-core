@@ -27,6 +27,28 @@ public class SurveyRepository : Repository<Survey>, ISurveyRepository
         _tenantContext = tenantContext;
     }
 
+    public override async Task<IEnumerable<Survey>> GetAllAsync()
+    {
+        const string sql = @"
+            SELECT * FROM Surveys 
+            WHERE TenantId = @TenantId";
+        
+        using var connection = _context.CreateConnection();
+        return await connection.QueryAsync<Survey>(sql, new { TenantId = _tenantContext.TenantId });
+    }
+
+    public override async Task<Survey?> GetByIdAsync(Guid id)
+    {
+        const string sql = @"
+            SELECT * FROM Surveys 
+            WHERE Id = @Id 
+            AND TenantId = @TenantId";
+        
+        using var connection = _context.CreateConnection();
+        return await connection.QueryFirstOrDefaultAsync<Survey>(sql, 
+            new { Id = id, TenantId = _tenantContext.TenantId });
+    }
+
     public async Task<Survey?> GetByNameAsync(string surveyName)
     {
         const string sql = @"

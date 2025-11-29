@@ -11,9 +11,16 @@ using Xunit;
 namespace Porpoise.DataAccess.Tests;
 
 /// <summary>
+/// Collection definition to ensure tenant isolation tests run sequentially, not in parallel.
+/// </summary>
+[CollectionDefinition("TenantIsolation", DisableParallelization = true)]
+public class TenantIsolationCollection { }
+
+/// <summary>
 /// Integration tests for multi-tenancy isolation.
 /// These tests write to the actual dev database to verify tenant isolation.
 /// </summary>
+[Collection("TenantIsolation")]
 public class TenantIsolationTests : IDisposable
 {
     private readonly DapperContext _context;
@@ -38,12 +45,29 @@ public class TenantIsolationTests : IDisposable
         _context = new DapperContext(connectionString);
         _tenantRepository = new TenantRepository(_context);
 
-        // Create test tenants
-        var tenant1 = new Tenant { TenantKey = "test-tenant-1", Name = "Test Tenant 1", IsActive = true };
-        var tenant2 = new Tenant { TenantKey = "test-tenant-2", Name = "Test Tenant 2", IsActive = true };
-        
-        _testTenant1Id = _tenantRepository.AddAsync(tenant1).Result;
-        _testTenant2Id = _tenantRepository.AddAsync(tenant2).Result;
+        // Try to get existing test tenants, or create new ones
+        var tenant1 = _tenantRepository.GetByKeyAsync("test-tenant-1").Result;
+        var tenant2 = _tenantRepository.GetByKeyAsync("test-tenant-2").Result;
+
+        if (tenant1 == null)
+        {
+            tenant1 = new Tenant { TenantKey = "test-tenant-1", Name = "Test Tenant 1", IsActive = true };
+            _testTenant1Id = _tenantRepository.AddAsync(tenant1).Result;
+        }
+        else
+        {
+            _testTenant1Id = tenant1.TenantId;
+        }
+
+        if (tenant2 == null)
+        {
+            tenant2 = new Tenant { TenantKey = "test-tenant-2", Name = "Test Tenant 2", IsActive = true };
+            _testTenant2Id = _tenantRepository.AddAsync(tenant2).Result;
+        }
+        else
+        {
+            _testTenant2Id = tenant2.TenantId;
+        }
 
         // Create contexts for each tenant
         var tenantContext1 = new TenantContext { TenantId = _testTenant1Id, TenantKey = "test-tenant-1" };
@@ -66,6 +90,9 @@ public class TenantIsolationTests : IDisposable
             _surveyRepositoryTenant1, questionRepo1, responseRepo1, surveyDataRepo1, _projectRepositoryTenant1);
         _persistenceServiceTenant2 = new SurveyPersistenceService(
             _surveyRepositoryTenant2, questionRepo2, responseRepo2, surveyDataRepo2, _projectRepositoryTenant2);
+
+        // Clean up any leftover data from previous test runs
+        CleanupTestDataAsync().Wait();
     }
 
     [Fact]
@@ -132,14 +159,20 @@ public class TenantIsolationTests : IDisposable
         var tenant1Surveys = await _surveyRepositoryTenant1.GetAllAsync();
         var tenant2Surveys = await _surveyRepositoryTenant2.GetAllAsync();
 
-        // Assert - Each tenant sees only their own surveys
-        var tenant1List = new List<Survey>(tenant1Surveys);
-        var tenant2List = new List<Survey>(tenant2Surveys);
+        // Assert - Each tenant can see their own survey
+        Assert.Contains(tenant1Surveys, s => s.Id == saved1.Id && s.SurveyName == "Tenant 1 Survey");
+        Assert.Contains(tenant2Surveys, s => s.Id == saved2.Id && s.SurveyName == "Tenant 2 Survey");
+
+        // Assert - Each tenant cannot see the other tenant's survey
+        Assert.DoesNotContain(tenant1Surveys, s => s.Id == saved2.Id);
+        Assert.DoesNotContain(tenant2Surveys, s => s.Id == saved1.Id);
+
+        // Assert - Direct lookup across tenants should fail
+        var tenant1CannotSeeSurvey2 = await _surveyRepositoryTenant1.GetByIdAsync(saved2.Id);
+        var tenant2CannotSeeSurvey1 = await _surveyRepositoryTenant2.GetByIdAsync(saved1.Id);
         
-        Assert.Single(tenant1List);
-        Assert.Single(tenant2List);
-        Assert.Equal("Tenant 1 Survey", tenant1List[0].SurveyName);
-        Assert.Equal("Tenant 2 Survey", tenant2List[0].SurveyName);
+        Assert.Null(tenant1CannotSeeSurvey2);
+        Assert.Null(tenant2CannotSeeSurvey1);
     }
 
     [Fact]
@@ -202,25 +235,27 @@ public class TenantIsolationTests : IDisposable
         _createdSurveyIds.Add(savedSurvey1.Id);
         _createdSurveyIds.Add(savedSurvey2.Id);
 
-        // Assert - Tenant 1 sees only their data
-        var tenant1Projects = new List<Project>(await _projectRepositoryTenant1.GetAllAsync());
-        var tenant1Surveys = new List<Survey>(await _surveyRepositoryTenant1.GetAllAsync());
+        // Assert - Tenant 1 can see their own project and survey
+        var tenant1Projects = await _projectRepositoryTenant1.GetAllAsync();
+        var tenant1Surveys = await _surveyRepositoryTenant1.GetAllAsync();
         
-        Assert.Single(tenant1Projects);
-        Assert.Single(tenant1Surveys);
-        Assert.Equal("Isolation Test Project 1", tenant1Projects[0].ProjectName);
-        Assert.Equal("Complete Survey Tenant 1", tenant1Surveys[0].SurveyName);
+        Assert.Contains(tenant1Projects, p => p.ProjectName == "Isolation Test Project 1");
+        Assert.Contains(tenant1Surveys, s => s.Id == savedSurvey1.Id && s.SurveyName == "Complete Survey Tenant 1");
 
-        // Assert - Tenant 2 sees only their data
-        var tenant2Projects = new List<Project>(await _projectRepositoryTenant2.GetAllAsync());
-        var tenant2Surveys = new List<Survey>(await _surveyRepositoryTenant2.GetAllAsync());
+        // Assert - Tenant 2 can see their own project and survey
+        var tenant2Projects = await _projectRepositoryTenant2.GetAllAsync();
+        var tenant2Surveys = await _surveyRepositoryTenant2.GetAllAsync();
         
-        Assert.Single(tenant2Projects);
-        Assert.Single(tenant2Surveys);
-        Assert.Equal("Isolation Test Project 2", tenant2Projects[0].ProjectName);
-        Assert.Equal("Complete Survey Tenant 2", tenant2Surveys[0].SurveyName);
+        Assert.Contains(tenant2Projects, p => p.ProjectName == "Isolation Test Project 2");
+        Assert.Contains(tenant2Surveys, s => s.Id == savedSurvey2.Id && s.SurveyName == "Complete Survey Tenant 2");
 
-        // Assert - Cross-tenant access returns nothing
+        // Assert - Each tenant cannot see the other tenant's data
+        Assert.DoesNotContain(tenant1Projects, p => p.ProjectName == "Isolation Test Project 2");
+        Assert.DoesNotContain(tenant1Surveys, s => s.Id == savedSurvey2.Id);
+        Assert.DoesNotContain(tenant2Projects, p => p.ProjectName == "Isolation Test Project 1");
+        Assert.DoesNotContain(tenant2Surveys, s => s.Id == savedSurvey1.Id);
+
+        // Assert - Cross-tenant access by name returns nothing
         var tenant1CannotSeeProject2 = await _projectRepositoryTenant1.GetByNameAsync("Isolation Test Project 2");
         var tenant2CannotSeeSurvey1 = await _surveyRepositoryTenant2.GetByNameAsync("Complete Survey Tenant 1");
         
@@ -228,39 +263,64 @@ public class TenantIsolationTests : IDisposable
         Assert.Null(tenant2CannotSeeSurvey1);
     }
 
+    // Helper method to clean up test data
+    private async Task CleanupTestDataAsync()
+    {
+        // Get all surveys for both test tenants and delete them
+        var tenant1Surveys = await _surveyRepositoryTenant1.GetAllAsync();
+        foreach (var survey in tenant1Surveys)
+        {
+            _createdSurveyIds.Add(survey.Id);
+            try
+            {
+                await _surveyRepositoryTenant1.DeleteAsync(survey.Id);
+            }
+            catch { /* Ignore if already deleted */ }
+        }
+
+        var tenant2Surveys = await _surveyRepositoryTenant2.GetAllAsync();
+        foreach (var survey in tenant2Surveys)
+        {
+            _createdSurveyIds.Add(survey.Id);
+            try
+            {
+                await _surveyRepositoryTenant2.DeleteAsync(survey.Id);
+            }
+            catch { /* Ignore if already deleted */ }
+        }
+
+        // Get all projects for both test tenants and delete them
+        var tenant1Projects = await _projectRepositoryTenant1.GetAllAsync();
+        foreach (var project in tenant1Projects)
+        {
+            _createdProjectIds.Add(project.Id);
+            try
+            {
+                await _projectRepositoryTenant1.DeleteAsync(project.Id);
+            }
+            catch { /* Ignore if already deleted */ }
+        }
+
+        var tenant2Projects = await _projectRepositoryTenant2.GetAllAsync();
+        foreach (var project in tenant2Projects)
+        {
+            _createdProjectIds.Add(project.Id);
+            try
+            {
+                await _projectRepositoryTenant2.DeleteAsync(project.Id);
+            }
+            catch { /* Ignore if already deleted */ }
+        }
+
+        _createdSurveyIds.Clear();
+        _createdProjectIds.Clear();
+    }
+
     public void Dispose()
     {
-        // Cleanup: Delete all created test data
-        foreach (var surveyId in _createdSurveyIds)
-        {
-            try
-            {
-                _surveyRepositoryTenant1.DeleteAsync(surveyId).Wait();
-            }
-            catch { /* Ignore if already deleted */ }
-            try
-            {
-                _surveyRepositoryTenant2.DeleteAsync(surveyId).Wait();
-            }
-            catch { /* Ignore if already deleted */ }
-        }
-
-        foreach (var projectId in _createdProjectIds)
-        {
-            try
-            {
-                _projectRepositoryTenant1.DeleteAsync(projectId).Wait();
-            }
-            catch { /* Ignore if already deleted */ }
-            try
-            {
-                _projectRepositoryTenant2.DeleteAsync(projectId).Wait();
-            }
-            catch { /* Ignore if already deleted */ }
-        }
-
-        // Delete test tenants
-        _tenantRepository.DeleteAsync(_testTenant1Id).Wait();
-        _tenantRepository.DeleteAsync(_testTenant2Id).Wait();
+        // Cleanup: Delete all test data for these tenants
+        // Note: We intentionally do NOT delete the test tenants themselves,
+        // as they are reused across test runs for efficiency
+        CleanupTestDataAsync().Wait();
     }
 }
