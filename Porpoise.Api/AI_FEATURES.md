@@ -4,6 +4,8 @@
 
 Porpoise now includes AI-powered insights that **explain** your statistical calculations in plain English. The AI doesn't replace your statistical engines - it makes them more accessible.
 
+**Note:** This documentation describes the AI features in the Porpoise application. The AI service used is **OpenAI GPT-4o-mini**. This is separate from the AI assistant (Claude Sonnet 4.5 by Anthropic) used for development help.
+
 ## How It Works
 
 ```
@@ -74,6 +76,7 @@ Using `gpt-4o-mini` (fast and cheap):
 - Executive summaries of survey statistics
 - Sample size quality assessments
 - Survey complexity analysis
+- Top line analysis summary
 
 🚧 **Coming Soon:**
 - Question wording improvements
