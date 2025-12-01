@@ -244,6 +244,7 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
                 p.StartDate,
                 p.EndDate,
                 p.CreatedDate,
+                MAX(s.ModifiedDate) as LastModifiedDate,
                 COUNT(DISTINCT s.Id) as SurveyCount,
                 MAX(s.Id) as FirstSurveyId,
                 MAX(s.SurveyName) as FirstSurveyName,
