@@ -161,5 +161,87 @@ namespace Porpoise.Api.Tests.Controllers
             // Assert
             Assert.IsType<NoContentResult>(result);
         }
+
+        [Fact]
+        public async Task GetProjectsWithSurveyCounts_ReturnsOkResult_WithProjectCounts()
+        {
+            // Arrange
+            var projectsWithCounts = new List<dynamic>
+            {
+                new { Id = Guid.NewGuid(), ProjectName = "Project 1", SurveyCount = 3 },
+                new { Id = Guid.NewGuid(), ProjectName = "Project 2", SurveyCount = 1 }
+            };
+            _mockProjectRepository.Setup(repo => repo.GetProjectsWithSurveyCountAsync()).ReturnsAsync(projectsWithCounts);
+
+            // Act
+            var result = await _controller.GetProjectsWithCounts();
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.NotNull(okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetMultiSurveyProjects_ReturnsOkResult_WithMultiSurveyProjects()
+        {
+            // Arrange
+            var multiSurveyProjects = new List<dynamic>
+            {
+                new { Id = Guid.NewGuid(), ProjectName = "Multi Survey Project", SurveyCount = 4 }
+            };
+            _mockProjectRepository.Setup(repo => repo.GetMultiSurveyProjectsAsync()).ReturnsAsync(multiSurveyProjects);
+
+            // Act
+            var result = await _controller.GetMultiSurveyProjects();
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.NotNull(okResult.Value);
+        }
+
+        [Fact]
+        public async Task GetProjectSurveys_ReturnsNotFound_WhenProjectDoesNotExist()
+        {
+            // Arrange
+            _mockProjectRepository.Setup(repo => repo.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(null as Project);
+
+            // Act
+            var result = await _controller.GetProjectSurveys(Guid.NewGuid());
+
+            // Assert
+            Assert.IsType<NotFoundResult>(result);
+        }
+
+        [Fact]
+        public async Task MoveSurveyToProject_ReturnsNotFound_WhenProjectDoesNotExist()
+        {
+            // Arrange
+            _mockProjectRepository.Setup(repo => repo.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(null as Project);
+
+            // Act
+            var result = await _controller.MoveSurvey(Guid.NewGuid(), Guid.NewGuid());
+
+            // Assert
+            Assert.IsType<NotFoundResult>(result);
+        }
+
+        [Fact]
+        public async Task MoveSurveyToProject_ReturnsNoContent_WhenMoveIsSuccessful()
+        {
+            // Arrange
+            var projectId = Guid.NewGuid();
+            var surveyId = Guid.NewGuid();
+            var project = new Project { Id = projectId, ProjectName = "Project 1" };
+            _mockProjectRepository.Setup(repo => repo.GetByIdAsync(projectId)).ReturnsAsync(project);
+            _mockProjectRepository.Setup(repo => repo.MoveSurveyToProjectAsync(surveyId, projectId)).ReturnsAsync(true);
+            _mockUnitOfWork.Setup(uow => uow.CommitAsync()).ReturnsAsync(1);
+
+            // Act
+            var result = await _controller.MoveSurvey(projectId, surveyId);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.NotNull(okResult.Value);
+        }
     }
 }

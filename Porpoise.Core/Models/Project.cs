@@ -16,6 +16,11 @@ namespace Porpoise.Core.Models
         private int _tenantId;
         private string? _projectName;
         private string? _clientName;
+        private string? _description;
+        private DateTime? _startDate;
+        private DateTime? _endDate;
+        private string? _defaultWeightingScheme;
+        private string? _brandingSettings;
         private string? _researcherLabel;
         private string? _researcherSubLabel;
         // Legacy WinForms: public Image? ResearcherLogo { get; set; }
@@ -27,11 +32,11 @@ namespace Porpoise.Core.Models
         private ObjectListBase<Survey>? _surveyList;
         private ObjectListBase<SurveySummary>? _surveyListSummary;
 
-        // These are runtime-only (not serialized)
+        // These are runtime-only (not serialized) - kept for backwards compatibility
         private string? _fullPath;
         private string? _fullFolder;
         private string? _projectFolder;
-        private string? _fileName;
+        private string? _projectFile;
         private string? _baseProjectFolder;
 
         private bool _isExported;
@@ -83,6 +88,36 @@ namespace Porpoise.Core.Models
         {
             get => _clientName;
             set => SetProperty(ref _clientName, value, nameof(ClientName));
+        }
+
+        public string? Description
+        {
+            get => _description;
+            set => SetProperty(ref _description, value, nameof(Description));
+        }
+
+        public DateTime? StartDate
+        {
+            get => _startDate;
+            set => SetProperty(ref _startDate, value, nameof(StartDate));
+        }
+
+        public DateTime? EndDate
+        {
+            get => _endDate;
+            set => SetProperty(ref _endDate, value, nameof(EndDate));
+        }
+
+        public string? DefaultWeightingScheme
+        {
+            get => _defaultWeightingScheme;
+            set => SetProperty(ref _defaultWeightingScheme, value, nameof(DefaultWeightingScheme));
+        }
+
+        public string? BrandingSettings
+        {
+            get => _brandingSettings;
+            set => SetProperty(ref _brandingSettings, value, nameof(BrandingSettings));
         }
 
         public string? ResearcherLabel
@@ -175,10 +210,18 @@ namespace Porpoise.Core.Models
             set => SetProperty(ref _baseProjectFolder, value, nameof(BaseProjectFolder));
         }
 
+        public string? ProjectFile
+        {
+            get => _projectFile;
+            set => SetProperty(ref _projectFile, value, nameof(ProjectFile));
+        }
+
+        // Legacy property for backwards compatibility
+        [Obsolete("Use ProjectFile instead")]
         public string? FileName
         {
-            get => _fileName;
-            set => SetProperty(ref _fileName, value, nameof(FileName));
+            get => _projectFile;
+            set => SetProperty(ref _projectFile, value, nameof(FileName));
         }
 
         public bool IsExported

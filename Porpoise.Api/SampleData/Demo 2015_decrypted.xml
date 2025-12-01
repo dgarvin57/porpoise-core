@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-16"?>
+<Project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <CreatedOn>2015-03-24T21:20:57.129476-07:00</CreatedOn>
+  <CreatedBy>valsmith</CreatedBy>
+  <ModifiedOn>2015-06-02T14:45:13.5345236-07:00</ModifiedOn>
+  <ModifiedBy>valsmith</ModifiedBy>
+  <IsDirty>true</IsDirty>
+  <Id>c902a6fa-2b7a-4572-a2ce-226e9e217fab</Id>
+  <ProjectName>Demo 2015</ProjectName>
+  <ClientName>Val</ClientName>
+  <ResearcherLabel>Researcher name here</ResearcherLabel>
+  <ResearcherSubLabel>Researcher title here</ResearcherSubLabel>
+  <SurveyListSummary>
+    <SurveySummary>
+      <CreatedOn>2015-06-02T14:45:13.8155397-07:00</CreatedOn>
+      <CreatedBy>valsmith</CreatedBy>
+      <ModifiedOn>0001-01-01T00:00:00</ModifiedOn>
+      <Id>512d80e2-9751-49dc-9bfa-12dcda09a390</Id>
+      <SurveyName>Demo 2015</SurveyName>
+      <SurveyFileName>Demo 2015.porps</SurveyFileName>
+      <SurveyFolder>Demo 2015</SurveyFolder>
+    </SurveySummary>
+  </SurveyListSummary>
+  <ProjectFolder>C:\Users\valsmith\AppData\Local\Temp\Demo 2015\Demo 2015.porp</ProjectFolder>
+  <BaseProjectFolder>\Porpoise Projects</BaseProjectFolder>
+  <FileName>Demo 2015.porp</FileName>
+  <IsExported>true</IsExported>
+</Project>

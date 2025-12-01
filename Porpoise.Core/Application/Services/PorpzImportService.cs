@@ -185,15 +185,33 @@ public class PorpzImportService : IDisposable
                         survey.FullProjectFolder = destinationProjectFolder;
                         survey.SurveyPath = surveyPath;
 
+                        // Clear any metadata-based data list from .porps file
+                        // The .porps file contains survey metadata, not actual response data
+                        if (survey.Data?.DataList != null && survey.Data.DataList.Count > 0)
+                        {
+                            // Check if first row contains metadata fields (old format)
+                            var firstRow = survey.Data.DataList[0];
+                            if (firstRow.Contains("CreatedOn") || firstRow.Contains("CreatedBy") || 
+                                firstRow.Contains("ModifiedOn") || firstRow.Contains("IsDirty"))
+                            {
+                                // This is metadata, not survey responses - clear it
+                                survey.Data.DataList = new List<List<string>>();
+                            }
+                        }
+
                         // Load binary data if exists
                         var dataFileName = Path.GetFileNameWithoutExtension(summary.SurveyFileName) + ".porpd";
                         var dataPath = Path.Combine(destinationProjectFolder, summary.SurveyFolder, dataFileName);
 
                         if (File.Exists(dataPath))
                         {
-                            survey.Data.DataList = LegacyDataAccess.ReadSurveyDataFromBinary(dataPath);
-                            survey.Data.DataFilePath = dataPath;
-                            survey.DataFileName = dataFileName;
+                            var dataList = LegacyDataAccess.ReadSurveyDataFromBinary(dataPath);
+                            if (dataList != null && dataList.Count > 0)
+                            {
+                                survey.Data.DataList = dataList;
+                                survey.Data.DataFilePath = dataPath;
+                                survey.DataFileName = dataFileName;
+                            }
                         }
 
                         project.SurveyList.Add(survey);

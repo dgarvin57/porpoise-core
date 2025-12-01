@@ -12,23 +12,48 @@ namespace Porpoise.Api.Controllers;
 public class SurveyImportController : ControllerBase
 {
     private readonly ISurveyRepository _surveyRepository;
+    private readonly IProjectRepository _projectRepository;
     private readonly SurveyPersistenceService? _persistenceService;
     private readonly IWebHostEnvironment _environment;
 
     public SurveyImportController(
         ISurveyRepository surveyRepository,
+        IProjectRepository projectRepository,
         IWebHostEnvironment environment,
         SurveyPersistenceService? persistenceService = null)
     {
         _surveyRepository = surveyRepository;
+        _projectRepository = projectRepository;
         _environment = environment;
         _persistenceService = persistenceService;
     }
 
     /// <summary>
+    /// Ensures a project exists in the database, creating it if necessary
+    /// </summary>
+    private async Task<Guid> EnsureProjectExistsAsync(Project project)
+    {
+        if (project == null || string.IsNullOrEmpty(project.ProjectName))
+        {
+            throw new ArgumentException("Project name is required");
+        }
+
+        // Check if project already exists
+        var existingProject = await _projectRepository.GetByNameAsync(project.ProjectName);
+        if (existingProject != null)
+        {
+            return existingProject.Id;
+        }
+
+        // Create new project
+        var savedProject = await _projectRepository.AddAsync(project);
+        return savedProject.Id;
+    }
+
+    /// <summary>
     /// Helper method to import surveys from a directory containing .porp, .porps, and .porpd files
     /// </summary>
-    private async Task<(List<object> ImportedSurveys, List<string> Errors, List<string> ReferencedFiles)> ImportSurveysFromDirectory(string directory, string projectFilePath)
+    private async Task<(List<object> ImportedSurveys, List<string> Errors, List<string> ReferencedFiles, Guid? ProjectId)> ImportSurveysFromDirectory(string directory, string projectFilePath)
     {
         var importedSurveys = new List<object>();
         var errors = new List<string>();
@@ -40,7 +65,19 @@ public class SurveyImportController : ControllerBase
         if (project.SurveyListSummary == null || project.SurveyListSummary.Count == 0)
         {
             errors.Add("Project file contains no survey references");
-            return (importedSurveys, errors, referencedFiles);
+            return (importedSurveys, errors, referencedFiles, null);
+        }
+
+        // Ensure project exists in database
+        Guid? projectId = null;
+        try
+        {
+            projectId = await EnsureProjectExistsAsync(project);
+        }
+        catch (Exception ex)
+        {
+            errors.Add($"Error creating project: {ex.Message}");
+            return (importedSurveys, errors, referencedFiles, null);
         }
 
         // List all referenced survey/data filenames
@@ -75,7 +112,43 @@ public class SurveyImportController : ControllerBase
 
                 string fallbackSurveyPath = Path.Combine(projectFolder, surveySummary.SurveyFileName);
                 string surveyPath = System.IO.File.Exists(expectedSurveyPath) ? expectedSurveyPath : (System.IO.File.Exists(fallbackSurveyPath) ? fallbackSurveyPath : expectedSurveyPath);
-                var dataPath = surveyPath.Replace(".porps", ".porpd");
+                
+                // Construct data path - should be in same directory as survey file, with .porpd extension
+                var surveyDir = Path.GetDirectoryName(surveyPath) ?? projectFolder;
+                var surveyBaseName = Path.GetFileNameWithoutExtension(surveyPath);
+                
+                // Try multiple patterns for the data file
+                // Pattern 1: Same base name (e.g., "Cut Down 1.porps" -> "Cut Down 1.porpd")
+                // Pattern 2: Remove spaces and add "dk" (e.g., "Cut Down 1.porps" -> "CutDown1dk.porpd" or "CutDowndk1.porpd")
+                var surveyBaseNoSpaces = surveyBaseName.Replace(" ", "");
+                var dataPaths = new[]
+                {
+                    Path.Combine(surveyDir, surveyBaseName + ".porpd"),           // Same base name
+                    surveyPath.Replace(".porps", ".porpd"),                        // Simple extension replace
+                    Path.Combine(surveyDir, surveyBaseNoSpaces + "dk.porpd"),     // No spaces + "dk"
+                    Path.Combine(surveyDir, surveyBaseNoSpaces + "dk" + surveyBaseName.Last() + ".porpd")  // Pattern like "CutDowndk1.porpd"
+                };
+                
+                // Also check for any .porpd file in the same directory
+                string? dataPath = null;
+                foreach (var path in dataPaths)
+                {
+                    if (System.IO.File.Exists(path))
+                    {
+                        dataPath = path;
+                        break;
+                    }
+                }
+                
+                // If still not found, search for any .porpd file in the survey directory
+                if (dataPath == null && Directory.Exists(surveyDir))
+                {
+                    var porpdFiles = Directory.GetFiles(surveyDir, "*.porpd");
+                    if (porpdFiles.Length > 0)
+                    {
+                        dataPath = porpdFiles[0];
+                    }
+                }
 
                 if (!System.IO.File.Exists(surveyPath))
                 {
@@ -83,14 +156,33 @@ public class SurveyImportController : ControllerBase
                     continue;
                 }
 
-                // Load the survey
+                // Load the survey - use data path if exists, otherwise pass surveyPath (will return empty data)
+                var actualDataPath = dataPath ?? surveyPath;
                 var (survey, _, data) = ProjectLoader.LoadProject(
                     surveyPath,
                     projectFilePath,
-                    System.IO.File.Exists(dataPath) ? dataPath : surveyPath
+                    actualDataPath
                 );
 
-                survey.Data = data;
+                // IMPORTANT: Use the properly loaded data from .porpd, not metadata from .porps
+                // Always prefer the data loaded from the .porpd file over what's in the .porps
+                if (data != null && data.DataList != null && data.DataList.Count > 0)
+                {
+                    survey.Data = data;
+                }
+                else if (survey.Data != null && survey.Data.DataList != null && survey.Data.DataList.Count > 0)
+                {
+                    // Check if Data from .porps contains metadata instead of survey responses
+                    var firstRow = survey.Data.DataList[0];
+                    if (firstRow.Contains("CreatedOn") || firstRow.Contains("CreatedBy") || 
+                        firstRow.Contains("ModifiedOn") || firstRow.Contains("IsDirty"))
+                    {
+                        // This is metadata, not survey data - clear it
+                        survey.Data = new SurveyData { DataList = new List<List<string>>() };
+                    }
+                }
+                
+                survey.ProjectId = projectId; // Link survey to project
 
                 // Save using persistence service if available, otherwise use basic repository
                 Survey savedSurvey;
@@ -117,7 +209,7 @@ public class SurveyImportController : ControllerBase
             }
         }
 
-        return (importedSurveys, errors, referencedFiles);
+        return (importedSurveys, errors, referencedFiles, projectId);
     }
 
     /// <summary>
@@ -162,8 +254,22 @@ public class SurveyImportController : ControllerBase
                 tempDataPath ?? tempSurveyPath
             );
 
-            // Link data to survey
-            survey.Data = data;
+            // IMPORTANT: Use the properly loaded data from .porpd, not metadata from .porps
+            if (data != null && data.DataList != null && data.DataList.Count > 0)
+            {
+                survey.Data = data;
+            }
+            else if (survey.Data != null && survey.Data.DataList != null && survey.Data.DataList.Count > 0)
+            {
+                // Check if Data contains metadata instead of survey responses
+                var firstRow = survey.Data.DataList[0];
+                if (firstRow.Contains("CreatedOn") || firstRow.Contains("CreatedBy") || 
+                    firstRow.Contains("ModifiedOn") || firstRow.Contains("IsDirty"))
+                {
+                    // This is metadata, not survey data - clear it
+                    survey.Data = new SurveyData { DataList = new List<List<string>>() };
+                }
+            }
 
             // Save using persistence service if available, otherwise use basic repository
             Survey savedSurvey;
@@ -250,7 +356,7 @@ public class SurveyImportController : ControllerBase
             }
 
             // Import surveys using shared helper method
-            var (importedSurveys, errors, referencedFiles) = await ImportSurveysFromDirectory(tempDir, tempProjectPath);
+            var (importedSurveys, errors, referencedFiles, projectId) = await ImportSurveysFromDirectory(tempDir, tempProjectPath);
 
             // Load project metadata for response
             var project = ProjectLoader.LoadProjectOnly(tempProjectPath);
@@ -261,6 +367,7 @@ public class SurveyImportController : ControllerBase
             return Ok(new
             {
                 Message = $"Imported {importedSurveys.Count} of {project.SurveyListSummary?.Count ?? 0} surveys",
+                ProjectId = projectId,
                 ProjectName = project.ProjectName,
                 ClientName = project.ClientName,
                 TempPorpFiles = porpFiles,
@@ -316,7 +423,7 @@ public class SurveyImportController : ControllerBase
             }
 
             // Use the same import logic as /project endpoint
-            var (importedSurveys, errors, referencedFiles) = await ImportSurveysFromDirectory(extractDir, projectFile);
+            var (importedSurveys, errors, referencedFiles, projectId) = await ImportSurveysFromDirectory(extractDir, projectFile);
 
             // Load project metadata
             var project = ProjectLoader.LoadProjectOnly(projectFile);
@@ -329,6 +436,7 @@ public class SurveyImportController : ControllerBase
             {
                 Message = $"Imported {importedSurveys.Count} of {project.SurveyListSummary?.Count ?? 0} surveys from PORPZ archive",
                 FileName = porpzFile.FileName,
+                ProjectId = projectId,
                 ProjectName = project.ProjectName,
                 ClientName = project.ClientName,
                 ExtractedFiles = extractedFiles,

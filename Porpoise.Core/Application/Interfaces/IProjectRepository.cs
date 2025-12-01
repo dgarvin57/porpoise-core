@@ -27,4 +27,24 @@ public interface IProjectRepository : IRepository<Project>
     /// Get all surveys associated with a specific project.
     /// </summary>
     Task<IEnumerable<Survey>> GetSurveysByProjectIdAsync(Guid projectId);
+
+    /// <summary>
+    /// Get surveys for a project with question and data counts.
+    /// </summary>
+    Task<IEnumerable<dynamic>> GetSurveysWithCountsAsync(Guid projectId);
+
+    /// <summary>
+    /// Get all projects with survey counts (for UI display).
+    /// </summary>
+    Task<IEnumerable<dynamic>> GetProjectsWithSurveyCountAsync();
+
+    /// <summary>
+    /// Get only projects that have multiple surveys (for pooling/trending).
+    /// </summary>
+    Task<IEnumerable<dynamic>> GetMultiSurveyProjectsAsync();
+
+    /// <summary>
+    /// Move a survey to a different project.
+    /// </summary>
+    Task<bool> MoveSurveyToProjectAsync(Guid surveyId, Guid newProjectId);
 }

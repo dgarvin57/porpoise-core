@@ -83,17 +83,60 @@ public static class LegacyDataAccess
         return true;
     }
 
-    // Survey Data (stubs — no real I/O)
+    // Survey Data - reads actual .porpd binary files
     public static List<List<string>>? ReadSurveyDataFromBinary(string path)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
-        return null;
+        
+        if (!File.Exists(path))
+            return null;
+
+        try
+        {
+            // Use PorpoiseFileEncryption to decrypt and read the .porpd file
+            var surveyData = PorpoiseFileEncryption.ReadData(path);
+            return surveyData?.DataList;
+        }
+        catch (Exception)
+        {
+            // Return null on error - caller will handle
+            return null;
+        }
     }
 
     public static List<List<string>>? ReadSurveyDataFromCSV(string path)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
-        return null;
+        
+        if (!File.Exists(path))
+            return null;
+
+        var rowList = new List<List<string>>();
+        
+        try
+        {
+            using var reader = new StreamReader(path);
+            while (!reader.EndOfStream)
+            {
+                var line = reader.ReadLine();
+                if (string.IsNullOrWhiteSpace(line))
+                    continue;
+
+                // Parse CSV line (simple split - handles basic CSV)
+                var values = line.Split(',')
+                    .Select(v => v.Trim())
+                    .ToList();
+                
+                rowList.Add(values);
+            }
+            
+            return rowList.Count > 0 ? rowList : null;
+        }
+        catch (Exception)
+        {
+            // Return null on error - caller will handle
+            return null;
+        }
     }
 
     public static void WriteSurveyDataToBinary(SurveyData data, string path)
