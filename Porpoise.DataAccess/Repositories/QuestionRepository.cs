@@ -24,9 +24,15 @@ public class QuestionRepository : Repository<Question>, IQuestionRepository
     {
         const string sql = @"
             SELECT 
-                Id, SurveyId, QstNumber, QstLabel,
-                DataFileColumn as DataFileCol,
-                VariableType, MissingLow, MissingHigh,
+                Id, SurveyId, QstNumber, QstLabel, QstStem,
+                DataFileColumn as DataFileCol, ColumnFilled,
+                VariableType, DataType,
+                MissValue1, MissValue2, MissValue3,
+                MissingLow, MissingHigh,
+                BlkQstStatus, BlkLabel, BlkStem,
+                IsPreferenceBlock, IsPreferenceBlockType, NumberOfPreferenceItems, PreserveDifferentResponsesInPreferenceBlock,
+                QuestionNotes,
+                UseAlternatePosNegLabels, AlternatePosLabel, AlternateNegLabel,
                 CreatedDate, ModifiedDate
             FROM Questions 
             WHERE SurveyId = @SurveyId 
@@ -83,11 +89,23 @@ public class QuestionRepository : Repository<Question>, IQuestionRepository
     {
         const string sql = @"
             INSERT INTO Questions (
-                Id, SurveyId, QstNumber, QstLabel, DataFileColumn, 
-                VariableType, MissingLow, MissingHigh, CreatedDate, ModifiedDate
+                Id, SurveyId, QstNumber, QstLabel, QstStem, DataFileColumn, ColumnFilled,
+                VariableType, DataType,
+                MissValue1, MissValue2, MissValue3, MissingLow, MissingHigh,
+                BlkQstStatus, BlkLabel, BlkStem,
+                IsPreferenceBlock, IsPreferenceBlockType, NumberOfPreferenceItems, PreserveDifferentResponsesInPreferenceBlock,
+                QuestionNotes,
+                UseAlternatePosNegLabels, AlternatePosLabel, AlternateNegLabel,
+                CreatedDate, ModifiedDate
             ) VALUES (
-                @Id, @SurveyId, @QstNumber, @QstLabel, @DataFileColumn, 
-                @VariableType, @MissingLow, @MissingHigh, @CreatedDate, @ModifiedDate
+                @Id, @SurveyId, @QstNumber, @QstLabel, @QstStem, @DataFileColumn, @ColumnFilled,
+                @VariableType, @DataType,
+                @MissValue1, @MissValue2, @MissValue3, @MissingLow, @MissingHigh,
+                @BlkQstStatus, @BlkLabel, @BlkStem,
+                @IsPreferenceBlock, @IsPreferenceBlockType, @NumberOfPreferenceItems, @PreserveDifferentResponsesInPreferenceBlock,
+                @QuestionNotes,
+                @UseAlternatePosNegLabels, @AlternatePosLabel, @AlternateNegLabel,
+                @CreatedDate, @ModifiedDate
             )";
         
         question.Id = Guid.NewGuid();
@@ -99,10 +117,27 @@ public class QuestionRepository : Repository<Question>, IQuestionRepository
             SurveyId = surveyId,
             QstNumber = question.QstNumber ?? string.Empty,
             QstLabel = question.QstLabel ?? string.Empty,
+            QstStem = question.QstStem ?? string.Empty,
             DataFileColumn = question.DataFileCol,
+            ColumnFilled = question.ColumnFilled,
             VariableType = (int)question.VariableType,
+            DataType = (int?)question.DataType,
+            MissValue1 = question.MissValue1 ?? string.Empty,
+            MissValue2 = question.MissValue2 ?? string.Empty,
+            MissValue3 = question.MissValue3 ?? string.Empty,
             MissingLow = 0.0,
             MissingHigh = 0.0,
+            BlkQstStatus = (int?)question.BlkQstStatus,
+            BlkLabel = question.BlkLabel ?? string.Empty,
+            BlkStem = question.BlkStem ?? string.Empty,
+            IsPreferenceBlock = question.IsPreferenceBlock,
+            IsPreferenceBlockType = question.IsPreferenceBlockType,
+            NumberOfPreferenceItems = question.NumberOfPreferenceItems,
+            PreserveDifferentResponsesInPreferenceBlock = question.PreserveDifferentResponsesInPreferenceBlock,
+            QuestionNotes = question.QuestionNotes ?? string.Empty,
+            UseAlternatePosNegLabels = question.UseAlternatePosNegLabels,
+            AlternatePosLabel = question.AlternatePosLabel ?? string.Empty,
+            AlternateNegLabel = question.AlternateNegLabel ?? string.Empty,
             CreatedDate = DateTime.UtcNow,
             ModifiedDate = DateTime.UtcNow
         });
@@ -122,10 +157,27 @@ public class QuestionRepository : Repository<Question>, IQuestionRepository
             UPDATE Questions SET
                 QstNumber = @QstNumber,
                 QstLabel = @QstLabel,
+                QstStem = @QstStem,
                 DataFileColumn = @DataFileColumn,
+                ColumnFilled = @ColumnFilled,
                 VariableType = @VariableType,
+                DataType = @DataType,
+                MissValue1 = @MissValue1,
+                MissValue2 = @MissValue2,
+                MissValue3 = @MissValue3,
                 MissingLow = @MissingLow,
                 MissingHigh = @MissingHigh,
+                BlkQstStatus = @BlkQstStatus,
+                BlkLabel = @BlkLabel,
+                BlkStem = @BlkStem,
+                IsPreferenceBlock = @IsPreferenceBlock,
+                IsPreferenceBlockType = @IsPreferenceBlockType,
+                NumberOfPreferenceItems = @NumberOfPreferenceItems,
+                PreserveDifferentResponsesInPreferenceBlock = @PreserveDifferentResponsesInPreferenceBlock,
+                QuestionNotes = @QuestionNotes,
+                UseAlternatePosNegLabels = @UseAlternatePosNegLabels,
+                AlternatePosLabel = @AlternatePosLabel,
+                AlternateNegLabel = @AlternateNegLabel,
                 ModifiedDate = @ModifiedDate
             WHERE Id = @Id";
         
@@ -135,10 +187,27 @@ public class QuestionRepository : Repository<Question>, IQuestionRepository
             question.Id,
             QstNumber = question.QstNumber ?? string.Empty,
             QstLabel = question.QstLabel ?? string.Empty,
+            QstStem = question.QstStem ?? string.Empty,
             DataFileColumn = question.DataFileCol,
+            ColumnFilled = question.ColumnFilled,
             VariableType = (int)question.VariableType,
+            DataType = (int?)question.DataType,
+            MissValue1 = question.MissValue1 ?? string.Empty,
+            MissValue2 = question.MissValue2 ?? string.Empty,
+            MissValue3 = question.MissValue3 ?? string.Empty,
             MissingLow = 0.0,
             MissingHigh = 0.0,
+            BlkQstStatus = (int?)question.BlkQstStatus,
+            BlkLabel = question.BlkLabel ?? string.Empty,
+            BlkStem = question.BlkStem ?? string.Empty,
+            IsPreferenceBlock = question.IsPreferenceBlock,
+            IsPreferenceBlockType = question.IsPreferenceBlockType,
+            NumberOfPreferenceItems = question.NumberOfPreferenceItems,
+            PreserveDifferentResponsesInPreferenceBlock = question.PreserveDifferentResponsesInPreferenceBlock,
+            QuestionNotes = question.QuestionNotes ?? string.Empty,
+            UseAlternatePosNegLabels = question.UseAlternatePosNegLabels,
+            AlternatePosLabel = question.AlternatePosLabel ?? string.Empty,
+            AlternateNegLabel = question.AlternateNegLabel ?? string.Empty,
             ModifiedDate = DateTime.UtcNow
         });
         

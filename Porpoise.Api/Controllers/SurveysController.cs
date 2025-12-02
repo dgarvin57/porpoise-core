@@ -248,6 +248,49 @@ public class SurveysController : ControllerBase
     }
 
     /// <summary>
+    /// Get raw question list for a survey (for question editor/tree view)
+    /// </summary>
+    [HttpGet("{id:guid}/questions-list")]
+    public async Task<IActionResult> GetSurveyQuestionsList(Guid id)
+    {
+        try
+        {
+            var survey = await _surveyRepository.GetByIdAsync(id);
+            if (survey == null)
+            {
+                return NotFound($"Survey with ID {id} not found");
+            }
+
+            // Get questions from database
+            var questions = await _questionRepository.GetBySurveyIdAsync(id);
+            
+            // Return questions with camelCase field names for frontend
+            var questionList = questions.Select(q => new
+            {
+                id = q.Id,
+                qstNumber = q.QstNumber,
+                qstLabel = q.QstLabel,
+                qstStem = q.QstStem,
+                dataFileCol = q.DataFileCol,
+                variableType = (int)q.VariableType,
+                blkQstStatus = (int?)q.BlkQstStatus,
+                blkLabel = q.BlkLabel,
+                blkStem = q.BlkStem,
+                missValue1 = q.MissValue1,
+                missValue2 = q.MissValue2,
+                missValue3 = q.MissValue3,
+                questionNotes = q.QuestionNotes
+            });
+
+            return Ok(questionList);
+        }
+        catch (Exception ex)
+        {
+            return Problem($"Error retrieving question list: {ex.Message}");
+        }
+    }
+
+    /// <summary>
     /// Get all questions with response statistics for a survey
     /// </summary>
     [HttpGet("{id:guid}/questions")]
@@ -261,8 +304,10 @@ public class SurveysController : ControllerBase
                 return NotFound($"Survey with ID {id} not found");
             }
 
-            // Get questions from database
-            var questions = await _questionRepository.GetBySurveyIdAsync(id);
+            // Get questions from database and sort by DataFileCol (numeric column) instead of QstNumber (text)
+            var questions = (await _questionRepository.GetBySurveyIdAsync(id))
+                .OrderBy(q => q.DataFileCol)
+                .ToList();
             
             // Get survey data (actual responses from survey takers)
             var surveyData = await _surveyDataRepository.GetBySurveyIdAsync(id);
@@ -273,9 +318,8 @@ public class SurveysController : ControllerBase
             {
                 var responseDefinitions = await _responseRepository.GetByQuestionIdAsync(question.Id);
                 
-                // Get missing value range for this question (MissingLow to MissingHigh, e.g., 97-99)
-                var missingLow = (int)Math.Round(question.MissingLow);
-                var missingHigh = (int)Math.Round(question.MissingHigh);
+                // Get missing values for this question (discrete values like 97, 98, 99)
+                var missingValues = question.MissingValues; // Returns List<int> from MissValue1/2/3
                 
                 // Calculate actual frequencies from survey data
                 var responsesWithStats = new List<object>();
@@ -292,8 +336,8 @@ public class SurveysController : ControllerBase
                         {
                             if (int.TryParse(row[question.DataFileCol], out int value))
                             {
-                                // Exclude values in the missing range
-                                if (missingLow > 0 && value >= missingLow && value <= missingHigh)
+                                // Exclude missing values
+                                if (missingValues.Contains(value))
                                 {
                                     continue; // Skip missing values
                                 }
@@ -328,16 +372,11 @@ public class SurveysController : ControllerBase
                             _ => ""
                         };
                         
-                        // Calculate index value (100 for base response, scaled for others)
-                        string indexValue = response.RespValue == 1 ? "100.0" : 
-                                          (percentage > 0 ? (percentage / 0.304 * 100).ToString("F1") : "—");
-                        
                         responsesWithStats.Add(new
                         {
                             Label = response.Label,
                             Count = count,
                             Percentage = percentage,
-                            Index = indexValue,
                             IndexSymbol = indexSymbol
                         });
                     }
@@ -360,7 +399,6 @@ public class SurveysController : ControllerBase
                             Label = response.Label,
                             Count = 0,
                             Percentage = 0.0,
-                            Index = "—",
                             IndexSymbol = indexSymbol
                         });
                     }
@@ -369,10 +407,16 @@ public class SurveysController : ControllerBase
                 questionResults.Add(new
                 {
                     Id = question.Id.ToString(),
+                    QstNumber = question.QstNumber,
                     Label = question.QstLabel,
                     Text = question.QstStem,
                     Index = 128, // Default index value
                     TotalCases = totalValidCases, // Only count valid responses (exclude missing values)
+                    VariableType = (int)question.VariableType,
+                    BlkQstStatus = (int?)question.BlkQstStatus,
+                    BlkLabel = question.BlkLabel,
+                    BlkStem = question.BlkStem,
+                    DataFileCol = question.DataFileCol,
                     Responses = responsesWithStats
                 });
             }

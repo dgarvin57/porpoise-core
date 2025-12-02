@@ -21,7 +21,7 @@
         <!-- Filter Toggle -->
         <button
           @click="showFilters = !showFilters"
-          :class="showFilters ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400'"
+          :class="showFilters ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300' : 'bg-transparent text-gray-600 dark:text-gray-400'"
           class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           title="Toggle filters"
         >
@@ -34,7 +34,7 @@
         <div class="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
           <button
             @click="viewMode = 'grid'"
-            :class="viewMode === 'grid' ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400'"
+            :class="viewMode === 'grid' ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white' : 'bg-transparent text-gray-600 dark:text-gray-400'"
             class="px-3 py-1.5 rounded-md transition-all"
             title="Grid view"
           >
@@ -44,7 +44,7 @@
           </button>
           <button
             @click="viewMode = 'list'"
-            :class="viewMode === 'list' ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400'"
+            :class="viewMode === 'list' ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white' : 'bg-transparent text-gray-600 dark:text-gray-400'"
             class="px-3 py-1.5 rounded-md transition-all"
             title="List view"
           >
@@ -133,14 +133,14 @@
       <!-- Column Headers -->
       <div class="grid grid-cols-[32px_minmax(200px,1fr)_140px_80px_80px_110px_110px_90px] gap-3 items-center px-3 py-2 border-b-2 border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 sticky top-0 min-w-[900px]">
         <span class="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase"></span>
-        <button @click="sortByColumn('name')" class="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase text-left hover:text-gray-900 dark:hover:text-gray-200 flex items-center space-x-1">
+        <button @click="sortByColumn('name')" class="text-xs font-semibold uppercase text-left flex items-center space-x-1 px-2 py-1 rounded border transition-colors" :class="sortBy === 'name' ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-900 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-500'">
           <span>Name</span>
           <svg v-if="sortBy === 'name'" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path v-if="sortDirection === 'asc'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
             <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
           </svg>
         </button>
-        <button @click="sortByColumn('client')" class="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase text-left hover:text-gray-900 dark:hover:text-gray-200 flex items-center space-x-1">
+        <button @click="sortByColumn('client')" class="text-xs font-semibold uppercase text-left flex items-center space-x-1 px-2 py-1 rounded border transition-colors" :class="sortBy === 'client' ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-900 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-500'">
           <span>Client</span>
           <svg v-if="sortBy === 'client'" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path v-if="sortDirection === 'asc'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
@@ -159,21 +159,21 @@
           </svg>
           <span>Qs</span>
         </div>
-        <button @click="sortByColumn('created')" class="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase text-right hover:text-gray-900 dark:hover:text-gray-200 flex items-center justify-end space-x-1">
+        <button @click="sortByColumn('created')" class="text-xs font-semibold uppercase text-right flex items-center justify-end space-x-1 px-2 py-1 rounded border transition-colors" :class="sortBy === 'created' ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-900 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-500'">
           <span>Created</span>
           <svg v-if="sortBy === 'created'" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path v-if="sortDirection === 'asc'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
             <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
           </svg>
         </button>
-        <button @click="sortByColumn('modified')" class="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase text-right hover:text-gray-900 dark:hover:text-gray-200 flex items-center justify-end space-x-1">
+        <button @click="sortByColumn('modified')" class="text-xs font-semibold uppercase text-right flex items-center justify-end space-x-1 px-2 py-1 rounded border transition-colors" :class="sortBy === 'modified' ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-900 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-500'">
           <span>Modified</span>
           <svg v-if="sortBy === 'modified'" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path v-if="sortDirection === 'asc'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
             <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
           </svg>
         </button>
-        <button @click="sortByColumn('status')" class="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase text-center hover:text-gray-900 dark:hover:text-gray-200 flex items-center justify-center space-x-1">
+        <button @click="sortByColumn('status')" class="text-xs font-semibold uppercase text-center flex items-center justify-center space-x-1 px-2 py-1 rounded border transition-colors" :class="sortBy === 'status' ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-900 dark:hover:text-gray-200 hover:border-gray-300 dark:hover:border-gray-500'">
           <span>Status</span>
           <svg v-if="sortBy === 'status'" class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path v-if="sortDirection === 'asc'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />

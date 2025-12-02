@@ -1,5 +1,5 @@
 <template>
-  <div class="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900 pt-16">
+  <div class="fixed inset-0 top-16 flex overflow-hidden bg-gray-50 dark:bg-gray-900">
     <!-- Sidebar Navigation -->
     <aside class="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
       <div class="p-4 border-b border-gray-200 dark:border-gray-700">
@@ -24,7 +24,7 @@
               'w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
               activeSection === 'results'
                 ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
             ]"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -40,7 +40,7 @@
               'w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
               activeSection === 'crosstab'
                 ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
             ]"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -56,7 +56,7 @@
               'w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
               activeSection === 'questions'
                 ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
             ]"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -72,7 +72,7 @@
               'w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
               activeSection === 'data'
                 ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
             ]"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -88,7 +88,7 @@
               'w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
               activeSection === 'cleansing'
                 ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
             ]"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -104,7 +104,7 @@
         <!-- Back to Projects -->
         <button
           @click="backToProjects"
-          class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -131,15 +131,7 @@
       </div>
 
       <!-- Questions View -->
-      <div v-else-if="activeSection === 'questions'" class="h-full flex items-center justify-center">
-        <div class="text-center">
-          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Question Editor</h3>
-          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Coming soon...</p>
-        </div>
-      </div>
+      <QuestionsView v-else-if="activeSection === 'questions'" :surveyId="surveyId" />
 
       <!-- Data View -->
       <div v-else-if="activeSection === 'data'" class="h-full flex items-center justify-center">
@@ -171,6 +163,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import ResultsView from '../components/Analytics/ResultsView.vue'
+import QuestionsView from '../components/Analytics/QuestionsView.vue'
 
 const route = useRoute()
 const router = useRouter()

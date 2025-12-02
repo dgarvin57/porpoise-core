@@ -62,6 +62,13 @@ public class SurveyPersistenceService
         {
             foreach (var question in survey.QuestionList)
             {
+                // Optimize block storage: only save BlkLabel and BlkStem on first question of block
+                if (question.BlkQstStatus == BlkQuestionStatusType.ContinuationQuestion) // Status 2
+                {
+                    question.BlkLabel = string.Empty;
+                    question.BlkStem = string.Empty;
+                }
+                
                 var savedQuestion = await _questionRepository.AddAsync(question, savedSurvey.Id);
 
                 // Save responses for this question
@@ -69,6 +76,7 @@ public class SurveyPersistenceService
                 {
                     foreach (var response in question.Responses)
                     {
+                        // Note: ResultFrequency and ResultPercent are calculated fields, not persisted
                         await _responseRepository.AddAsync(response, savedQuestion.Id);
                     }
                 }

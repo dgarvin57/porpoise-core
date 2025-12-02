@@ -24,8 +24,6 @@ public class ResponseRepository : Repository<Response>, IResponseRepository
     {
         const string sql = @"
             SELECT Id, QuestionId, RespValue, Label, 
-                   Percentage AS ResultPercent, 
-                   Frequency AS ResultFrequency, 
                    IndexType 
             FROM Responses 
             WHERE Id = @Id";
@@ -38,8 +36,6 @@ public class ResponseRepository : Repository<Response>, IResponseRepository
     {
         const string sql = @"
             SELECT Id, QuestionId, RespValue, Label, 
-                   Percentage AS ResultPercent, 
-                   Frequency AS ResultFrequency, 
                    IndexType 
             FROM Responses 
             WHERE QuestionId = @QuestionId 
@@ -53,8 +49,6 @@ public class ResponseRepository : Repository<Response>, IResponseRepository
     {
         const string sql = @"
             SELECT Id, QuestionId, RespValue, Label, 
-                   Percentage AS ResultPercent, 
-                   Frequency AS ResultFrequency, 
                    IndexType 
             FROM Responses 
             WHERE QuestionId = @QuestionId 
@@ -69,8 +63,6 @@ public class ResponseRepository : Repository<Response>, IResponseRepository
     {
         const string sql = @"
             SELECT Id, QuestionId, RespValue, Label, 
-                   Percentage AS ResultPercent, 
-                   Frequency AS ResultFrequency, 
                    IndexType 
             FROM Responses 
             WHERE QuestionId = @QuestionId 
@@ -94,11 +86,11 @@ public class ResponseRepository : Repository<Response>, IResponseRepository
     {
         const string sql = @"
             INSERT INTO Responses (
-                Id, QuestionId, RespValue, Label, Percentage, 
-                Frequency, IndexType, CreatedDate, ModifiedDate
+                Id, QuestionId, RespValue, Label, 
+                IndexType, CreatedDate, ModifiedDate
             ) VALUES (
-                @Id, @QuestionId, @RespValue, @Label, @Percentage, 
-                @Frequency, @IndexType, @CreatedDate, @ModifiedDate
+                @Id, @QuestionId, @RespValue, @Label, 
+                @IndexType, @CreatedDate, @ModifiedDate
             )";
         
         response.Id = Guid.NewGuid();
@@ -110,8 +102,6 @@ public class ResponseRepository : Repository<Response>, IResponseRepository
             QuestionId = questionId,
             response.RespValue,
             Label = response.Label ?? string.Empty,
-            Percentage = response.ResultPercent,
-            Frequency = response.ResultFrequency,
             IndexType = response.IndexType.ToString(),
             CreatedDate = DateTime.UtcNow,
             ModifiedDate = DateTime.UtcNow
@@ -132,8 +122,6 @@ public class ResponseRepository : Repository<Response>, IResponseRepository
             UPDATE Responses SET
                 RespValue = @RespValue,
                 Label = @Label,
-                Percentage = @Percentage,
-                Frequency = @Frequency,
                 IndexType = @IndexType,
                 ModifiedDate = @ModifiedDate
             WHERE Id = @Id";
@@ -144,8 +132,6 @@ public class ResponseRepository : Repository<Response>, IResponseRepository
             response.Id,
             response.RespValue,
             Label = response.Label ?? string.Empty,
-            Percentage = response.ResultPercent,
-            Frequency = response.ResultFrequency,
             IndexType = response.IndexType.ToString(),
             ModifiedDate = DateTime.UtcNow
         });

@@ -3,7 +3,7 @@
     <!-- Question List Sidebar -->
     <aside class="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
       <!-- Search Bar -->
-      <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+      <div class="p-3 border-b border-gray-200 dark:border-gray-700">
         <div class="relative">
           <input
             v-model="searchQuery"
@@ -12,23 +12,40 @@
             autocomplete="off"
             data-1p-ignore
             data-lpignore="true"
-            class="w-full px-3 py-2 pl-9 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="w-full px-3 py-1.5 pl-9 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-          <svg class="absolute left-3 top-2.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="absolute left-3 top-2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </div>
-        <button
-          @click="clearSearch"
-          v-if="searchQuery"
-          class="mt-2 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
-        >
-          Clear Selection
-        </button>
+        <div class="flex items-center justify-between mt-1">
+          <button
+            @click="clearSearch"
+            v-if="searchQuery"
+            class="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+          >
+            Clear
+          </button>
+          <div class="flex items-center space-x-1.5 ml-auto text-xs">
+            <a
+              @click="expandAll"
+              class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 cursor-pointer hover:underline"
+            >
+              Expand All
+            </a>
+            <span class="text-gray-400">|</span>
+            <a
+              @click="collapseAll"
+              class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 cursor-pointer hover:underline"
+            >
+              Collapse All
+            </a>
+          </div>
+        </div>
       </div>
 
       <!-- Question List -->
-      <div class="flex-1 overflow-y-auto">
+      <div class="flex-1 overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 dark:[&::-webkit-scrollbar-track]:bg-gray-800 [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-gray-600 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-gray-400 dark:[&::-webkit-scrollbar-thumb:hover]:bg-gray-500">
         <div v-if="loading" class="flex items-center justify-center py-8">
           <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
         </div>
@@ -38,38 +55,103 @@
         </div>
 
         <div v-else class="p-2">
-          <div
-            v-for="question in filteredQuestions"
-            :key="question.id"
-            @click="selectQuestion(question)"
-            :class="[
-              'p-3 mb-2 rounded-lg cursor-pointer transition-all',
-              selectedQuestion?.id === question.id
-                ? 'bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-500 dark:border-blue-400'
-                : 'bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-600'
-            ]"
-          >
-            <div class="flex items-start space-x-2">
-              <span class="text-xs font-semibold text-gray-500 dark:text-gray-400 mt-0.5">
-                {{ question.label }}
-              </span>
-              <p class="text-sm text-gray-900 dark:text-white flex-1">
-                {{ question.text }}
-              </p>
+          <div v-for="(item, index) in filteredQuestions" :key="index" class="mb-1">
+            <!-- Block -->
+            <div v-if="item.type === 'block'">
+              <!-- Block Header -->
+              <button
+                @click="toggleBlock(item)"
+                class="w-full flex items-center space-x-2 px-2 py-1 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600 rounded transition-colors text-left"
+              >
+                <svg 
+                  class="w-3 h-3 text-gray-500 dark:text-gray-400 transition-transform flex-shrink-0"
+                  :class="{ 'rotate-90': item.isExpanded }"
+                  fill="currentColor" 
+                  viewBox="0 0 20 20"
+                >
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                </svg>
+                <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
+                </svg>
+                <div class="flex-1 text-left min-w-0">
+                  <span class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    {{ item.label }}
+                  </span>
+                </div>
+                <span class="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">
+                  {{ item.questions.length }}
+                </span>
+              </button>
+              
+              <!-- Block Questions -->
+              <div v-show="item.isExpanded" class="ml-6 mt-0.5 space-y-0">
+                <div
+                  v-for="question in item.questions"
+                  :key="question.id"
+                  @click="selectQuestion(question)"
+                  :class="[
+                    'px-2 py-0.5 rounded cursor-pointer transition-all flex items-center space-x-2',
+                    selectedQuestion?.id === question.id
+                      ? 'bg-blue-50 dark:bg-blue-900/30 border-l-2 border-blue-500 dark:border-blue-400'
+                      : 'hover:bg-gray-100 dark:hover:bg-gray-700 border-l-2 border-transparent'
+                  ]"
+                >
+                  <!-- Variable Type Icon: 1=IV (red), 2=DV (blue) -->
+                  <svg 
+                    class="w-3.5 h-3.5 flex-shrink-0" 
+                    :class="question.variableType === 1 ? 'text-red-400' : question.variableType === 2 ? 'text-blue-400' : 'text-gray-400'"
+                    fill="currentColor" 
+                    viewBox="0 0 20 20"
+                  >
+                    <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
+                  </svg>
+                  <div class="flex-1 min-w-0 leading-none">
+                    <span class="text-sm text-gray-700 dark:text-gray-300">
+                      {{ question.label }}
+                    </span>
+                    <span class="text-xs text-gray-400 dark:text-gray-500 ml-2">
+                      {{ question.qstNumber }}
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              {{ question.responses?.length || 0 }} responses
+            
+            <!-- Standalone Question -->
+            <div
+              v-else
+              @click="selectQuestion(item.question)"
+              :class="[
+                'px-2 py-0.5 rounded cursor-pointer transition-all flex items-center space-x-2',
+                selectedQuestion?.id === item.question.id
+                  ? 'bg-blue-50 dark:bg-blue-900/30 border-l-2 border-blue-500 dark:border-blue-400'
+                  : 'hover:bg-gray-100 dark:hover:bg-gray-700 border-l-2 border-transparent'
+              ]"
+            >
+              <!-- Variable Type Icon: 1=IV (red), 2=DV (blue) -->
+              <svg 
+                class="w-3.5 h-3.5 flex-shrink-0" 
+                :class="item.question.variableType === 1 ? 'text-red-400' : item.question.variableType === 2 ? 'text-blue-400' : 'text-gray-400'"
+                fill="currentColor" 
+                viewBox="0 0 20 20"
+              >
+                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
+              </svg>
+              <div class="flex-1 min-w-0 leading-none">
+                <span class="text-sm text-gray-700 dark:text-gray-300">
+                  {{ item.question.label }}
+                </span>
+                <span class="text-xs text-gray-400 dark:text-gray-500 ml-2">
+                  {{ item.question.qstNumber }}
+                </span>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Total Cases -->
-      <div class="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-        <div class="text-sm text-gray-600 dark:text-gray-400">
-          <span class="font-medium">Total N:</span> {{ totalCases }}
-        </div>
-      </div>
+      <!-- Total Cases removed - shown per question in header instead -->
     </aside>
 
     <!-- Main Content Area -->
@@ -93,13 +175,27 @@
         <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6">
           <div class="flex items-start justify-between">
             <div class="flex-1">
-              <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                {{ selectedQuestion.label }} - {{ selectedQuestion.text }}
-              </h2>
+              <div class="flex items-center space-x-3 mb-2">
+                <!-- Variable Type Icon: 1=IV (red), 2=DV (blue) -->
+                <svg 
+                  class="w-5 h-5" 
+                  :class="selectedQuestion.variableType === 1 ? 'text-red-400' : selectedQuestion.variableType === 2 ? 'text-blue-400' : 'text-gray-400'"
+                  fill="currentColor" 
+                  viewBox="0 0 20 20"
+                >
+                  <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
+                </svg>
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+                  {{ selectedQuestion.label }}
+                </h2>
+                <span class="text-sm text-gray-400 dark:text-gray-500">
+                  ({{ selectedQuestion.qstNumber }})
+                </span>
+              </div>
               <div class="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
-                <span>Index: {{ selectedQuestion.index || '128' }}</span>
+                <span><span class="font-medium">Index:</span> {{ selectedQuestion.index || '128' }}</span>
                 <span>•</span>
-                <span>Total N: {{ totalCases }}</span>
+                <span><span class="font-medium">Total N:</span> {{ selectedQuestion.totalCases }}</span>
               </div>
             </div>
           </div>
@@ -111,10 +207,10 @@
             <button
               @click="activeTab = 'results'"
               :class="[
-                'px-4 py-3 text-sm font-medium border-b-2 transition-colors',
+                'bg-transparent px-4 py-2 text-sm font-medium border-b-2 transition-colors focus:outline-none focus:border-blue-500',
                 activeTab === 'results'
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  ? 'border-gray-300 dark:border-gray-600 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:border-gray-200 dark:hover:border-gray-700'
               ]"
             >
               Results
@@ -122,10 +218,10 @@
             <button
               @click="activeTab = 'chart'"
               :class="[
-                'px-4 py-3 text-sm font-medium border-b-2 transition-colors',
+                'bg-transparent px-4 py-2 text-sm font-medium border-b-2 transition-colors focus:outline-none focus:border-blue-500',
                 activeTab === 'chart'
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  ? 'border-gray-300 dark:border-gray-600 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:border-gray-200 dark:hover:border-gray-700'
               ]"
             >
               Chart
@@ -133,10 +229,10 @@
             <button
               @click="activeTab = 'statistics'"
               :class="[
-                'px-4 py-3 text-sm font-medium border-b-2 transition-colors',
+                'bg-transparent px-4 py-2 text-sm font-medium border-b-2 transition-colors focus:outline-none focus:border-blue-500',
                 activeTab === 'statistics'
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  ? 'border-gray-300 dark:border-gray-600 text-blue-600 dark:text-blue-400'
+                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:border-gray-200 dark:hover:border-gray-700'
               ]"
             >
               Statistics
@@ -172,19 +268,19 @@
                   </thead>
                   <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     <tr v-for="(response, index) in selectedQuestion.responses" :key="index">
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      <td class="px-6 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                         {{ index + 1 }}
                       </td>
-                      <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                      <td class="px-6 py-2 text-sm text-gray-900 dark:text-white">
                         {{ response.label }}
                       </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900 dark:text-white font-medium">
+                      <td class="px-6 py-2 whitespace-nowrap text-sm text-right text-gray-900 dark:text-white font-medium">
                         {{ response.percentage.toFixed(1) }}
                       </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500 dark:text-gray-400">
-                        {{ response.index || '—' }}
+                      <td class="px-6 py-2 whitespace-nowrap text-sm text-center text-gray-500 dark:text-gray-400">
+                        {{ response.indexSymbol || '' }}
                       </td>
-                      <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-500 dark:text-gray-400">
+                      <td class="px-6 py-2 whitespace-nowrap text-sm text-right text-gray-500 dark:text-gray-400">
                         {{ response.count }}
                       </td>
                     </tr>
@@ -198,7 +294,7 @@
           <div v-else-if="activeTab === 'chart'" class="p-6">
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
               <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-6">
-                Frequency Distribution: {{ selectedQuestion.text }}
+                Frequency Distribution: {{ selectedQuestion.qstNumber }}
               </h3>
               <QuestionChart :question="selectedQuestion" />
             </div>
@@ -237,22 +333,115 @@ const error = ref(null)
 const totalCases = ref(0)
 const activeTab = ref('chart') // Default to chart view
 
+// Track expanded state of blocks using a reactive Set
+const expandedBlocks = ref(new Set())
+
+// Organize questions into blocks
+const organizedQuestions = computed(() => {
+  const result = []
+  const questionList = questions.value
+  let currentBlock = null
+  let blockIndex = 0
+  
+  for (const question of questionList) {
+    if (question.blkQstStatus === 1) { // FirstQuestionInBlock
+      // Start a new block
+      currentBlock = {
+        type: 'block',
+        blockId: `block-${blockIndex++}`,
+        label: question.blkLabel || 'Untitled Block',
+        questions: [question],
+        get isExpanded() {
+          return expandedBlocks.value.has(this.blockId)
+        },
+        set isExpanded(value) {
+          if (value) {
+            expandedBlocks.value.add(this.blockId)
+          } else {
+            expandedBlocks.value.delete(this.blockId)
+          }
+        }
+      }
+      result.push(currentBlock)
+    } else if (question.blkQstStatus === 2 && currentBlock) { // ContinuationQuestion
+      // Add to current block
+      currentBlock.questions.push(question)
+    } else { // DiscreetQuestion or no block status
+      // Add as standalone question
+      result.push({
+        type: 'question',
+        question: question
+      })
+    }
+  }
+  
+  return result
+})
+
 const filteredQuestions = computed(() => {
-  if (!searchQuery.value) return questions.value
+  if (!searchQuery.value) return organizedQuestions.value
   const query = searchQuery.value.toLowerCase()
-  return questions.value.filter(q =>
-    q.text.toLowerCase().includes(query) ||
-    q.label.toLowerCase().includes(query)
-  )
+  
+  // Filter both blocks and standalone questions
+  const filtered = []
+  for (const item of organizedQuestions.value) {
+    if (item.type === 'block') {
+      // Check if block label matches or any question in block matches
+      const blockMatches = item.label.toLowerCase().includes(query)
+      const matchingQuestions = item.questions.filter(q =>
+        q.label.toLowerCase().includes(query)
+      )
+      
+      if (blockMatches || matchingQuestions.length > 0) {
+        // Auto-expand matching blocks when searching
+        if (!expandedBlocks.value.has(item.blockId)) {
+          expandedBlocks.value.add(item.blockId)
+        }
+        filtered.push({
+          ...item,
+          questions: blockMatches ? item.questions : matchingQuestions
+        })
+      }
+    } else {
+      // Standalone question
+      if (item.question.label.toLowerCase().includes(query)) {
+        filtered.push(item)
+      }
+    }
+  }
+  
+  return filtered
 })
 
 function clearSearch() {
   searchQuery.value = ''
 }
 
+function toggleBlock(block) {
+  if (expandedBlocks.value.has(block.blockId)) {
+    expandedBlocks.value.delete(block.blockId)
+  } else {
+    expandedBlocks.value.add(block.blockId)
+  }
+}
+
+function expandAll() {
+  // Add all block IDs to expandedBlocks
+  organizedQuestions.value.forEach(item => {
+    if (item.type === 'block') {
+      expandedBlocks.value.add(item.blockId)
+    }
+  })
+}
+
+function collapseAll() {
+  // Clear all expanded blocks
+  expandedBlocks.value.clear()
+}
+
 function selectQuestion(question) {
   selectedQuestion.value = question
-  activeTab.value = 'chart' // Show chart by default when selecting a question
+  // Don't change active tab - let user stay on their current tab
 }
 
 async function loadQuestions() {

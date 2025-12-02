@@ -105,7 +105,7 @@
       </div>
       <button
         @click="clearFilters"
-        class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+        class="bg-transparent text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
       >
         Clear All
       </button>
