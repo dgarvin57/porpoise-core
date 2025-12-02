@@ -220,13 +220,13 @@ async function toggleExpand() {
       const response = await axios.get(`http://localhost:5107/api/projects/${props.project.id}/surveys`)
       // Map API response to component format
       surveys.value = response.data.map(s => ({
-        id: s.Id,
-        name: s.SurveyName,
-        status: s.Status,
-        caseCount: s.CaseCount,
-        questionCount: s.QuestionCount,
-        createdDate: s.CreatedDate,
-        modifiedDate: s.ModifiedDate
+        id: s.id,
+        name: s.name,
+        status: s.status,
+        caseCount: s.caseCount,
+        questionCount: s.questionCount,
+        createdDate: s.createdDate,
+        modifiedDate: s.modifiedDate
       }))
     } catch (error) {
       console.error('Error fetching surveys:', error)
@@ -236,13 +236,22 @@ async function toggleExpand() {
   }
 }
 
-function handleSingleSurveyClick() {
+async function handleSingleSurveyClick() {
   // Clear all expanded projects and focused surveys
   emit('clear-all')
   emit('set-focus')
   // Navigate to analytics
   if (props.project.surveyCount === 1) {
-    router.push(`/analytics/${props.project.id}`)
+    try {
+      // Fetch the survey ID for this project
+      const response = await axios.get(`http://localhost:5107/api/projects/${props.project.id}/surveys`)
+      if (response.data && response.data.length > 0) {
+        const surveyId = response.data[0].id
+        router.push(`/analytics/${surveyId}`)
+      }
+    } catch (error) {
+      console.error('Error fetching survey:', error)
+    }
   }
 }
 

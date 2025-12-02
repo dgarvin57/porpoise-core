@@ -29,6 +29,8 @@ public class Question : ObjectBase
     private string _missValue1 = string.Empty;
     private string _missValue2 = string.Empty;
     private string _missValue3 = string.Empty;
+    private double _missingLow = 0;
+    private double _missingHigh = 0;
     private QuestionVariableType _variableType = QuestionVariableType.Dependent;
     private QuestionDataType _dataType = QuestionDataType.Nominal;
     private BlkQuestionStatusType _blkQstStatus = 0;
@@ -127,6 +129,18 @@ public class Question : ObjectBase
     {
         get => _missValue3;
         set => SetProperty(ref _missValue3, value ?? string.Empty, nameof(MissValue3));
+    }
+
+    public double MissingLow
+    {
+        get => _missingLow;
+        set => SetProperty(ref _missingLow, value, nameof(MissingLow));
+    }
+
+    public double MissingHigh
+    {
+        get => _missingHigh;
+        set => SetProperty(ref _missingHigh, value, nameof(MissingHigh));
     }
 
     public List<int> MissingValues

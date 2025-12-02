@@ -18,6 +18,11 @@ public interface ISurveyDataRepository : IRepository<SurveyData>
     Task<SurveyData?> GetBySurveyIdAsync(Guid surveyId);
     
     /// <summary>
+    /// Get the number of cases (rows) in the survey data.
+    /// </summary>
+    Task<int> GetCaseCountBySurveyIdAsync(Guid surveyId);
+    
+    /// <summary>
     /// Delete survey data by survey ID.
     /// </summary>
     Task DeleteBySurveyIdAsync(Guid surveyId);

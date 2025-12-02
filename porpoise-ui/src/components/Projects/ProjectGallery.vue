@@ -361,18 +361,18 @@ async function fetchProjects() {
     const response = await axios.get('http://localhost:5107/api/projects/with-counts')
     // Map API response to component format
     projects.value = response.data.map(p => ({
-      id: p.Id,
-      name: p.ProjectName,
-      clientName: p.ClientName,
-      description: p.Description,
-      surveyCount: p.SurveyCount,
-      caseCount: p.CaseCount,
-      questionCount: p.QuestionCount,
-      createdAt: p.CreatedDate,
-      lastModified: p.LastModifiedDate || p.CreatedDate,
-      startDate: p.StartDate,
-      endDate: p.EndDate,
-      status: getStatusFromDates(p.StartDate, p.EndDate)
+      id: p.id,
+      name: p.name,
+      clientName: p.clientName,
+      description: p.description,
+      surveyCount: p.surveyCount,
+      caseCount: p.caseCount,
+      questionCount: p.questionCount,
+      createdAt: p.createdAt,
+      lastModified: p.lastModified || p.createdAt,
+      startDate: p.startDate,
+      endDate: p.endDate,
+      status: p.status || getStatusFromDates(p.startDate, p.endDate)
     }))
   } catch (err) {
     error.value = 'Failed to load projects. Please try again.'
@@ -563,13 +563,13 @@ async function toggleProjectExpand(projectId) {
       try {
         const response = await axios.get(`http://localhost:5107/api/projects/${projectId}/surveys`)
         projectSurveys.value.set(projectId, response.data.map(s => ({
-          id: s.Id,
-          name: s.SurveyName,
-          status: s.Status,
-          caseCount: s.CaseCount,
-          questionCount: s.QuestionCount,
-          createdDate: s.CreatedDate,
-          modifiedDate: s.ModifiedDate
+          id: s.id,
+          name: s.name,
+          status: s.status,
+          caseCount: s.caseCount,
+          questionCount: s.questionCount,
+          createdDate: s.createdDate,
+          modifiedDate: s.modifiedDate
         })))
       } catch (error) {
         console.error('Error fetching surveys:', error)
@@ -592,7 +592,7 @@ function navigateToProject(project) {
   router.push(`/analytics/${project.id}`)
 }
 
-function handleSingleProjectClick(project) {
+async function handleSingleProjectClick(project) {
   // Clear expanded projects and focused surveys
   expandedProjects.value.clear()
   focusedSurveyId.value = null
@@ -601,7 +601,19 @@ function handleSingleProjectClick(project) {
   // Set focused project for highlighting when returning
   focusedProjectId.value = project.id
   localStorage.setItem('focusedProjectId', project.id)
-  navigateToProject(project)
+  
+  // For single survey projects, fetch the survey and navigate to it
+  try {
+    const response = await axios.get(`http://localhost:5107/api/projects/${project.id}/surveys`)
+    if (response.data && response.data.length > 0) {
+      navigateToSurvey(response.data[0].id)
+    } else {
+      navigateToProject(project)
+    }
+  } catch (error) {
+    console.error('Error loading survey:', error)
+    navigateToProject(project)
+  }
 }
 
 function navigateToSurvey(surveyId) {
@@ -629,13 +641,13 @@ onMounted(async () => {
       try {
         const response = await axios.get(`http://localhost:5107/api/projects/${projectId}/surveys`)
         projectSurveys.value.set(projectId, response.data.map(s => ({
-          id: s.Id,
-          name: s.SurveyName,
-          status: s.Status,
-          caseCount: s.CaseCount,
-          questionCount: s.QuestionCount,
-          createdDate: s.CreatedDate,
-          modifiedDate: s.ModifiedDate
+          id: s.id,
+          name: s.name,
+          status: s.status,
+          caseCount: s.caseCount,
+          questionCount: s.questionCount,
+          createdDate: s.createdDate,
+          modifiedDate: s.modifiedDate
         })))
       } catch (err) {
         console.error('Error loading surveys:', err)

@@ -23,7 +23,12 @@ public class QuestionRepository : Repository<Question>, IQuestionRepository
     public async Task<IEnumerable<Question>> GetBySurveyIdAsync(Guid surveyId)
     {
         const string sql = @"
-            SELECT * FROM Questions 
+            SELECT 
+                Id, SurveyId, QstNumber, QstLabel,
+                DataFileColumn as DataFileCol,
+                VariableType, MissingLow, MissingHigh,
+                CreatedDate, ModifiedDate
+            FROM Questions 
             WHERE SurveyId = @SurveyId 
             ORDER BY QstNumber";
         

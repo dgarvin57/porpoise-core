@@ -209,13 +209,13 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
     {
         const string sql = @"
             SELECT 
-                s.Id,
-                s.SurveyName,
-                s.Status,
-                s.CreatedDate,
-                s.ModifiedDate,
-                COUNT(DISTINCT q.Id) as QuestionCount,
-                GREATEST(COALESCE(MAX(JSON_LENGTH(sd.DataList)), 0) - 1, 0) as CaseCount
+                CAST(s.Id AS CHAR) as id,
+                s.SurveyName as name,
+                s.Status as status,
+                s.CreatedDate as createdDate,
+                s.ModifiedDate as modifiedDate,
+                COUNT(DISTINCT q.Id) as questionCount,
+                GREATEST(COALESCE(MAX(JSON_LENGTH(sd.DataList)), 0) - 1, 0) as caseCount
             FROM Surveys s
             LEFT JOIN Questions q ON s.Id = q.SurveyId
             LEFT JOIN SurveyData sd ON s.Id = sd.SurveyId
@@ -237,21 +237,21 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
     {
         const string sql = @"
             SELECT 
-                p.Id,
-                p.ProjectName,
-                p.ClientName,
-                p.Description,
-                p.StartDate,
-                p.EndDate,
-                p.CreatedDate,
-                MAX(s.ModifiedDate) as LastModifiedDate,
-                COUNT(DISTINCT s.Id) as SurveyCount,
-                MAX(s.Id) as FirstSurveyId,
-                MAX(s.SurveyName) as FirstSurveyName,
-                MAX(s.Status) as FirstSurveyStatus,
-                MAX(s.CreatedDate) as FirstSurveyCreatedDate,
-                COUNT(DISTINCT q.Id) as QuestionCount,
-                GREATEST(COALESCE(MAX(JSON_LENGTH(sd.DataList)), 0) - 1, 0) as CaseCount
+                CAST(p.Id AS CHAR) as id,
+                p.ProjectName as name,
+                p.ClientName as clientName,
+                p.Description as description,
+                p.StartDate as startDate,
+                p.EndDate as endDate,
+                p.CreatedDate as createdAt,
+                MAX(s.ModifiedDate) as lastModified,
+                COUNT(DISTINCT s.Id) as surveyCount,
+                CAST(MAX(s.Id) AS CHAR) as firstSurveyId,
+                MAX(s.SurveyName) as firstSurveyName,
+                MAX(s.Status) as status,
+                MAX(s.CreatedDate) as firstSurveyCreatedDate,
+                COUNT(DISTINCT q.Id) as questionCount,
+                GREATEST(COALESCE(MAX(JSON_LENGTH(sd.DataList)), 0) - 1, 0) as caseCount
             FROM Projects p
             LEFT JOIN Surveys s ON p.Id = s.ProjectId AND s.TenantId = @TenantId
             LEFT JOIN Questions q ON s.Id = q.SurveyId

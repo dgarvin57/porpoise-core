@@ -52,6 +52,18 @@ public class SurveyDataRepository : Repository<SurveyData>, ISurveyDataRepositor
         return surveyData;
     }
 
+    public async Task<int> GetCaseCountBySurveyIdAsync(Guid surveyId)
+    {
+        const string sql = @"
+            SELECT GREATEST(COALESCE(JSON_LENGTH(DataList), 0) - 1, 0) as CaseCount
+            FROM SurveyData 
+            WHERE SurveyId = @SurveyId";
+        
+        using var connection = _context.CreateConnection();
+        var count = await connection.ExecuteScalarAsync<int?>(sql, new { SurveyId = surveyId });
+        return count ?? 0;
+    }
+
     public async Task DeleteBySurveyIdAsync(Guid surveyId)
     {
         const string sql = "DELETE FROM SurveyData WHERE SurveyId = @SurveyId";
