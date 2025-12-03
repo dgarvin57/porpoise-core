@@ -405,7 +405,7 @@ public static class QuestionEngine
 
             decimal pVar = unweightedPercent * 100m;
             decimal qVar = 100m - pVar;
-            response.SamplingError = Math.Sqrt((double)(pVar * qVar / unweightedN)) * 1.96;
+            response.SamplingError = unweightedN > 0 ? Math.Sqrt((double)(pVar * qVar / unweightedN)) * 1.96 : 0;
         }
 
         question.TotalIndex = (int)Math.Round(positive - negative + 100, 0);

@@ -66,6 +66,7 @@ else
     builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();
     builder.Services.AddScoped<IResponseRepository, ResponseRepository>();
     builder.Services.AddScoped<ISurveyDataRepository, SurveyDataRepository>();
+    builder.Services.AddScoped<IQuestionBlockRepository, QuestionBlockRepository>();
     builder.Services.AddScoped<ProjectRepository>(); // UnitOfWork needs concrete type
     builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
     builder.Services.AddScoped<SurveyPersistenceService>();

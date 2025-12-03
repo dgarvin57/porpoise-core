@@ -34,8 +34,9 @@ public class Question : ObjectBase
     private QuestionVariableType _variableType = QuestionVariableType.Dependent;
     private QuestionDataType _dataType = QuestionDataType.Nominal;
     private BlkQuestionStatusType _blkQstStatus = 0;
-    private string _blkLabel = string.Empty;
-    private string _blkStem = string.Empty;
+    private Guid? _blockId; // FK to QuestionBlocks table
+    private string _blkLabel = string.Empty; // DEPRECATED: Use Block.Label via BlockId
+    private string _blkStem = string.Empty;  // DEPRECATED: Use Block.Stem via BlockId
     private bool _isPreferenceBlock;
     private bool _isPreferenceBlockType;
     private int _numberOfPreferenceItems;
@@ -181,12 +182,38 @@ public class Question : ObjectBase
         set => SetProperty(ref _blkQstStatus, value, nameof(BlkQstStatus));
     }
 
+    /// <summary>
+    /// Foreign key to the QuestionBlock that this question belongs to.
+    /// Null for discrete questions that are not part of a block.
+    /// </summary>
+    public Guid? BlockId
+    {
+        get => _blockId;
+        set => SetProperty(ref _blockId, value, nameof(BlockId));
+    }
+
+    /// <summary>
+    /// Navigation property to the block this question belongs to.
+    /// </summary>
+    [XmlIgnore]
+    public QuestionBlock? Block { get; set; }
+
+    /// <summary>
+    /// DEPRECATED: Use Block.Label via BlockId instead.
+    /// Kept for backward compatibility during migration.
+    /// </summary>
+    [Obsolete("Use Block.Label via BlockId instead")]
     public string BlkLabel
     {
         get => _blkLabel;
         set => SetProperty(ref _blkLabel, value ?? string.Empty, nameof(BlkLabel));
     }
 
+    /// <summary>
+    /// DEPRECATED: Use Block.Stem via BlockId instead.
+    /// Kept for backward compatibility during migration.
+    /// </summary>
+    [Obsolete("Use Block.Stem via BlockId instead")]
     public string BlkStem
     {
         get => _blkStem;

@@ -54,36 +54,6 @@
           <option value="year">Last Year</option>
         </select>
       </div>
-
-      <!-- Project Type Toggle -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Project Type
-        </label>
-        <div class="flex items-center space-x-2 h-[38px]">
-          <button
-            @click="setProjectType('')"
-            :class="filters.projectType === '' ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'"
-            class="px-4 py-2 rounded-md text-sm font-medium transition-colors"
-          >
-            All
-          </button>
-          <button
-            @click="setProjectType('single')"
-            :class="filters.projectType === 'single' ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'"
-            class="px-4 py-2 rounded-md text-sm font-medium transition-colors"
-          >
-            Single
-          </button>
-          <button
-            @click="setProjectType('multi')"
-            :class="filters.projectType === 'multi' ? 'bg-blue-500 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'"
-            class="px-4 py-2 rounded-md text-sm font-medium transition-colors"
-          >
-            Multi
-          </button>
-        </div>
-      </div>
     </div>
 
     <!-- Active Filters Summary / Clear Button -->
@@ -98,9 +68,6 @@
         </span>
         <span v-if="filters.dateRange" class="inline-flex items-center px-2 py-1 rounded-md bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
           {{ getDateRangeLabel(filters.dateRange) }}
-        </span>
-        <span v-if="filters.projectType" class="inline-flex items-center px-2 py-1 rounded-md bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
-          {{ filters.projectType === 'single' ? 'Single Survey' : 'Multi Survey' }}
         </span>
       </div>
       <button
@@ -128,29 +95,22 @@ const emit = defineEmits(['filter-change'])
 const filters = ref({
   client: '',
   status: '',
-  dateRange: '',
-  projectType: '' // '', 'single', 'multi'
+  dateRange: ''
 })
 
 const hasActiveFilters = computed(() => {
-  return filters.value.client || filters.value.status || filters.value.dateRange || filters.value.projectType
+  return filters.value.client || filters.value.status || filters.value.dateRange
 })
 
 function emitFilters() {
   emit('filter-change', { ...filters.value })
 }
 
-function setProjectType(type) {
-  filters.value.projectType = type
-  emitFilters()
-}
-
 function clearFilters() {
   filters.value = {
     client: '',
     status: '',
-    dateRange: '',
-    projectType: ''
+    dateRange: ''
   }
   emitFilters()
 }

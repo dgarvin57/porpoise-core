@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.IO.Compression;
 using Porpoise.Core.Application.Interfaces;
 using Porpoise.Core.Data;
+using Porpoise.Core.DataAccess;
 using Porpoise.Core.Models;
 using Porpoise.Core.Services;
 
@@ -29,7 +30,7 @@ public class SurveyImportController : ControllerBase
     }
 
     /// <summary>
-    /// Ensures a project exists in the database, creating it if necessary
+    /// Ensures a project exists in the database, creating it with a unique name if necessary
     /// </summary>
     private async Task<Guid> EnsureProjectExistsAsync(Project project)
     {
@@ -38,33 +39,139 @@ public class SurveyImportController : ControllerBase
             throw new ArgumentException("Project name is required");
         }
 
-        // Check if project already exists
-        var existingProject = await _projectRepository.GetByNameAsync(project.ProjectName);
-        if (existingProject != null)
-        {
-            return existingProject.Id;
-        }
-
-        // Create new project
+        // Always create a new project with a unique name (don't reuse existing)
+        var originalName = project.ProjectName;
+        project.ProjectName = await GetUniqueProjectNameAsync(project.ProjectName);
+        
+        // Generate a new ID (don't reuse the ID from the .porp file)
+        project.Id = Guid.NewGuid();
+        Console.WriteLine($"[PROJECT] Creating project: '{originalName}' -> '{project.ProjectName}'");
+        
         var savedProject = await _projectRepository.AddAsync(project);
+        Console.WriteLine($"[PROJECT] Saved with ID: {savedProject.Id}");
         return savedProject.Id;
+    }
+
+    /// <summary>
+    /// Get a unique survey name by appending a number if name already exists
+    /// </summary>
+    private async Task<string> GetUniqueSurveyNameAsync(string baseName)
+    {
+        var existingSurveys = await _surveyRepository.GetAllAsync();
+        var existingNames = existingSurveys.Select(s => s.SurveyName?.ToLower()).ToHashSet();
+        
+        if (!existingNames.Contains(baseName.ToLower()))
+            return baseName;
+        
+        int counter = 2;
+        string newName;
+        do
+        {
+            newName = $"{baseName} ({counter})";
+            counter++;
+        } while (existingNames.Contains(newName.ToLower()));
+        
+        return newName;
+    }
+
+    /// <summary>
+    /// Get a unique survey name within a specific project
+    /// </summary>
+    private async Task<string> GetUniqueSurveyNameInProjectAsync(string baseName, Guid projectId)
+    {
+        var allSurveys = await _surveyRepository.GetAllAsync();
+        var projectSurveys = allSurveys.Where(s => s.ProjectId == projectId);
+        var existingNames = projectSurveys.Select(s => s.SurveyName?.ToLower()).ToHashSet();
+        
+        if (!existingNames.Contains(baseName.ToLower()))
+            return baseName;
+        
+        int counter = 2;
+        string newName;
+        do
+        {
+            newName = $"{baseName} ({counter})";
+            counter++;
+        } while (existingNames.Contains(newName.ToLower()));
+        
+        return newName;
+    }
+
+    /// <summary>
+    /// Get a unique project name by appending a number if name already exists
+    /// </summary>
+    private async Task<string> GetUniqueProjectNameAsync(string baseName)
+    {
+        var existingProjects = await _projectRepository.GetAllAsync();
+        var existingNames = existingProjects.Select(p => p.ProjectName?.ToLower()).ToHashSet();
+        
+        if (!existingNames.Contains(baseName.ToLower()))
+            return baseName;
+        
+        int counter = 2;
+        string newName;
+        do
+        {
+            newName = $"{baseName} ({counter})";
+            counter++;
+        } while (existingNames.Contains(newName.ToLower()));
+        
+        return newName;
     }
 
     /// <summary>
     /// Helper method to import surveys from a directory containing .porp, .porps, and .porpd files
     /// </summary>
-    private async Task<(List<object> ImportedSurveys, List<string> Errors, List<string> ReferencedFiles, Guid? ProjectId)> ImportSurveysFromDirectory(string directory, string projectFilePath)
+    private async Task<(List<object> ImportedSurveys, List<string> Errors, List<string> ReferencedFiles, Guid? ProjectId)> ImportSurveysFromDirectory(string directory, string? projectFilePath)
     {
         var importedSurveys = new List<object>();
         var errors = new List<string>();
         var referencedFiles = new List<string>();
 
-        // Load the project to get survey references
-        var project = ProjectLoader.LoadProjectOnly(projectFilePath);
+        Project project;
+        
+        // If no project file, create a default project from survey files
+        if (string.IsNullOrEmpty(projectFilePath))
+        {
+            var surveyFiles = Directory.GetFiles(directory, "*.porps", SearchOption.AllDirectories);
+            if (surveyFiles.Length == 0)
+            {
+                errors.Add("No survey files found in archive");
+                return (importedSurveys, errors, referencedFiles, null);
+            }
+
+            // Load first survey to get its name for the project
+            var firstSurveyPath = surveyFiles[0];
+            var (firstSurvey, _, _) = ProjectLoader.LoadProject(firstSurveyPath, null, firstSurveyPath);
+            
+            var surveySummaries = new ObjectListBase<SurveySummary>();
+            foreach (var file in surveyFiles)
+            {
+                surveySummaries.Add(new SurveySummary
+                {
+                    SurveyFileName = Path.GetFileName(file),
+                    SurveyFolder = Path.GetDirectoryName(file)
+                });
+            }
+            
+            project = new Project
+            {
+                ProjectName = firstSurvey.SurveyName ?? "Imported Survey",
+                Description = "Auto-created project from survey import",
+                SurveyListSummary = surveySummaries
+            };
+            Console.WriteLine($"[IMPORT] Auto-created project from {surveyFiles.Length} survey file(s)");
+        }
+        else
+        {
+            // Load the project to get survey references
+            project = ProjectLoader.LoadProjectOnly(projectFilePath);
+            Console.WriteLine($"[IMPORT] Loaded project: '{project.ProjectName}' with {project.SurveyListSummary?.Count ?? 0} surveys");
+        }
         
         if (project.SurveyListSummary == null || project.SurveyListSummary.Count == 0)
         {
-            errors.Add("Project file contains no survey references");
+            errors.Add("Project contains no survey references");
             return (importedSurveys, errors, referencedFiles, null);
         }
 
@@ -72,10 +179,13 @@ public class SurveyImportController : ControllerBase
         Guid? projectId = null;
         try
         {
+            Console.WriteLine($"[IMPORT] Calling EnsureProjectExistsAsync for '{project.ProjectName}'");
             projectId = await EnsureProjectExistsAsync(project);
+            Console.WriteLine($"[IMPORT] Project created/found with ID: {projectId}");
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"[IMPORT] Error in EnsureProjectExistsAsync: {ex.Message}");
             errors.Add($"Error creating project: {ex.Message}");
             return (importedSurveys, errors, referencedFiles, null);
         }
@@ -164,6 +274,12 @@ public class SurveyImportController : ControllerBase
                     actualDataPath
                 );
 
+                // Make survey name unique within this project
+                if (projectId.HasValue)
+                {
+                    survey.SurveyName = await GetUniqueSurveyNameInProjectAsync(survey.SurveyName, projectId.Value);
+                }
+
                 // IMPORTANT: Use the properly loaded data from .porpd, not metadata from .porps
                 // Always prefer the data loaded from the .porpd file over what's in the .porps
                 if (data != null && data.DataList != null && data.DataList.Count > 0)
@@ -219,6 +335,7 @@ public class SurveyImportController : ControllerBase
     public async Task<IActionResult> ImportPorpsFile(
         [FromForm] IFormFile surveyFile,
         [FromForm] IFormFile? dataFile,
+        [FromForm] IFormFile? projectFile,
         [FromForm] string? projectPath)
     {
         try
@@ -243,16 +360,55 @@ public class SurveyImportController : ControllerBase
                 }
             }
 
-            // Use default project path if not provided
-            var defaultProjectPath = Path.Combine(_environment.ContentRootPath, "SampleData", "Demo 2015.porp");
-            var actualProjectPath = string.IsNullOrEmpty(projectPath) ? defaultProjectPath : projectPath;
+            string? tempProjectPath = null;
+            if (projectFile != null && projectFile.Length > 0)
+            {
+                tempProjectPath = Path.Combine(Path.GetTempPath(), projectFile.FileName);
+                using (var stream = new FileStream(tempProjectPath, FileMode.Create))
+                {
+                    await projectFile.CopyToAsync(stream);
+                }
+            }
 
-            // Load the project
-            var (survey, project, data) = ProjectLoader.LoadProject(
-                tempSurveyPath,
-                actualProjectPath,
-                tempDataPath ?? tempSurveyPath
-            );
+            // Load survey and data
+            var survey = ProjectLoader.LoadSurvey(tempSurveyPath);
+            var data = tempDataPath != null ? PorpoiseFileEncryption.ReadData(tempDataPath) : null;
+            
+            // Load project if uploaded
+            Project? project = null;
+            if (tempProjectPath != null)
+            {
+                Console.WriteLine($"[INDIVIDUAL] Loading project from file: {tempProjectPath}");
+                project = ProjectLoader.LoadProjectOnly(tempProjectPath);
+            }
+            else
+            {
+                Console.WriteLine("[INDIVIDUAL] No project file uploaded");
+            }
+
+            // Ensure survey name is unique
+            survey.SurveyName = await GetUniqueSurveyNameAsync(survey.SurveyName ?? "Imported Survey");
+
+            // If no project file provided, create a default project
+            if (project == null)
+            {
+                Console.WriteLine($"[INDIVIDUAL] Creating auto project for survey: {survey.SurveyName}");
+                project = new Project
+                {
+                    ProjectName = survey.SurveyName,
+                    Description = "Auto-created project from survey import"
+                };
+            }
+
+            // Ensure project exists in database
+            Guid? projectId = null;
+            if (project != null)
+            {
+                Console.WriteLine($"[INDIVIDUAL] Calling EnsureProjectExistsAsync for: {project.ProjectName}");
+                projectId = await EnsureProjectExistsAsync(project);
+                Console.WriteLine($"[INDIVIDUAL] Project saved with ID: {projectId}");
+                survey.ProjectId = projectId.Value;
+            }
 
             // IMPORTANT: Use the properly loaded data from .porpd, not metadata from .porps
             if (data != null && data.DataList != null && data.DataList.Count > 0)
@@ -286,15 +442,18 @@ public class SurveyImportController : ControllerBase
             System.IO.File.Delete(tempSurveyPath);
             if (tempDataPath != null)
                 System.IO.File.Delete(tempDataPath);
+            if (tempProjectPath != null)
+                System.IO.File.Delete(tempProjectPath);
 
             return Ok(new
             {
                 Message = "Survey imported successfully",
                 SurveyId = savedSurvey.Id,
                 SurveyName = savedSurvey.SurveyName,
+                ProjectId = projectId,
+                ProjectName = project?.ProjectName,
                 QuestionCount = savedSurvey.QuestionList?.Count ?? 0,
-                ResponseCount = data?.DataList?.Count - 1 ?? 0,
-                ProjectName = project?.ProjectName
+                ResponseCount = data?.DataList?.Count - 1 ?? 0
             });
         }
         catch (Exception ex)
@@ -413,20 +572,23 @@ public class SurveyImportController : ControllerBase
             var extractedFiles = Directory.GetFiles(extractDir, "*", SearchOption.AllDirectories)
                 .Select(f => Path.GetRelativePath(extractDir, f)).ToList();
 
-            // Find the .porp project file
+            // Find the .porp project file (optional - will auto-create if missing)
             var projectFile = Directory.GetFiles(extractDir, "*.porp", SearchOption.AllDirectories).FirstOrDefault();
-            if (projectFile == null)
-            {
-                Directory.Delete(extractDir, true);
-                System.IO.File.Delete(tempZipPath);
-                return BadRequest("No .porp project file found in archive");
-            }
 
             // Use the same import logic as /project endpoint
             var (importedSurveys, errors, referencedFiles, projectId) = await ImportSurveysFromDirectory(extractDir, projectFile);
 
-            // Load project metadata
-            var project = ProjectLoader.LoadProjectOnly(projectFile);
+            // Load project metadata for response
+            Project? project = null;
+            if (projectFile != null)
+            {
+                project = ProjectLoader.LoadProjectOnly(projectFile);
+            }
+            else if (projectId.HasValue)
+            {
+                // Get the auto-created project from database
+                project = await _projectRepository.GetByIdAsync(projectId.Value);
+            }
 
             // Clean up
             System.IO.File.Delete(tempZipPath);
@@ -434,11 +596,11 @@ public class SurveyImportController : ControllerBase
 
             return Ok(new
             {
-                Message = $"Imported {importedSurveys.Count} of {project.SurveyListSummary?.Count ?? 0} surveys from PORPZ archive",
+                Message = $"Imported {importedSurveys.Count} survey(s) from PORPZ archive",
                 FileName = porpzFile.FileName,
                 ProjectId = projectId,
-                ProjectName = project.ProjectName,
-                ClientName = project.ClientName,
+                ProjectName = project?.ProjectName,
+                ClientName = project?.ClientName,
                 ExtractedFiles = extractedFiles,
                 ReferencedFiles = referencedFiles,
                 ImportedSurveys = importedSurveys,

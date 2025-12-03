@@ -10,80 +10,8 @@
             ? 'rounded-lg border-2 border-blue-600/70 dark:border-blue-500/70'
             : 'rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md'
     ]">
-    <!-- Single Survey Project - Direct Click -->
-    <div
-      v-if="project.surveyCount === 1"
-      @click="handleSingleSurveyClick"
-      @mousedown="isActive = true"
-      @mouseup="isActive = false"
-      @mouseleave="isActive = false"
-      class="p-6 cursor-pointer flex-1 flex flex-col"
-    >
-      <div class="flex items-start justify-between min-w-0">
-        <div class="flex items-start space-x-4 flex-1 min-w-0">
-          <!-- Icon -->
-          <div class="flex-shrink-0">
-            <svg class="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </div>
-          
-          <!-- Content -->
-          <div class="flex-1 min-w-0">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white truncate">
-              {{ project.name }}
-            </h3>
-            <p v-if="project.clientName" class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              {{ project.clientName }}
-            </p>
-            <p v-if="project.description" class="text-sm text-gray-500 dark:text-gray-400 mt-2 line-clamp-2">
-              {{ project.description }}
-            </p>
-            
-            <!-- Metadata -->
-            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-xs text-gray-500 dark:text-gray-400">
-              <span class="flex items-center flex-shrink-0">
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-                {{ project.caseCount || 0 }} cases
-              </span>
-              <span class="flex items-center flex-shrink-0">
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {{ project.questionCount || 0 }} questions
-              </span>
-              <span v-if="project.createdAt" class="flex items-center flex-shrink-0">
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span class="truncate">Created {{ formatDate(project.createdAt) }}</span>
-              </span>
-              <span v-if="project.lastModified" class="flex items-center flex-shrink-0">
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                <span class="truncate">Modified {{ formatDate(project.lastModified) }}</span>
-              </span>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Status Badge -->
-        <div v-if="project.status" class="ml-4 flex-shrink-0">
-          <span
-            :class="getStatusClass(project.status)"
-            class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-          >
-            {{ project.status }}
-          </span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Multi-Survey Project - Expandable -->
-    <div v-else class="flex-1 flex flex-col">
+    <!-- All Projects - Expandable -->
+    <div class="flex-1 flex flex-col">
       <!-- Project Header -->
       <div
         @click="toggleExpand"
@@ -106,7 +34,7 @@
               {{ project.name }}
             </h3>
             <span class="text-sm text-gray-500 dark:text-gray-400 mt-1 block 5xl:inline 5xl:ml-2 5xl:mt-0">
-              ({{ project.surveyCount }} surveys)
+              ({{ project.surveyCount }} {{ project.surveyCount === 1 ? 'survey' : 'surveys' }})
             </span>
             <p v-if="project.clientName" class="text-sm text-gray-600 dark:text-gray-400 mt-1">
               {{ project.clientName }}
@@ -214,10 +142,11 @@ async function toggleExpand() {
   emit('set-focus')
   
   // Fetch surveys if expanding and not already loaded
-  if (!props.isExpanded && surveys.value.length === 0 && props.project.surveyCount > 1) {
+  if (!props.isExpanded && surveys.value.length === 0) {
     loadingSurveys.value = true
     try {
       const response = await axios.get(`http://localhost:5107/api/projects/${props.project.id}/surveys`)
+      console.log('[ProjectCard] Fetched surveys:', response.data)
       // Map API response to component format
       surveys.value = response.data.map(s => ({
         id: s.id,
@@ -228,6 +157,7 @@ async function toggleExpand() {
         createdDate: s.createdDate,
         modifiedDate: s.modifiedDate
       }))
+      console.log('[ProjectCard] Mapped surveys:', surveys.value)
     } catch (error) {
       console.error('Error fetching surveys:', error)
     } finally {
@@ -236,47 +166,23 @@ async function toggleExpand() {
   }
 }
 
-async function handleSingleSurveyClick() {
-  // Clear all expanded projects and focused surveys
-  emit('clear-all')
-  emit('set-focus')
-  // Navigate to analytics
-  if (props.project.surveyCount === 1) {
-    try {
-      // Fetch the survey ID for this project
-      const response = await axios.get(`http://localhost:5107/api/projects/${props.project.id}/surveys`)
-      if (response.data && response.data.length > 0) {
-        const surveyId = response.data[0].id
-        router.push(`/analytics/${surveyId}`)
-      }
-    } catch (error) {
-      console.error('Error fetching survey:', error)
-    }
-  }
-}
-
-function navigateToAnalytics() {
-  // For single-survey projects, navigate directly
-  if (props.project.surveyCount === 1) {
-    router.push(`/analytics/${props.project.id}`)
-  }
-}
-
 // Reload surveys if component mounts in expanded state (e.g., returning from navigation)
 onMounted(async () => {
-  if (props.isExpanded && surveys.value.length === 0 && props.project.surveyCount > 1) {
+  if (props.isExpanded && surveys.value.length === 0) {
     loadingSurveys.value = true
     try {
       const response = await axios.get(`http://localhost:5107/api/projects/${props.project.id}/surveys`)
+      console.log('[ProjectCard onMounted] Fetched surveys:', response.data)
       surveys.value = response.data.map(s => ({
-        id: s.Id,
-        name: s.SurveyName,
-        status: s.Status,
-        caseCount: s.CaseCount,
-        questionCount: s.QuestionCount,
-        createdDate: s.CreatedDate,
-        modifiedDate: s.ModifiedDate
+        id: s.id,
+        name: s.name,
+        status: s.status,
+        caseCount: s.caseCount,
+        questionCount: s.questionCount,
+        createdDate: s.createdDate,
+        modifiedDate: s.modifiedDate
       }))
+      console.log('[ProjectCard onMounted] Mapped surveys:', surveys.value)
     } catch (error) {
       console.error('Error fetching surveys on mount:', error)
     } finally {

@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Porpoise.Core.Application.Interfaces;
 using Porpoise.Core.Models;
@@ -10,7 +11,7 @@ namespace Porpoise.Core.Services;
 
 /// <summary>
 /// Service for persisting complete surveys with questions and responses to the database.
-/// Handles the full object graph: Survey → Questions → Responses
+/// Handles the full object graph: Survey → Questions → Responses → QuestionBlocks
 /// </summary>
 public class SurveyPersistenceService
 {
@@ -19,18 +20,21 @@ public class SurveyPersistenceService
     private readonly IResponseRepository _responseRepository;
     private readonly ISurveyDataRepository _surveyDataRepository;
     private readonly IProjectRepository? _projectRepository;
+    private readonly IQuestionBlockRepository _questionBlockRepository;
 
     public SurveyPersistenceService(
         ISurveyRepository surveyRepository,
         IQuestionRepository questionRepository,
         IResponseRepository responseRepository,
         ISurveyDataRepository surveyDataRepository,
+        IQuestionBlockRepository questionBlockRepository,
         IProjectRepository? projectRepository = null)
     {
         _surveyRepository = surveyRepository;
         _questionRepository = questionRepository;
         _responseRepository = responseRepository;
         _surveyDataRepository = surveyDataRepository;
+        _questionBlockRepository = questionBlockRepository;
         _projectRepository = projectRepository;
     }
 
@@ -57,17 +61,56 @@ public class SurveyPersistenceService
         // Step 2: Save the survey
         var savedSurvey = await _surveyRepository.AddAsync(survey);
 
-        // Step 3: Save questions and their responses
+        // Step 3: Create QuestionBlocks for unique blocks in this survey
+        var blockMap = new Dictionary<string, Guid>(); // blkLabel -> BlockId
         if (survey.QuestionList != null && survey.QuestionList.Count > 0)
         {
+            // Find all unique blocks (first question in each block has the block info)
+            var firstQuestionsInBlocks = survey.QuestionList
+                .Where(q => q.BlkQstStatus == BlkQuestionStatusType.FirstQuestionInBlock &&
+                           !string.IsNullOrEmpty(q.BlkLabel))
+                .ToList();
+
+            int displayOrder = 0;
+            foreach (var firstQuestion in firstQuestionsInBlocks)
+            {
+                // Create QuestionBlock record
+                var questionBlock = new QuestionBlock
+                {
+                    SurveyId = savedSurvey.Id,
+                    Label = firstQuestion.BlkLabel,
+                    Stem = firstQuestion.BlkStem ?? string.Empty,
+                    DisplayOrder = displayOrder++
+                };
+
+                var savedBlock = await _questionBlockRepository.AddAsync(questionBlock);
+                blockMap[firstQuestion.BlkLabel] = savedBlock.Id;
+            }
+        }
+
+        // Step 4: Save questions and their responses
+        if (survey.QuestionList != null && survey.QuestionList.Count > 0)
+        {
+            Guid? currentBlockId = null;
+            
             foreach (var question in survey.QuestionList)
             {
-                // Optimize block storage: only save BlkLabel and BlkStem on first question of block
-                if (question.BlkQstStatus == BlkQuestionStatusType.ContinuationQuestion) // Status 2
+                // Assign BlockId based on question's block status
+                if (question.BlkQstStatus == BlkQuestionStatusType.FirstQuestionInBlock)
                 {
-                    question.BlkLabel = string.Empty;
-                    question.BlkStem = string.Empty;
+                    // First question in block - use its label to find the BlockId
+                    if (!string.IsNullOrEmpty(question.BlkLabel) && blockMap.ContainsKey(question.BlkLabel))
+                    {
+                        currentBlockId = blockMap[question.BlkLabel];
+                        question.BlockId = currentBlockId;
+                    }
                 }
+                else if (question.BlkQstStatus == BlkQuestionStatusType.ContinuationQuestion)
+                {
+                    // Continuation question - use current block's ID
+                    question.BlockId = currentBlockId;
+                }
+                // Discrete questions (status 0 or 3) have BlockId = null
                 
                 var savedQuestion = await _questionRepository.AddAsync(question, savedSurvey.Id);
 
@@ -83,7 +126,7 @@ public class SurveyPersistenceService
             }
         }
 
-        // Step 4: Save survey data (respondent answers)
+        // Step 5: Save survey data (respondent answers)
         if (survey.Data != null && survey.Data.DataList != null && survey.Data.DataList.Count > 0)
         {
             await _surveyDataRepository.AddAsync(survey.Data, savedSurvey.Id);

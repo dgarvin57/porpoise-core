@@ -6,7 +6,7 @@
         Import Survey Data
       </h1>
       <p class="text-gray-600 dark:text-gray-400">
-        Upload survey files (.porps + .porpd pair for survey with data, or .porpz archive containing all files)
+        Upload survey files (.porps + .porpd for survey with data, optional .porp for project info, or .porpz archive)
       </p>
     </div>
 
@@ -55,7 +55,7 @@
           </button>
 
           <p class="text-xs text-gray-500 dark:text-gray-500 mt-4">
-            Supported: .porps (survey), .porpd (data), .porpz (archive) • Upload matching .porps + .porpd together • Max 50MB
+            Supported: .porps (survey), .porpd (data), .porp (project, optional), .porpz (archive) • Max 50MB
           </p>
         </div>
       </div>
@@ -390,10 +390,13 @@ const uploadFiles = async () => {
         })
         
       } else if (ext === 'porps') {
-        // Upload porps, and look for matching porpd file
+        // Upload porps, look for matching porpd and porp files
         const baseName = fileItem.name.replace('.porps', '')
         const matchingPorpd = selectedFiles.value.find(f => 
           f.name === baseName + '.porpd' && !f.success && !f.error
+        )
+        const matchingPorp = selectedFiles.value.find(f => 
+          f.name === baseName + '.porp' && !f.success && !f.error
         )
         
         formData.append('surveyFile', fileItem.file)
@@ -402,6 +405,11 @@ const uploadFiles = async () => {
           matchingPorpd.uploading = true
           matchingPorpd.progress = 0
         }
+        if (matchingPorp) {
+          formData.append('projectFile', matchingPorp.file)
+          matchingPorp.uploading = true
+          matchingPorp.progress = 0
+        }
         
         const response = await axios.post('http://localhost:5107/api/survey-import/porps', formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
@@ -409,22 +417,33 @@ const uploadFiles = async () => {
             const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
             fileItem.progress = progress
             if (matchingPorpd) matchingPorpd.progress = progress
+            if (matchingPorp) matchingPorp.progress = progress
           }
         })
         
         fileItem.uploading = false
         fileItem.success = true
         fileItem.surveyId = response.data.surveyId
+        fileItem.projectId = response.data.projectId
         
         if (matchingPorpd) {
           matchingPorpd.uploading = false
           matchingPorpd.success = true
           matchingPorpd.surveyId = response.data.surveyId
+          matchingPorpd.projectId = response.data.projectId
+        }
+        if (matchingPorp) {
+          matchingPorp.uploading = false
+          matchingPorp.success = true
+          matchingPorp.surveyId = response.data.surveyId
+          matchingPorp.projectId = response.data.projectId
         }
         
         recentImports.value.unshift({
           id: response.data.surveyId,
           name: response.data.surveyName || fileItem.name,
+          projectId: response.data.projectId,
+          projectName: response.data.projectName,
           importedAt: new Date(),
           questionCount: response.data.questionCount || 0,
           responseCount: response.data.responseCount || 0

@@ -15,37 +15,11 @@
     </div>
 
     <div v-else class="projects-grid">
-      <!-- Standalone surveys (projects with 1 survey) -->
-      <div v-if="standaloneSurveys.length > 0" class="standalone-section">
-        <h2 class="section-title">Standalone Surveys</h2>
-        <div class="survey-cards">
-          <div
-            v-for="project in standaloneSurveys"
-            :key="project.Id"
-            class="survey-card"
-            @click="viewSurvey(project)"
-          >
-            <div class="card-icon">📊</div>
-            <div class="card-content">
-              <h3>{{ project.ProjectName }}</h3>
-              <p class="client-name">{{ project.ClientName }}</p>
-              <p v-if="project.Description" class="description">{{ project.Description }}</p>
-              <div class="card-meta">
-                <span class="date">{{ formatDate(project.FirstSurveyCreatedDate || project.CreatedDate) }}</span>
-                <span v-if="project.QuestionCount > 0" class="stat">{{ project.QuestionCount }} questions</span>
-                <span v-if="project.CaseCount > 0" class="stat">{{ project.CaseCount }} cases</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Multi-survey projects -->
-      <div v-if="multiSurveyProjects.length > 0" class="multi-survey-section">
-        <h2 class="section-title">Multi-Survey Projects</h2>
+      <!-- All projects shown uniformly -->
+      <div v-if="allProjects.length > 0" class="projects-section">
         <div class="project-folders">
           <div
-            v-for="project in multiSurveyProjects"
+            v-for="project in allProjects"
             :key="project.Id"
             class="project-folder"
             :class="{ expanded: expandedProjects.has(project.Id) }"
@@ -55,7 +29,7 @@
               <div class="folder-content">
                 <h3>{{ project.ProjectName }}</h3>
                 <p class="client-name">{{ project.ClientName }}</p>
-                <span class="survey-count">{{ project.SurveyCount }} surveys</span>
+                <span class="survey-count">{{ project.SurveyCount }} {{ project.SurveyCount === 1 ? 'survey' : 'surveys' }}</span>
               </div>
               <span class="toggle-icon">{{ expandedProjects.has(project.Id) ? '▼' : '▶' }}</span>
             </div>
@@ -90,7 +64,7 @@
         </div>
       </div>
 
-      <div v-if="standaloneSurveys.length === 0 && multiSurveyProjects.length === 0" class="empty-state">
+      <div v-else class="empty-state">
         <p>No projects or surveys found.</p>
         <p class="hint">Import a survey file (.porpz) to get started.</p>
       </div>
@@ -113,15 +87,6 @@ const loadingSurveys = ref(new Set())
 const projectSurveys = ref(new Map())
 
 // Computed: Standalone surveys (projects with 1 survey)
-const standaloneSurveys = computed(() => {
-  return allProjects.value.filter(p => p.SurveyCount === 1)
-})
-
-// Computed: Multi-survey projects (projects with 2+ surveys)
-const multiSurveyProjects = computed(() => {
-  return allProjects.value.filter(p => p.SurveyCount > 1)
-})
-
 // Load all projects with survey counts
 async function loadProjects() {
   try {
@@ -260,88 +225,8 @@ onMounted(() => {
   background: #2563eb;
 }
 
-.section-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1a202c;
-  margin: 2rem 0 1rem 0;
-}
-
-.standalone-section {
-  margin-bottom: 3rem;
-}
-
-.survey-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
-}
-
-.survey-card {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.5rem;
-  padding: 1.5rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.survey-card:hover {
-  border-color: #3b82f6;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
-}
-
-.card-icon {
-  font-size: 2rem;
-  margin-bottom: 1rem;
-}
-
-.card-content h3 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #1a202c;
-  margin: 0 0 0.5rem 0;
-}
-
-.client-name {
-  color: #64748b;
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
-  display: block;
-}
-
-.description {
-  color: #64748b;
-  font-size: 0.875rem;
-  line-height: 1.5;
-  margin-bottom: 1rem;
-}
-
-.card-meta {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-  padding-top: 0.75rem;
-  border-top: 1px solid #e2e8f0;
-  flex-wrap: wrap;
-}
-
-.date {
-  font-size: 0.813rem;
-  color: #94a3b8;
-}
-
-.stat {
-  font-size: 0.813rem;
-  color: #64748b;
-  font-weight: 500;
-}
-
-.stat:not(:last-child)::after {
-  content: "•";
-  margin-left: 0.5rem;
-  color: #cbd5e1;
+.projects-section {
+  margin-bottom: 2rem;
 }
 
 .project-folders {
@@ -383,6 +268,12 @@ onMounted(() => {
   font-weight: 600;
   color: #1a202c;
   margin: 0 0 0.25rem 0;
+}
+
+.client-name {
+  color: #64748b;
+  font-size: 0.9rem;
+  display: block;
 }
 
 .survey-count {

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Porpoise.Core.Application.Interfaces;
 using Porpoise.Core.Models;
 using Porpoise.Core.Services;
+using Porpoise.Core.Engines;
 
 namespace Porpoise.Api.Controllers;
 
@@ -192,6 +193,64 @@ public class SurveysController : ControllerBase
     }
 
     /// <summary>
+    /// Partially update survey (e.g., just survey notes)
+    /// </summary>
+    [HttpPatch("{id:guid}")]
+    public async Task<IActionResult> PatchSurvey(Guid id, [FromBody] Dictionary<string, object> updates)
+    {
+        try
+        {
+            var survey = await _surveyRepository.GetByIdAsync(id);
+            if (survey == null)
+            {
+                return NotFound($"Survey with ID {id} not found");
+            }
+
+            // Apply updates
+            if (updates.ContainsKey("surveyNotes"))
+            {
+                survey.SurveyNotes = updates["surveyNotes"]?.ToString() ?? string.Empty;
+            }
+
+            var updated = await _surveyRepository.UpdateAsync(survey);
+            return Ok(updated);
+        }
+        catch (Exception ex)
+        {
+            return Problem($"Error updating survey: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Partially update question (e.g., just question notes)
+    /// </summary>
+    [HttpPatch("{surveyId:guid}/questions/{questionId:guid}")]
+    public async Task<IActionResult> PatchQuestion(Guid surveyId, Guid questionId, [FromBody] Dictionary<string, object> updates)
+    {
+        try
+        {
+            var question = await _questionRepository.GetByIdAsync(questionId);
+            if (question == null)
+            {
+                return NotFound($"Question with ID {questionId} not found");
+            }
+
+            // Apply updates
+            if (updates.ContainsKey("questionNotes"))
+            {
+                question.QuestionNotes = updates["questionNotes"]?.ToString() ?? string.Empty;
+            }
+
+            var updated = await _questionRepository.UpdateAsync(question);
+            return Ok(updated);
+        }
+        catch (Exception ex)
+        {
+            return Problem($"Error updating question: {ex.Message}");
+        }
+    }
+
+    /// <summary>
     /// Delete survey
     /// </summary>
     [HttpDelete("{id:guid}")]
@@ -309,21 +368,38 @@ public class SurveysController : ControllerBase
                 .OrderBy(q => q.DataFileCol)
                 .ToList();
             
+            // Log question order for debugging
+            Console.WriteLine($"Questions ordered by DataFileCol for survey {id}:");
+            foreach (var q in questions)
+            {
+                Console.WriteLine($"  DataFileCol={q.DataFileCol}, QstNumber={q.QstNumber}, Label={q.QstLabel}, BlkQstStatus={q.BlkQstStatus}, BlkLabel={q.BlkLabel}");
+            }
+            
             // Get survey data (actual responses from survey takers)
             var surveyData = await _surveyDataRepository.GetBySurveyIdAsync(id);
+            
+            // Assign survey data to survey object so calculations work
+            survey.Data = surveyData;
             
             // Load responses for each question
             var questionResults = new List<object>();
             foreach (var question in questions)
             {
                 var responseDefinitions = await _responseRepository.GetByQuestionIdAsync(question.Id);
+                var responseList = new ObjectListBase<Response>();
+                foreach (var resp in responseDefinitions)
+                {
+                    responseList.Add(resp);
+                }
+                question.Responses = responseList; // Assign responses to question
                 
                 // Get missing values for this question (discrete values like 97, 98, 99)
                 var missingValues = question.MissingValues; // Returns List<int> from MissValue1/2/3
                 
                 // Calculate actual frequencies from survey data
                 var responsesWithStats = new List<object>();
-                int totalValidCases = 0; // Count of non-missing responses
+                int totalValidCases = 0; // Count of non-missing responses (weighted)
+                int totalValidCasesUnweighted = 0; // Count of non-missing responses (unweighted)
                 
                 if (surveyData?.DataList != null && surveyData.DataList.Count > 1) // Need at least header + 1 data row
                 {
@@ -341,15 +417,27 @@ public class SurveysController : ControllerBase
                                 {
                                     continue; // Skip missing values
                                 }
-                                totalValidCases++;
+                                
+                                // Find the response definition to get its weight
+                                var responseDef = responseDefinitions.FirstOrDefault(r => r.RespValue == value);
+                                double weight = responseDef?.Weight ?? 1.0;
+                                
+                                totalValidCases += (int)Math.Round(weight); // Weighted count
+                                totalValidCasesUnweighted++; // Unweighted count
                             }
                         }
                     }
                     
-                    // Now calculate frequencies for each response
+                    // Set question TotalN for calculations
+                    question.TotalN = totalValidCases;
+                    
+                    // Now calculate frequencies for each response and set ResultFrequency
                     foreach (var response in responseDefinitions)
                     {
-                        int count = 0;
+                        int count = 0; // Weighted count
+                        int countUnweighted = 0; // Unweighted count
+                        double weight = response.Weight;
+                        
                         // Skip row 0 which is the header row
                         for (int i = 1; i < surveyData.DataList.Count; i++)
                         {
@@ -357,9 +445,13 @@ public class SurveysController : ControllerBase
                             if (question.DataFileCol < row.Count && 
                                 row[question.DataFileCol] == response.RespValue.ToString())
                             {
-                                count++;
+                                count += (int)Math.Round(weight); // Apply weight
+                                countUnweighted++; // No weight applied
                             }
                         }
+                        
+                        // Set ResultFrequency for the calculation engine
+                        response.ResultFrequency = count;
                         
                         double percentage = totalValidCases > 0 ? (count / (double)totalValidCases * 100) : 0;
                         
@@ -376,10 +468,15 @@ public class SurveysController : ControllerBase
                         {
                             Label = response.Label,
                             Count = count,
+                            CountUnweighted = countUnweighted,
                             Percentage = percentage,
-                            IndexSymbol = indexSymbol
+                            IndexSymbol = indexSymbol,
+                            Weight = weight
                         });
                     }
+                    
+                    // Now calculate TotalIndex and other statistics using the QuestionEngine
+                    QuestionEngine.CalculateStatisticsHelper(question, totalValidCasesUnweighted);
                 }
                 else
                 {
@@ -398,8 +495,10 @@ public class SurveysController : ControllerBase
                         {
                             Label = response.Label,
                             Count = 0,
+                            CountUnweighted = 0,
                             Percentage = 0.0,
-                            IndexSymbol = indexSymbol
+                            IndexSymbol = indexSymbol,
+                            Weight = response.Weight
                         });
                     }
                 }
@@ -410,12 +509,15 @@ public class SurveysController : ControllerBase
                     QstNumber = question.QstNumber,
                     Label = question.QstLabel,
                     Text = question.QstStem,
-                    Index = 128, // Default index value
-                    TotalCases = totalValidCases, // Only count valid responses (exclude missing values)
+                    Index = question.TotalIndex, // Calculate from positive/negative responses
+                    SamplingError = (double)question.SamplingError, // Question-level CI
+                    TotalCases = totalValidCases, // Weighted count (exclude missing values)
+                    TotalCasesUnweighted = totalValidCasesUnweighted, // Unweighted count (exclude missing values)
                     VariableType = (int)question.VariableType,
                     BlkQstStatus = (int?)question.BlkQstStatus,
                     BlkLabel = question.BlkLabel,
                     BlkStem = question.BlkStem,
+                    QuestionNotes = question.QuestionNotes,
                     DataFileCol = question.DataFileCol,
                     Responses = responsesWithStats
                 });

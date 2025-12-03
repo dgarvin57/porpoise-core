@@ -195,50 +195,8 @@
       <!-- Project Rows -->
       <div class="space-y-0">
         <div v-for="project in filteredProjects" :key="project.id">
-          <!-- Single Survey Project Row -->
-          <div
-            v-if="project.surveyCount === 1"
-            @click="handleSingleProjectClick(project)"
-            :class="[
-              'grid grid-cols-[32px_minmax(200px,1fr)_140px_80px_80px_110px_110px_90px] gap-3 items-center px-3 py-1.5 cursor-pointer group border-b border-gray-100 dark:border-gray-800 min-w-[900px]',
-              focusedProjectId === project.id
-                ? 'bg-blue-50 dark:bg-blue-900/30'
-                : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-            ]"
-          >
-            <div class="flex justify-center">
-              <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <span class="text-sm font-medium text-gray-700 dark:text-gray-300 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400">
-              {{ project.name }}
-            </span>
-            <span class="text-xs text-gray-500 dark:text-gray-400 truncate">
-              {{ project.clientName || '—' }}
-            </span>
-            <span class="text-xs text-gray-500 dark:text-gray-400 text-right tabular-nums">
-              {{ project.caseCount || 0 }}
-            </span>
-            <span class="text-xs text-gray-500 dark:text-gray-400 text-right tabular-nums">
-              {{ project.questionCount || 0 }}
-            </span>
-            <span class="text-xs text-gray-500 dark:text-gray-400 text-right tabular-nums">
-              {{ formatDateShort(project.createdAt) }}
-            </span>
-            <span class="text-xs text-gray-500 dark:text-gray-400 text-right tabular-nums">
-              {{ formatDateShort(project.lastModified) }}
-            </span>
-            <div class="flex justify-center">
-              <span v-if="project.status" :class="getStatusClass(project.status)" class="text-xs px-2 py-0.5 rounded-full whitespace-nowrap">
-                {{ project.status }}
-              </span>
-              <span v-else class="text-xs text-gray-400">—</span>
-            </div>
-          </div>
-
-          <!-- Multi-Survey Project Row (Expandable) -->
-          <div v-else>
+          <!-- Project Row (All Expandable) -->
+          <div>
             <div
               @click="toggleProjectExpand(project.id)"
               class="grid grid-cols-[32px_minmax(200px,1fr)_140px_80px_80px_110px_110px_90px] gap-3 items-center px-3 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer group border-b border-gray-100 dark:border-gray-800 min-w-[900px]"
@@ -450,16 +408,7 @@ const filteredProjects = computed(() => {
     })
   }
   
-  // Project type filter
-  if (activeFilters.value.projectType) {
-    if (activeFilters.value.projectType === 'single') {
-      result = result.filter(p => p.surveyCount === 1)
-    } else if (activeFilters.value.projectType === 'multi') {
-      result = result.filter(p => p.surveyCount > 1)
-    }
-  }
-  
-  // Sort
+  // Sort projects
   result.sort((a, b) => {
     let comparison = 0
     switch (sortBy.value) {

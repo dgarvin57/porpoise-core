@@ -119,11 +119,19 @@
       <!-- Results View -->
       <ResultsView 
         v-if="activeSection === 'results'" 
-        :surveyId="surveyId" 
+        :surveyId="surveyId"
+        :surveyNotes="surveyNotes"
         :initialQuestionId="selectedQuestionId"
         :initialExpandedBlocks="expandedBlocks"
+        :initialColumnMode="columnMode"
+        :initialInfoExpanded="infoExpanded"
+        :initialInfoTab="infoTab"
         @question-selected="handleQuestionSelected"
         @expanded-blocks-changed="handleExpandedBlocksChanged"
+        @column-mode-changed="handleColumnModeChanged"
+        @info-expanded-changed="handleInfoExpandedChanged"
+        @info-tab-changed="handleInfoTabChanged"
+        @survey-notes-updated="handleSurveyNotesUpdated"
       />
 
       <!-- Crosstab View -->
@@ -178,6 +186,7 @@ const router = useRouter()
 const surveyId = ref(route.params.id)
 const surveyName = ref('Loading...')
 const projectName = ref('')
+const surveyNotes = ref('')
 const totalCases = ref(0)
 const questionCount = ref(0)
 const activeSection = ref('results')
@@ -185,6 +194,9 @@ const activeSection = ref('results')
 // State management helpers
 const selectedQuestionId = ref(null)
 const expandedBlocks = ref([])
+const columnMode = ref('totalN')
+const infoExpanded = ref(false)
+const infoTab = ref('question')
 
 function getSurveyStateKey() {
   return `survey-state-${surveyId.value}`
@@ -195,6 +207,9 @@ function saveSurveyState() {
     activeSection: activeSection.value,
     selectedQuestionId: selectedQuestionId.value,
     expandedBlocks: expandedBlocks.value,
+    columnMode: columnMode.value,
+    infoExpanded: infoExpanded.value,
+    infoTab: infoTab.value,
     timestamp: Date.now()
   }
   localStorage.setItem(getSurveyStateKey(), JSON.stringify(state))
@@ -232,6 +247,9 @@ function loadSurveyState() {
           selectedQuestionId.value = state.selectedQuestionId || null
         }
         expandedBlocks.value = state.expandedBlocks || []
+        columnMode.value = state.columnMode || 'totalN'
+        infoExpanded.value = state.infoExpanded || false
+        infoTab.value = state.infoTab || 'question'
       }
     } catch (error) {
       console.error('Error loading saved state:', error)
@@ -252,6 +270,18 @@ watch(expandedBlocks, () => {
   saveSurveyState()
 }, { deep: true })
 
+watch(columnMode, () => {
+  saveSurveyState()
+})
+
+watch(infoExpanded, () => {
+  saveSurveyState()
+})
+
+watch(infoTab, () => {
+  saveSurveyState()
+})
+
 // Handle question selection from ResultsView
 function handleQuestionSelected(questionId) {
   selectedQuestionId.value = questionId
@@ -262,10 +292,29 @@ function handleExpandedBlocksChanged(blocks) {
   expandedBlocks.value = blocks
 }
 
+// Handle column mode changes from ResultsView
+function handleColumnModeChanged(mode) {
+  columnMode.value = mode
+}
+
+// Handle info panel changes from ResultsView
+function handleInfoExpandedChanged(expanded) {
+  infoExpanded.value = expanded
+}
+
+function handleInfoTabChanged(tab) {
+  infoTab.value = tab
+}
+
+function handleSurveyNotesUpdated(notes) {
+  surveyNotes.value = notes
+}
+
 async function loadSurveyInfo() {
   try {
     const response = await axios.get(`http://localhost:5107/api/surveys/${surveyId.value}`)
     surveyName.value = response.data.surveyName || response.data.name
+    surveyNotes.value = response.data.surveyNotes || ''
     
     // Load project info
     if (response.data.projectId) {

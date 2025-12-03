@@ -115,7 +115,21 @@ namespace Porpoise.Core.DataAccess
                 if (dataSet.Tables.Count == 0)
                     throw new InvalidOperationException("Data file contains no tables");
                 
+                // Look for the table with actual survey data (not metadata)
+                // Survey data table should have question columns (q1, q2, etc.)
                 var dataTable = dataSet.Tables[0];
+                for (int i = 0; i < dataSet.Tables.Count; i++)
+                {
+                    var table = dataSet.Tables[i];
+                    // Check if this table has question-like columns
+                    if (table.Columns.Count > 0 && 
+                        (table.Columns.Contains("survey#") || 
+                         table.Columns.Cast<System.Data.DataColumn>().Any(c => c.ColumnName.StartsWith("q"))))
+                    {
+                        dataTable = table;
+                        break;
+                    }
+                }
                 
                 // Convert DataTable to List<List<string>>
                 var surveyData = new SurveyData();
