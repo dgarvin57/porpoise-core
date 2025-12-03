@@ -79,6 +79,16 @@
                     {{ item.label }}
                   </span>
                 </div>
+                <!-- Selected indicator -->
+                <svg
+                  v-if="item.questions.some(q => selectedQuestion?.id === q.id)"
+                  class="w-4 h-4 text-blue-500 dark:text-blue-400 flex-shrink-0"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  title="Contains selected question"
+                >
+                  <circle cx="10" cy="10" r="4" />
+                </svg>
                 <span class="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">
                   {{ item.questions.length }}
                 </span>
@@ -172,103 +182,67 @@
       <!-- Question Results -->
       <template v-else>
         <!-- Question Header -->
-        <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-6">
-          <div class="flex items-start justify-between">
-            <div class="flex-1">
-              <div class="flex items-center space-x-3 mb-2">
-                <!-- Variable Type Icon: 1=IV (red), 2=DV (blue) -->
-                <svg 
-                  class="w-5 h-5" 
-                  :class="selectedQuestion.variableType === 1 ? 'text-red-400' : selectedQuestion.variableType === 2 ? 'text-blue-400' : 'text-gray-400'"
-                  fill="currentColor" 
-                  viewBox="0 0 20 20"
-                >
-                  <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
-                </svg>
-                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
-                  {{ selectedQuestion.label }}
-                </h2>
-                <span class="text-sm text-gray-400 dark:text-gray-500">
-                  ({{ selectedQuestion.qstNumber }})
-                </span>
-              </div>
-              <div class="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
-                <span><span class="font-medium">Index:</span> {{ selectedQuestion.index || '128' }}</span>
-                <span>•</span>
-                <span><span class="font-medium">Total N:</span> {{ selectedQuestion.totalCases }}</span>
-              </div>
+        <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <!-- Variable Type Icon: 1=IV (red), 2=DV (blue) -->
+              <svg 
+                class="w-5 h-5" 
+                :class="selectedQuestion.variableType === 1 ? 'text-red-400' : selectedQuestion.variableType === 2 ? 'text-blue-400' : 'text-gray-400'"
+                fill="currentColor" 
+                viewBox="0 0 20 20"
+              >
+                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
+              </svg>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                {{ selectedQuestion.label }}
+              </h2>
+              <span class="text-sm text-gray-400 dark:text-gray-500">
+                {{ selectedQuestion.qstNumber }}
+              </span>
+            </div>
+            <div class="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
+              <span><span class="font-medium">Index:</span> {{ selectedQuestion.index || '128' }}</span>
+              <span>•</span>
+              <span><span class="font-medium">Total N:</span> {{ selectedQuestion.totalCases }}</span>
             </div>
           </div>
         </div>
 
-        <!-- Tabs -->
-        <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-          <div class="flex space-x-4 px-6">
-            <button
-              @click="activeTab = 'results'"
-              :class="[
-                'bg-transparent px-4 py-2 text-sm font-medium border-b-2 transition-colors focus:outline-none focus:border-blue-500',
-                activeTab === 'results'
-                  ? 'border-gray-300 dark:border-gray-600 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:border-gray-200 dark:hover:border-gray-700'
-              ]"
-            >
-              Results
-            </button>
-            <button
-              @click="activeTab = 'chart'"
-              :class="[
-                'bg-transparent px-4 py-2 text-sm font-medium border-b-2 transition-colors focus:outline-none focus:border-blue-500',
-                activeTab === 'chart'
-                  ? 'border-gray-300 dark:border-gray-600 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:border-gray-200 dark:hover:border-gray-700'
-              ]"
-            >
-              Chart
-            </button>
-            <button
-              @click="activeTab = 'statistics'"
-              :class="[
-                'bg-transparent px-4 py-2 text-sm font-medium border-b-2 transition-colors focus:outline-none focus:border-blue-500',
-                activeTab === 'statistics'
-                  ? 'border-gray-300 dark:border-gray-600 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:border-gray-200 dark:hover:border-gray-700'
-              ]"
-            >
-              Statistics
-            </button>
-          </div>
-        </div>
-
-        <!-- Content Area -->
-        <div class="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900">
-          <!-- Results Tab -->
-          <div v-if="activeTab === 'results'" class="p-6">
+        <!-- Combined Results and Chart Content -->
+        <div class="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-6 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 dark:[&::-webkit-scrollbar-track]:bg-gray-800 [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-gray-600 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-gray-400 dark:[&::-webkit-scrollbar-thumb:hover]:bg-gray-500">
+          <div class="space-y-6">
+            <!-- Results Table -->
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div class="px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                <h3 class="text-base font-medium text-gray-900 dark:text-white">
+                  Response Results
+                </h3>
+              </div>
               <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                  <thead class="bg-gray-50 dark:bg-gray-900">
-                    <tr>
-                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <table class="min-w-full">
+                  <thead>
+                    <tr class="border-b-2 border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800">
+                      <th class="px-6 py-3 text-center text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                         #
                       </th>
-                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                         Response
                       </th>
-                      <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      <th class="px-6 py-3 text-right text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                         %
                       </th>
-                      <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      <th class="px-6 py-3 text-center text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                         Index
                       </th>
-                      <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      <th class="px-6 py-3 text-right text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                         Count
                       </th>
                     </tr>
                   </thead>
                   <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                    <tr v-for="(response, index) in selectedQuestion.responses" :key="index">
-                      <td class="px-6 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    <tr v-for="(response, index) in selectedQuestion.responses" :key="index" class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                      <td class="px-6 py-2 whitespace-nowrap text-sm text-center text-gray-500 dark:text-gray-400">
                         {{ index + 1 }}
                       </td>
                       <td class="px-6 py-2 text-sm text-gray-900 dark:text-white">
@@ -288,23 +262,17 @@
                 </table>
               </div>
             </div>
-          </div>
 
-          <!-- Chart Tab -->
-          <div v-else-if="activeTab === 'chart'" class="p-6">
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-              <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-6">
-                Frequency Distribution: {{ selectedQuestion.qstNumber }}
-              </h3>
-              <QuestionChart :question="selectedQuestion" />
-            </div>
-          </div>
-
-          <!-- Statistics Tab -->
-          <div v-else-if="activeTab === 'statistics'" class="p-6">
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-              <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Statistics</h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400">Statistical analysis coming soon...</p>
+            <!-- Chart -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+              <div class="px-6 py-3 border-b border-gray-200 dark:border-gray-700">
+                <h3 class="text-base font-medium text-gray-900 dark:text-white">
+                  Frequency Distribution
+                </h3>
+              </div>
+              <div class="p-6">
+                <QuestionChart :question="selectedQuestion" />
+              </div>
             </div>
           </div>
         </div>
@@ -314,7 +282,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import axios from 'axios'
 import QuestionChart from './QuestionChart.vue'
 
@@ -322,8 +290,18 @@ const props = defineProps({
   surveyId: {
     type: String,
     required: true
+  },
+  initialQuestionId: {
+    type: String,
+    default: null
+  },
+  initialExpandedBlocks: {
+    type: Array,
+    default: () => []
   }
 })
+
+const emit = defineEmits(['question-selected', 'expanded-blocks-changed'])
 
 const questions = ref([])
 const selectedQuestion = ref(null)
@@ -331,7 +309,6 @@ const searchQuery = ref('')
 const loading = ref(true)
 const error = ref(null)
 const totalCases = ref(0)
-const activeTab = ref('chart') // Default to chart view
 
 // Track expanded state of blocks using a reactive Set
 const expandedBlocks = ref(new Set())
@@ -423,6 +400,8 @@ function toggleBlock(block) {
   } else {
     expandedBlocks.value.add(block.blockId)
   }
+  // Emit the current expanded blocks as an array
+  emit('expanded-blocks-changed', Array.from(expandedBlocks.value))
 }
 
 function expandAll() {
@@ -432,16 +411,19 @@ function expandAll() {
       expandedBlocks.value.add(item.blockId)
     }
   })
+  emit('expanded-blocks-changed', Array.from(expandedBlocks.value))
 }
 
 function collapseAll() {
   // Clear all expanded blocks
   expandedBlocks.value.clear()
+  emit('expanded-blocks-changed', Array.from(expandedBlocks.value))
 }
 
 function selectQuestion(question) {
   selectedQuestion.value = question
-  // Don't change active tab - let user stay on their current tab
+  // Emit the question ID to parent for state management
+  emit('question-selected', question.id)
 }
 
 async function loadQuestions() {
@@ -452,6 +434,29 @@ async function loadQuestions() {
     const response = await axios.get(`http://localhost:5107/api/surveys/${props.surveyId}/questions`)
     questions.value = response.data
     totalCases.value = response.data[0]?.totalCases || 0
+    
+    // Restore expanded blocks from prop
+    if (props.initialExpandedBlocks && props.initialExpandedBlocks.length > 0) {
+      expandedBlocks.value = new Set(props.initialExpandedBlocks)
+    }
+    
+    // Restore selected question if initialQuestionId provided
+    if (props.initialQuestionId && questions.value.length > 0) {
+      const savedQuestion = questions.value.find(q => q.id === props.initialQuestionId)
+      if (savedQuestion) {
+        selectedQuestion.value = savedQuestion
+        // Emit to ensure parent state is in sync
+        emit('question-selected', savedQuestion.id)
+      } else {
+        // If saved question not found, select first
+        selectedQuestion.value = questions.value[0]
+        emit('question-selected', questions.value[0].id)
+      }
+    } else if (questions.value.length > 0) {
+      // Default to first question if none selected
+      selectedQuestion.value = questions.value[0]
+      emit('question-selected', questions.value[0].id)
+    }
   } catch (err) {
     console.error('Error loading questions:', err)
     error.value = 'Failed to load questions. Please try again.'
@@ -459,6 +464,16 @@ async function loadQuestions() {
     loading.value = false
   }
 }
+
+// Watch for initialQuestionId changes (e.g., browser back/forward)
+watch(() => props.initialQuestionId, (newQuestionId) => {
+  if (newQuestionId && questions.value.length > 0) {
+    const question = questions.value.find(q => q.id === newQuestionId)
+    if (question) {
+      selectedQuestion.value = question
+    }
+  }
+})
 
 onMounted(() => {
   loadQuestions()

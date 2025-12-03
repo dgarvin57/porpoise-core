@@ -117,7 +117,14 @@
     <!-- Main Content Area -->
     <main class="flex-1 overflow-hidden">
       <!-- Results View -->
-      <ResultsView v-if="activeSection === 'results'" :surveyId="surveyId" />
+      <ResultsView 
+        v-if="activeSection === 'results'" 
+        :surveyId="surveyId" 
+        :initialQuestionId="selectedQuestionId"
+        :initialExpandedBlocks="expandedBlocks"
+        @question-selected="handleQuestionSelected"
+        @expanded-blocks-changed="handleExpandedBlocksChanged"
+      />
 
       <!-- Crosstab View -->
       <div v-else-if="activeSection === 'crosstab'" class="h-full flex items-center justify-center">
@@ -159,7 +166,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import ResultsView from '../components/Analytics/ResultsView.vue'
@@ -174,6 +181,86 @@ const projectName = ref('')
 const totalCases = ref(0)
 const questionCount = ref(0)
 const activeSection = ref('results')
+
+// State management helpers
+const selectedQuestionId = ref(null)
+const expandedBlocks = ref([])
+
+function getSurveyStateKey() {
+  return `survey-state-${surveyId.value}`
+}
+
+function saveSurveyState() {
+  const state = {
+    activeSection: activeSection.value,
+    selectedQuestionId: selectedQuestionId.value,
+    expandedBlocks: expandedBlocks.value,
+    timestamp: Date.now()
+  }
+  localStorage.setItem(getSurveyStateKey(), JSON.stringify(state))
+  
+  // Also update query params for URL state
+  router.replace({
+    query: {
+      ...route.query,
+      section: activeSection.value,
+      question: selectedQuestionId.value || undefined
+    }
+  })
+}
+
+function loadSurveyState() {
+  // First check URL query params (highest priority)
+  if (route.query.section) {
+    activeSection.value = route.query.section
+  }
+  if (route.query.question) {
+    selectedQuestionId.value = route.query.question
+  }
+  
+  // Then check localStorage for saved state if URL params not present
+  const savedState = localStorage.getItem(getSurveyStateKey())
+  if (savedState) {
+    try {
+      const state = JSON.parse(savedState)
+      // Only restore if less than 24 hours old
+      if (Date.now() - state.timestamp < 24 * 60 * 60 * 1000) {
+        if (!route.query.section) {
+          activeSection.value = state.activeSection || 'results'
+        }
+        if (!route.query.question) {
+          selectedQuestionId.value = state.selectedQuestionId || null
+        }
+        expandedBlocks.value = state.expandedBlocks || []
+      }
+    } catch (error) {
+      console.error('Error loading saved state:', error)
+    }
+  }
+}
+
+// Watch for changes and save state
+watch(activeSection, () => {
+  saveSurveyState()
+})
+
+watch(selectedQuestionId, () => {
+  saveSurveyState()
+})
+
+watch(expandedBlocks, () => {
+  saveSurveyState()
+}, { deep: true })
+
+// Handle question selection from ResultsView
+function handleQuestionSelected(questionId) {
+  selectedQuestionId.value = questionId
+}
+
+// Handle expanded blocks changes from ResultsView
+function handleExpandedBlocksChanged(blocks) {
+  expandedBlocks.value = blocks
+}
 
 async function loadSurveyInfo() {
   try {
@@ -209,6 +296,16 @@ function backToProjects() {
 }
 
 onMounted(() => {
+  loadSurveyState()
   loadSurveyInfo()
+})
+
+// Watch for route changes (when navigating to the same route with different params)
+watch(() => route.params.id, (newId) => {
+  if (newId) {
+    surveyId.value = newId
+    loadSurveyState()
+    loadSurveyInfo()
+  }
 })
 </script>
