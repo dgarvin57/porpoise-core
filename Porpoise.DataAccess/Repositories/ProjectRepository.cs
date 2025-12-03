@@ -370,6 +370,9 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
             DELETE FROM Responses WHERE SurveyId IN (
                 SELECT Id FROM Surveys WHERE ProjectId = @ProjectId AND TenantId = @TenantId
             );
+            DELETE FROM QuestionBlocks WHERE SurveyId IN (
+                SELECT Id FROM Surveys WHERE ProjectId = @ProjectId AND TenantId = @TenantId
+            );
             DELETE FROM Questions WHERE SurveyId IN (
                 SELECT Id FROM Surveys WHERE ProjectId = @ProjectId AND TenantId = @TenantId
             );

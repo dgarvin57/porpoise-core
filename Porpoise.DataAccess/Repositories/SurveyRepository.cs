@@ -281,6 +281,7 @@ public class SurveyRepository : Repository<Survey>, ISurveyRepository
     {
         const string sql = @"
             DELETE FROM Responses WHERE SurveyId = @SurveyId;
+            DELETE FROM QuestionBlocks WHERE SurveyId = @SurveyId;
             DELETE FROM Questions WHERE SurveyId = @SurveyId;
             DELETE FROM SurveyData WHERE SurveyId = @SurveyId;
             DELETE FROM Surveys WHERE Id = @SurveyId AND TenantId = @TenantId;";
