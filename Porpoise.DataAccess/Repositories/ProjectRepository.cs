@@ -31,7 +31,7 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
     {
         const string sql = @"
             SELECT * FROM Projects 
-            WHERE TenantId = @TenantId 
+            WHERE TenantId = @TenantId AND (IsDeleted = 0 OR IsDeleted IS NULL)
             ORDER BY ProjectName";
 
         using var connection = _context.CreateConnection();
@@ -72,12 +72,12 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
                 Id, TenantId, ProjectName, ClientName, Description, StartDate, EndDate,
                 DefaultWeightingScheme, BrandingSettings, ResearcherLabel, ResearcherSubLabel,
                 ResearcherLogo, ResearcherLogoFilename, ResearcherLogoPath, ProjectFile,
-                IsExported, CreatedBy
+                IsExported, IsDeleted, CreatedBy
             ) VALUES (
                 @Id, @TenantId, @ProjectName, @ClientName, @Description, @StartDate, @EndDate,
                 @DefaultWeightingScheme, @BrandingSettings, @ResearcherLabel, @ResearcherSubLabel,
                 @ResearcherLogo, @ResearcherLogoFilename, @ResearcherLogoPath, @ProjectFile,
-                @IsExported, @CreatedBy
+                @IsExported, @IsDeleted, @CreatedBy
             )";
 
         using var connection = _context.CreateConnection();
@@ -99,6 +99,7 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
             project.ResearcherLogoPath,
             project.ProjectFile,
             project.IsExported,
+            project.IsDeleted,
             project.CreatedBy
         });
 
@@ -253,10 +254,10 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
                 COUNT(DISTINCT q.Id) as questionCount,
                 GREATEST(COALESCE(MAX(JSON_LENGTH(sd.DataList)), 0) - 1, 0) as caseCount
             FROM Projects p
-            LEFT JOIN Surveys s ON p.Id = s.ProjectId AND s.TenantId = @TenantId
+            LEFT JOIN Surveys s ON p.Id = s.ProjectId AND s.TenantId = @TenantId AND (s.IsDeleted = 0 OR s.IsDeleted IS NULL)
             LEFT JOIN Questions q ON s.Id = q.SurveyId
             LEFT JOIN SurveyData sd ON s.Id = sd.SurveyId
-            WHERE p.TenantId = @TenantId
+            WHERE p.TenantId = @TenantId AND (p.IsDeleted = 0 OR p.IsDeleted IS NULL)
             GROUP BY p.Id, p.ProjectName, p.ClientName, p.Description, p.StartDate, p.EndDate, p.CreatedDate
             ORDER BY p.ProjectName";
 
@@ -279,8 +280,8 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
                 p.EndDate,
                 COUNT(s.Id) as SurveyCount
             FROM Projects p
-            INNER JOIN Surveys s ON p.Id = s.ProjectId AND s.TenantId = @TenantId
-            WHERE p.TenantId = @TenantId
+            INNER JOIN Surveys s ON p.Id = s.ProjectId AND s.TenantId = @TenantId AND (s.IsDeleted = 0 OR s.IsDeleted IS NULL)
+            WHERE p.TenantId = @TenantId AND (p.IsDeleted = 0 OR p.IsDeleted IS NULL)
             GROUP BY p.Id, p.ProjectName, p.ClientName, p.Description, p.StartDate, p.EndDate
             HAVING COUNT(s.Id) > 1
             ORDER BY p.ProjectName";
@@ -309,6 +310,106 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
         });
 
         return rowsAffected > 0;
+    }
+
+    /// <summary>
+    /// Soft delete a project and all its surveys
+    /// </summary>
+    public async Task<bool> SoftDeleteProjectAsync(Guid projectId)
+    {
+        const string sql = @"
+            UPDATE Projects 
+            SET IsDeleted = 1, DeletedDate = @DeletedDate 
+            WHERE Id = @ProjectId AND TenantId = @TenantId;
+            
+            UPDATE Surveys 
+            SET IsDeleted = 1, DeletedDate = @DeletedDate 
+            WHERE ProjectId = @ProjectId AND TenantId = @TenantId;";
+
+        using var connection = _context.CreateConnection();
+        var rowsAffected = await connection.ExecuteAsync(sql, new
+        {
+            ProjectId = projectId.ToString(),
+            DeletedDate = DateTime.UtcNow,
+            TenantId = _tenantContext.TenantId
+        });
+
+        return rowsAffected > 0;
+    }
+
+    /// <summary>
+    /// Restore a soft-deleted project and all its surveys
+    /// </summary>
+    public async Task<bool> RestoreProjectAsync(Guid projectId)
+    {
+        const string sql = @"
+            UPDATE Projects 
+            SET IsDeleted = 0, DeletedDate = NULL 
+            WHERE Id = @ProjectId AND TenantId = @TenantId;
+            
+            UPDATE Surveys 
+            SET IsDeleted = 0, DeletedDate = NULL 
+            WHERE ProjectId = @ProjectId AND TenantId = @TenantId;";
+
+        using var connection = _context.CreateConnection();
+        var rowsAffected = await connection.ExecuteAsync(sql, new
+        {
+            ProjectId = projectId.ToString(),
+            TenantId = _tenantContext.TenantId
+        });
+
+        return rowsAffected > 0;
+    }
+
+    /// <summary>
+    /// Permanently delete a project and all related data
+    /// </summary>
+    public async Task<bool> PermanentlyDeleteProjectAsync(Guid projectId)
+    {
+        const string sql = @"
+            DELETE FROM Responses WHERE SurveyId IN (
+                SELECT Id FROM Surveys WHERE ProjectId = @ProjectId AND TenantId = @TenantId
+            );
+            DELETE FROM Questions WHERE SurveyId IN (
+                SELECT Id FROM Surveys WHERE ProjectId = @ProjectId AND TenantId = @TenantId
+            );
+            DELETE FROM SurveyData WHERE SurveyId IN (
+                SELECT Id FROM Surveys WHERE ProjectId = @ProjectId AND TenantId = @TenantId
+            );
+            DELETE FROM Surveys WHERE ProjectId = @ProjectId AND TenantId = @TenantId;
+            DELETE FROM Projects WHERE Id = @ProjectId AND TenantId = @TenantId;";
+
+        using var connection = _context.CreateConnection();
+        var rowsAffected = await connection.ExecuteAsync(sql, new
+        {
+            ProjectId = projectId.ToString(),
+            TenantId = _tenantContext.TenantId
+        });
+
+        return rowsAffected > 0;
+    }
+
+    /// <summary>
+    /// Get all deleted projects (trash)
+    /// </summary>
+    public async Task<IEnumerable<dynamic>> GetDeletedProjectsAsync()
+    {
+        const string sql = @"
+            SELECT 
+                p.Id,
+                p.ProjectName,
+                p.ClientName,
+                p.Description,
+                p.DeletedDate,
+                COUNT(DISTINCT s.Id) as SurveyCount
+            FROM Projects p
+            LEFT JOIN Surveys s ON p.Id = s.ProjectId AND s.TenantId = @TenantId
+            WHERE p.TenantId = @TenantId AND p.IsDeleted = 1
+            GROUP BY p.Id, p.ProjectName, p.ClientName, p.Description, p.DeletedDate
+            ORDER BY p.DeletedDate DESC";
+
+        using var connection = _context.CreateConnection();
+        return await connection.QueryAsync(sql, new { TenantId = _tenantContext.TenantId });
     }
 }
 

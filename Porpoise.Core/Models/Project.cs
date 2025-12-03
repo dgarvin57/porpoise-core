@@ -31,6 +31,8 @@ namespace Porpoise.Core.Models
         private string? _researcherLogoPath;
         private ObjectListBase<Survey>? _surveyList;
         private ObjectListBase<SurveySummary>? _surveyListSummary;
+        private bool _isDeleted;
+        private DateTime? _deletedDate;
 
         // These are runtime-only (not serialized) - kept for backwards compatibility
         private string? _fullPath;
@@ -228,6 +230,18 @@ namespace Porpoise.Core.Models
         {
             get => _isExported;
             set => SetProperty(ref _isExported, value, nameof(IsExported));
+        }
+
+        public bool IsDeleted
+        {
+            get => _isDeleted;
+            set => SetProperty(ref _isDeleted, value, nameof(IsDeleted));
+        }
+
+        public DateTime? DeletedDate
+        {
+            get => _deletedDate;
+            set => SetProperty(ref _deletedDate, value, nameof(DeletedDate));
         }
 
         #endregion

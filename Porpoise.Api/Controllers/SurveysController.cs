@@ -538,6 +538,87 @@ public class SurveysController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Soft delete a survey
+    /// </summary>
+    [HttpPost("{id:guid}/soft-delete")]
+    public async Task<IActionResult> SoftDeleteSurvey(Guid id)
+    {
+        try
+        {
+            var success = await _surveyRepository.SoftDeleteSurveyAsync(id);
+            if (!success)
+            {
+                return NotFound($"Survey with ID {id} not found");
+            }
 
+            return Ok(new { message = "Survey moved to trash" });
+        }
+        catch (Exception ex)
+        {
+            return Problem($"Error deleting survey: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Restore a soft-deleted survey
+    /// </summary>
+    [HttpPost("{id:guid}/restore")]
+    public async Task<IActionResult> RestoreSurvey(Guid id)
+    {
+        try
+        {
+            var success = await _surveyRepository.RestoreSurveyAsync(id);
+            if (!success)
+            {
+                return NotFound($"Survey with ID {id} not found");
+            }
+
+            return Ok(new { message = "Survey restored" });
+        }
+        catch (Exception ex)
+        {
+            return Problem($"Error restoring survey: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Permanently delete a survey
+    /// </summary>
+    [HttpDelete("{id:guid}/permanent")]
+    public async Task<IActionResult> PermanentlyDeleteSurvey(Guid id)
+    {
+        try
+        {
+            var success = await _surveyRepository.PermanentlyDeleteSurveyAsync(id);
+            if (!success)
+            {
+                return NotFound($"Survey with ID {id} not found");
+            }
+
+            return Ok(new { message = "Survey permanently deleted" });
+        }
+        catch (Exception ex)
+        {
+            return Problem($"Error permanently deleting survey: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Get all deleted surveys (trash)
+    /// </summary>
+    [HttpGet("trash")]
+    public async Task<IActionResult> GetDeletedSurveys()
+    {
+        try
+        {
+            var surveys = await _surveyRepository.GetDeletedSurveysAsync();
+            return Ok(surveys);
+        }
+        catch (Exception ex)
+        {
+            return Problem($"Error retrieving deleted surveys: {ex.Message}");
+        }
+    }
 
 }

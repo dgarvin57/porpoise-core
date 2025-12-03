@@ -47,4 +47,24 @@ public interface ISurveyRepository : IRepository<Survey>
     /// Check if a survey name already exists (for validation).
     /// </summary>
     Task<bool> SurveyNameExistsAsync(string surveyName, Guid? excludeSurveyId = null);
+
+    /// <summary>
+    /// Soft delete a survey.
+    /// </summary>
+    Task<bool> SoftDeleteSurveyAsync(Guid surveyId);
+
+    /// <summary>
+    /// Restore a soft-deleted survey.
+    /// </summary>
+    Task<bool> RestoreSurveyAsync(Guid surveyId);
+
+    /// <summary>
+    /// Permanently delete a survey and all related data.
+    /// </summary>
+    Task<bool> PermanentlyDeleteSurveyAsync(Guid surveyId);
+
+    /// <summary>
+    /// Get all deleted surveys (trash).
+    /// </summary>
+    Task<IEnumerable<dynamic>> GetDeletedSurveysAsync();
 }

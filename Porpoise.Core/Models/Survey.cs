@@ -38,6 +38,8 @@ public class Survey : ObjectBase
     private SurveyData? _data;
     private bool _errorsExist = true;
     private string _surveyNotes = string.Empty;
+    private bool _isDeleted;
+    private DateTime? _deletedDate;
 
     #endregion
 
@@ -200,6 +202,18 @@ public class Survey : ObjectBase
     {
         get => _surveyNotes;
         set => SetProperty(ref _surveyNotes, value, nameof(SurveyNotes));
+    }
+
+    public bool IsDeleted
+    {
+        get => _isDeleted;
+        set => SetProperty(ref _isDeleted, value, nameof(IsDeleted));
+    }
+
+    public DateTime? DeletedDate
+    {
+        get => _deletedDate;
+        set => SetProperty(ref _deletedDate, value, nameof(DeletedDate));
     }
 
     private void Questions_IsDirtyChanged(object? sender, PropertyChangedEventArgs e)

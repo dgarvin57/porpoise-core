@@ -31,7 +31,7 @@ public class SurveyRepository : Repository<Survey>, ISurveyRepository
     {
         const string sql = @"
             SELECT * FROM Surveys 
-            WHERE TenantId = @TenantId";
+            WHERE TenantId = @TenantId AND (IsDeleted = 0 OR IsDeleted IS NULL)";
         
         using var connection = _context.CreateConnection();
         return await connection.QueryAsync<Survey>(sql, new { TenantId = _tenantContext.TenantId });
@@ -66,7 +66,8 @@ public class SurveyRepository : Repository<Survey>, ISurveyRepository
         const string sql = @"
             SELECT * FROM Surveys 
             WHERE Status = @Status 
-            AND TenantId = @TenantId";
+            AND TenantId = @TenantId
+            AND (IsDeleted = 0 OR IsDeleted IS NULL)";
         
         using var connection = _context.CreateConnection();
         return await connection.QueryAsync<Survey>(sql, 
@@ -147,12 +148,12 @@ public class SurveyRepository : Repository<Survey>, ISurveyRepository
                 Id, ProjectId, TenantId, SurveyName, Status, LockStatus, UnlockKeyName, UnlockKeyType,
                 SaveAlteredString, SurveyFileName, DataFileName, OrigDataFilePath,
                 SurveyPath, SurveyFolder, FullProjectFolder, ErrorsExist, SurveyNotes,
-                CreatedDate, ModifiedDate
+                IsDeleted, CreatedDate, ModifiedDate
             ) VALUES (
                 @Id, @ProjectId, @TenantId, @SurveyName, @Status, @LockStatus, @UnlockKeyName, @UnlockKeyType,
                 @SaveAlteredString, @SurveyFileName, @DataFileName, @OrigDataFilePath,
                 @SurveyPath, @SurveyFolder, @FullProjectFolder, @ErrorsExist, @SurveyNotes,
-                @CreatedDate, @ModifiedDate
+                @IsDeleted, @CreatedDate, @ModifiedDate
             )";
         
         survey.Id = Guid.NewGuid();
@@ -177,6 +178,7 @@ public class SurveyRepository : Repository<Survey>, ISurveyRepository
             survey.FullProjectFolder,
             survey.ErrorsExist,
             survey.SurveyNotes,
+            survey.IsDeleted,
             CreatedDate = DateTime.UtcNow,
             ModifiedDate = DateTime.UtcNow
         });
@@ -229,5 +231,88 @@ public class SurveyRepository : Repository<Survey>, ISurveyRepository
         });
         
         return survey;
+    }
+
+    /// <summary>
+    /// Soft delete a survey
+    /// </summary>
+    public async Task<bool> SoftDeleteSurveyAsync(Guid surveyId)
+    {
+        const string sql = @"
+            UPDATE Surveys 
+            SET IsDeleted = 1, DeletedDate = @DeletedDate 
+            WHERE Id = @SurveyId AND TenantId = @TenantId";
+
+        using var connection = _context.CreateConnection();
+        var rowsAffected = await connection.ExecuteAsync(sql, new
+        {
+            SurveyId = surveyId.ToString(),
+            DeletedDate = DateTime.UtcNow,
+            TenantId = _tenantContext.TenantId
+        });
+
+        return rowsAffected > 0;
+    }
+
+    /// <summary>
+    /// Restore a soft-deleted survey
+    /// </summary>
+    public async Task<bool> RestoreSurveyAsync(Guid surveyId)
+    {
+        const string sql = @"
+            UPDATE Surveys 
+            SET IsDeleted = 0, DeletedDate = NULL 
+            WHERE Id = @SurveyId AND TenantId = @TenantId";
+
+        using var connection = _context.CreateConnection();
+        var rowsAffected = await connection.ExecuteAsync(sql, new
+        {
+            SurveyId = surveyId.ToString(),
+            TenantId = _tenantContext.TenantId
+        });
+
+        return rowsAffected > 0;
+    }
+
+    /// <summary>
+    /// Permanently delete a survey and all related data
+    /// </summary>
+    public async Task<bool> PermanentlyDeleteSurveyAsync(Guid surveyId)
+    {
+        const string sql = @"
+            DELETE FROM Responses WHERE SurveyId = @SurveyId;
+            DELETE FROM Questions WHERE SurveyId = @SurveyId;
+            DELETE FROM SurveyData WHERE SurveyId = @SurveyId;
+            DELETE FROM Surveys WHERE Id = @SurveyId AND TenantId = @TenantId;";
+
+        using var connection = _context.CreateConnection();
+        var rowsAffected = await connection.ExecuteAsync(sql, new
+        {
+            SurveyId = surveyId.ToString(),
+            TenantId = _tenantContext.TenantId
+        });
+
+        return rowsAffected > 0;
+    }
+
+    /// <summary>
+    /// Get all deleted surveys (trash)
+    /// </summary>
+    public async Task<IEnumerable<dynamic>> GetDeletedSurveysAsync()
+    {
+        const string sql = @"
+            SELECT 
+                s.Id,
+                s.SurveyName,
+                s.DeletedDate,
+                s.ProjectId,
+                p.ProjectName
+            FROM Surveys s
+            LEFT JOIN Projects p ON s.ProjectId = p.Id
+            WHERE s.TenantId = @TenantId AND s.IsDeleted = 1
+            ORDER BY s.DeletedDate DESC";
+
+        using var connection = _context.CreateConnection();
+        return await connection.QueryAsync(sql, new { TenantId = _tenantContext.TenantId });
     }
 }

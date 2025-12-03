@@ -131,5 +131,51 @@ namespace Porpoise.Api.Controllers
             await _unitOfWork.CommitAsync();
             return Ok(new { message = "Survey moved successfully" });
         }
+
+        [HttpPost("{id}/soft-delete")]
+        public async Task<IActionResult> SoftDeleteProject(Guid id)
+        {
+            var success = await _projectRepository.SoftDeleteProjectAsync(id);
+            if (!success)
+            {
+                return NotFound();
+            }
+
+            await _unitOfWork.CommitAsync();
+            return Ok(new { message = "Project moved to trash" });
+        }
+
+        [HttpPost("{id}/restore")]
+        public async Task<IActionResult> RestoreProject(Guid id)
+        {
+            var success = await _projectRepository.RestoreProjectAsync(id);
+            if (!success)
+            {
+                return NotFound();
+            }
+
+            await _unitOfWork.CommitAsync();
+            return Ok(new { message = "Project restored" });
+        }
+
+        [HttpDelete("{id}/permanent")]
+        public async Task<IActionResult> PermanentlyDeleteProject(Guid id)
+        {
+            var success = await _projectRepository.PermanentlyDeleteProjectAsync(id);
+            if (!success)
+            {
+                return NotFound();
+            }
+
+            await _unitOfWork.CommitAsync();
+            return Ok(new { message = "Project permanently deleted" });
+        }
+
+        [HttpGet("trash")]
+        public async Task<IActionResult> GetDeletedProjects()
+        {
+            var projects = await _projectRepository.GetDeletedProjectsAsync();
+            return Ok(projects);
+        }
     }
 }

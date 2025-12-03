@@ -47,4 +47,24 @@ public interface IProjectRepository : IRepository<Project>
     /// Move a survey to a different project.
     /// </summary>
     Task<bool> MoveSurveyToProjectAsync(Guid surveyId, Guid newProjectId);
+
+    /// <summary>
+    /// Soft delete a project and all its surveys.
+    /// </summary>
+    Task<bool> SoftDeleteProjectAsync(Guid projectId);
+
+    /// <summary>
+    /// Restore a soft-deleted project and all its surveys.
+    /// </summary>
+    Task<bool> RestoreProjectAsync(Guid projectId);
+
+    /// <summary>
+    /// Permanently delete a project and all related data.
+    /// </summary>
+    Task<bool> PermanentlyDeleteProjectAsync(Guid projectId);
+
+    /// <summary>
+    /// Get all deleted projects (trash).
+    /// </summary>
+    Task<IEnumerable<dynamic>> GetDeletedProjectsAsync();
 }
