@@ -119,7 +119,7 @@ namespace Porpoise.Api.Controllers
             return Ok(surveys);
         }
 
-        [HttpPost("{projectId}/surveys/{surveyId}/move")]
+        [HttpPost("{projectId:guid}/surveys/{surveyId:guid}/move")]
         public async Task<IActionResult> MoveSurvey(Guid projectId, Guid surveyId)
         {
             var success = await _projectRepository.MoveSurveyToProjectAsync(surveyId, projectId);
@@ -132,7 +132,7 @@ namespace Porpoise.Api.Controllers
             return Ok(new { message = "Survey moved successfully" });
         }
 
-        [HttpPost("{id}/soft-delete")]
+        [HttpPost("{id:guid}/soft-delete")]
         public async Task<IActionResult> SoftDeleteProject(Guid id)
         {
             var success = await _projectRepository.SoftDeleteProjectAsync(id);
@@ -145,7 +145,7 @@ namespace Porpoise.Api.Controllers
             return Ok(new { message = "Project moved to trash" });
         }
 
-        [HttpPost("{id}/restore")]
+        [HttpPost("{id:guid}/restore")]
         public async Task<IActionResult> RestoreProject(Guid id)
         {
             var success = await _projectRepository.RestoreProjectAsync(id);
@@ -158,7 +158,7 @@ namespace Porpoise.Api.Controllers
             return Ok(new { message = "Project restored" });
         }
 
-        [HttpDelete("{id}/permanent")]
+        [HttpDelete("{id:guid}/permanent")]
         public async Task<IActionResult> PermanentlyDeleteProject(Guid id)
         {
             var success = await _projectRepository.PermanentlyDeleteProjectAsync(id);
