@@ -61,7 +61,7 @@
           </div>
         </div>
         
-        <!-- Status & Expand Icon -->
+        <!-- Status, Delete & Expand Icon -->
         <div class="flex items-center space-x-3 ml-4 flex-shrink-0">
           <span
             v-if="project.status"
@@ -70,6 +70,16 @@
           >
             {{ project.status }}
           </span>
+          <svg
+            @click.stop="deleteProject"
+            class="w-4 h-4 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors cursor-pointer"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            title="Delete project"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
           <svg
             :class="{ 'rotate-180': isExpanded }"
             class="w-5 h-5 text-gray-400 transition-transform"
@@ -97,6 +107,7 @@
             :surveys="surveys" 
             :focused-survey-id="props.focusedSurveyId"
             @survey-click="(surveyId) => emit('survey-click', surveyId)"
+            @delete-survey="(surveyId, surveyName) => emit('delete-survey', surveyId, surveyName)"
           />
         </div>
       </div>
@@ -106,7 +117,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import SurveyList from './SurveyList.vue'
@@ -130,12 +141,36 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['toggle-expand', 'set-focus', 'survey-click', 'clear-all'])
+const emit = defineEmits(['toggle-expand', 'set-focus', 'survey-click', 'clear-all', 'delete-project', 'delete-survey'])
 
 const router = useRouter()
 const isActive = ref(false)
 const surveys = ref([])
 const loadingSurveys = ref(false)
+
+async function deleteProject() {
+  emit('delete-project', props.project.id, props.project.name)
+}
+
+async function loadSurveys() {
+  loadingSurveys.value = true
+  try {
+    const response = await axios.get(`http://localhost:5107/api/projects/${props.project.id}/surveys`)
+    surveys.value = response.data.map(s => ({
+      id: s.id,
+      name: s.name,
+      status: s.status,
+      caseCount: s.caseCount,
+      questionCount: s.questionCount,
+      createdDate: s.createdDate,
+      modifiedDate: s.modifiedDate
+    }))
+  } catch (error) {
+    console.error('Error fetching surveys:', error)
+  } finally {
+    loadingSurveys.value = false
+  }
+}
 
 async function toggleExpand() {
   emit('toggle-expand')
@@ -143,51 +178,21 @@ async function toggleExpand() {
   
   // Fetch surveys if expanding and not already loaded
   if (!props.isExpanded && surveys.value.length === 0) {
-    loadingSurveys.value = true
-    try {
-      const response = await axios.get(`http://localhost:5107/api/projects/${props.project.id}/surveys`)
-      console.log('[ProjectCard] Fetched surveys:', response.data)
-      // Map API response to component format
-      surveys.value = response.data.map(s => ({
-        id: s.id,
-        name: s.name,
-        status: s.status,
-        caseCount: s.caseCount,
-        questionCount: s.questionCount,
-        createdDate: s.createdDate,
-        modifiedDate: s.modifiedDate
-      }))
-      console.log('[ProjectCard] Mapped surveys:', surveys.value)
-    } catch (error) {
-      console.error('Error fetching surveys:', error)
-    } finally {
-      loadingSurveys.value = false
-    }
+    await loadSurveys()
   }
 }
 
 // Reload surveys if component mounts in expanded state (e.g., returning from navigation)
 onMounted(async () => {
   if (props.isExpanded && surveys.value.length === 0) {
-    loadingSurveys.value = true
-    try {
-      const response = await axios.get(`http://localhost:5107/api/projects/${props.project.id}/surveys`)
-      console.log('[ProjectCard onMounted] Fetched surveys:', response.data)
-      surveys.value = response.data.map(s => ({
-        id: s.id,
-        name: s.name,
-        status: s.status,
-        caseCount: s.caseCount,
-        questionCount: s.questionCount,
-        createdDate: s.createdDate,
-        modifiedDate: s.modifiedDate
-      }))
-      console.log('[ProjectCard onMounted] Mapped surveys:', surveys.value)
-    } catch (error) {
-      console.error('Error fetching surveys on mount:', error)
-    } finally {
-      loadingSurveys.value = false
-    }
+    await loadSurveys()
+  }
+})
+
+// Watch for project changes and reload surveys if expanded
+watch(() => props.project.surveyCount, async (newCount, oldCount) => {
+  if (props.isExpanded && newCount !== oldCount && surveys.value.length > 0) {
+    await loadSurveys()
   }
 })
 

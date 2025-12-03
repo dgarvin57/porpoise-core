@@ -70,6 +70,18 @@
             <option value="status">Status</option>
           </select>
         </div>
+
+        <!-- Trash Button -->
+        <button 
+          @click="$router.push('/trash')"
+          class="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-md flex items-center gap-2 transition-colors"
+          title="View trash"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          Trash
+        </button>
       </div>
     </div>
 
@@ -125,6 +137,8 @@
         @set-focus="handleSetFocus(project.id)"
         @survey-click="handleSurveyClick"
         @clear-all="handleClearAll"
+        @delete-project="deleteProject"
+        @delete-survey="deleteSurvey"
       />
     </div>
 
@@ -242,15 +256,16 @@
               </div>
               
               <div class="flex justify-center" @click.stop>
-                <button
+                <svg
                   @click="deleteProject(project.id, project.name)"
-                  class="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                  class="w-4 h-4 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors cursor-pointer"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                   title="Delete project"
                 >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
               </div>
             </div>
 
@@ -298,15 +313,16 @@
                   <span class="text-xs text-gray-500 dark:text-gray-400 text-center">—</span>
                   
                   <div class="flex justify-center" @click.stop>
-                    <button
+                    <svg
                       @click="deleteSurvey(survey.id, survey.name)"
-                      class="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                      class="w-4 h-4 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors cursor-pointer"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
                       title="Delete survey"
                     >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                    </button>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
                   </div>
                 </div>
               </template>
@@ -637,7 +653,10 @@ async function deleteSurvey(surveyId, surveyName) {
   try {
     await axios.post(`http://localhost:5107/api/surveys/${surveyId}/soft-delete`)
     
-    // Find which project this survey belongs to and reload its surveys
+    // Reload projects to update counts
+    await fetchProjects()
+    
+    // For list view: Find which project and reload its surveys
     let affectedProjectId = null
     for (const [projectId, surveys] of projectSurveys.value.entries()) {
       if (surveys.some(s => s.id === surveyId)) {
@@ -646,9 +665,6 @@ async function deleteSurvey(surveyId, surveyName) {
       }
     }
     
-    await fetchProjects() // Reload to update counts
-    
-    // Reload surveys for the affected project if it's still expanded
     if (affectedProjectId && expandedProjects.value.has(affectedProjectId)) {
       loadingSurveys.value.add(affectedProjectId)
       try {
@@ -668,6 +684,8 @@ async function deleteSurvey(surveyId, surveyName) {
         loadingSurveys.value.delete(affectedProjectId)
       }
     }
+    
+    // For grid view: surveys will be reloaded automatically on next expand due to reactive props
   } catch (error) {
     console.error('Error deleting survey:', error)
     alert('Failed to delete survey: ' + error.message)
