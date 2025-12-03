@@ -596,7 +596,9 @@ onMounted(async () => {
   // Load surveys for any expanded projects
   for (const projectId of expandedProjects.value) {
     const project = projects.value.find(p => p.id === projectId)
-    if (project && project.surveyCount > 1 && !projectSurveys.value.has(projectId)) {
+    
+    // Load surveys if expanded and either multi-survey OR doesn't have surveys yet
+    if (project && (project.surveyCount > 1 || !projectSurveys.value.has(projectId))) {
       loadingSurveys.value.add(projectId)
       try {
         const response = await axios.get(`http://localhost:5107/api/projects/${projectId}/surveys`)

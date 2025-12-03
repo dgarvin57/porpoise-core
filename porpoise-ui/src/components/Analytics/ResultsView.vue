@@ -170,6 +170,9 @@
       <!-- Total Cases removed - shown per question in header instead -->
     </aside>
 
+    <!-- Metric Definitions Modal -->
+    <MetricDefinitionsModal :show="showMetricDefinitions" @close="showMetricDefinitions = false" />
+
     <!-- Main Content Area -->
     <div class="flex-1 overflow-hidden flex flex-col">
       <!-- No Question Selected State -->
@@ -207,12 +210,23 @@
                 {{ selectedQuestion.qstNumber }}
               </span>
             </div>
-            <div class="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
-              <span><span class="font-medium">Index:</span> {{ selectedQuestion.index || '128' }}</span>
-              <span>•</span>
-              <span><span class="font-medium">CI:</span> +/- {{ selectedQuestion.samplingError?.toFixed(1) || '0.0' }}</span>
-              <span>•</span>
-              <span><span class="font-medium">Total N:</span> {{ selectedQuestion.totalCases }}</span>
+            <div class="flex items-center space-x-3">
+              <div class="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
+                <span><span class="font-medium">Index:</span> {{ selectedQuestion.index || '128' }}</span>
+                <span>•</span>
+                <span><span class="font-medium">CI:</span> +/- {{ selectedQuestion.samplingError?.toFixed(1) || '0.0' }}</span>
+                <span>•</span>
+                <span><span class="font-medium">Total N:</span> {{ selectedQuestion.totalCases }}</span>
+              </div>
+              <button
+                @click="showMetricDefinitions = true"
+                class="p-1 bg-transparent text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-gray-800 transition-colors border-0"
+                title="View metric definitions"
+              >
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" fill="currentColor" />
+                </svg>
+              </button>
             </div>
           </div>
         </div>
@@ -249,7 +263,7 @@
               
               <div v-show="infoExpanded" class="border-t border-gray-200 dark:border-gray-700">
                 <!-- Tabs -->
-                <div class="flex border-b border-gray-200 dark:border-gray-700">
+                <div class="flex border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
                   <button
                     v-for="tab in infoTabs"
                     :key="tab.id"
@@ -258,8 +272,8 @@
                     class="px-4 py-2 text-sm font-medium border-b-2 transition-colors focus:outline-none flex items-center space-x-2"
                     :class="[
                       activeInfoTab === tab.id
-                        ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600',
+                        ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                        : 'border-transparent text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600',
                       tab.id === 'block' && !blockStemForQuestion ? 'opacity-50 cursor-not-allowed' : ''
                     ]"
                   >
@@ -338,14 +352,14 @@
                       <div class="mt-3 flex space-x-2">
                         <button
                           @click="startEditingQuestionNotes"
-                          class="px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 focus:outline-none"
+                          class="px-2.5 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                           {{ selectedQuestion?.questionNotes ? 'Edit Notes' : 'Add Notes' }}
                         </button>
                         <button
                           v-if="selectedQuestion?.questionNotes"
                           @click="deleteQuestionNotes"
-                          class="px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 focus:outline-none"
+                          class="px-2.5 py-1 text-xs font-medium text-white bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-500 rounded focus:outline-none focus:ring-2 focus:ring-red-500"
                         >
                           Delete Notes
                         </button>
@@ -382,14 +396,14 @@
                       <div class="mt-3 flex space-x-2">
                         <button
                           @click="startEditingSurveyNotes"
-                          class="px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 focus:outline-none"
+                          class="px-2.5 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                           {{ surveyNotes ? 'Edit Notes' : 'Add Notes' }}
                         </button>
                         <button
                           v-if="surveyNotes"
                           @click="deleteSurveyNotes"
-                          class="px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 focus:outline-none"
+                          class="px-2.5 py-1 text-xs font-medium text-white bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-500 rounded focus:outline-none focus:ring-2 focus:ring-red-500"
                         >
                           Delete Notes
                         </button>
@@ -536,6 +550,9 @@ const loading = ref(true)
 const error = ref(null)
 const totalCases = ref(0)
 const columnMode = ref('totalN')
+
+// Metric definitions modal state
+const showMetricDefinitions = ref(false)
 
 // Info panel state
 const infoExpanded = ref(false)
@@ -982,4 +999,14 @@ watch(activeInfoTab, (newValue) => {
 onMounted(() => {
   loadQuestions()
 })
+</script>
+
+<script>
+import MetricDefinitionsModal from '../MetricDefinitionsModal.vue'
+
+export default {
+  components: {
+    MetricDefinitionsModal
+  }
+}
 </script>

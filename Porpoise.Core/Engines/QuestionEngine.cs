@@ -171,6 +171,7 @@ public static class QuestionEngine
         }
 
         // Block Label
+#pragma warning disable CS0618 // Type or member is obsolete
         if (whatToChange.BlkLabel && target.BlkLabel != source.BlkLabel)
         {
             if (string.IsNullOrEmpty(target.BlkLabel) && !string.IsNullOrEmpty(source.BlkLabel))
@@ -189,6 +190,7 @@ public static class QuestionEngine
                 target.BlkLabel = source.BlkLabel;
             }
         }
+#pragma warning restore CS0618 // Type or member is obsolete
 
         // Block Stem
         if (whatToChange.BlkStem && target.BlkStem != source.BlkStem)

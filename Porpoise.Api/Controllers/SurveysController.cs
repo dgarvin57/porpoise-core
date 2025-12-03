@@ -235,14 +235,21 @@ public class SurveysController : ControllerBase
                 return NotFound($"Question with ID {questionId} not found");
             }
 
-            // Apply updates
+            // Use targeted update for partial fields to avoid overwriting other data
+            bool updated = false;
             if (updates.ContainsKey("questionNotes"))
             {
-                question.QuestionNotes = updates["questionNotes"]?.ToString() ?? string.Empty;
+                updated = await _questionRepository.UpdateQuestionNotesAsync(questionId, updates["questionNotes"]?.ToString() ?? string.Empty);
             }
 
-            var updated = await _questionRepository.UpdateAsync(question);
-            return Ok(updated);
+            if (!updated)
+            {
+                return Problem("Failed to update question");
+            }
+
+            // Return the updated question with full data (including joins)
+            var updatedQuestion = await _questionRepository.GetByIdAsync(questionId);
+            return Ok(updatedQuestion);
         }
         catch (Exception ex)
         {

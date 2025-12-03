@@ -70,10 +70,12 @@ public class FullBlockEngine
                     // Inconsistent response count detected
                     row[qIndex + 1] = "0.0%";
                     IsConsistent = false;
+#pragma warning disable CS0618 // Type or member is obsolete
                     ConsistencyMessage =
                         $"All questions in block '{q.BlkLabel}' don't have the same number of responses, " +
                         $"which could skew results. See question '{q.QstLabel}', which has only {q.Responses.Count} responses. " +
                         $"This can be fixed in the Question Definition screen for this survey.";
+#pragma warning restore CS0618 // Type or member is obsolete
                 }
             }
             table.Rows.Add(row);

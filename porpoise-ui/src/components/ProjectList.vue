@@ -38,9 +38,9 @@
               <div v-if="loadingSurveys.has(project.Id)" class="loading-surveys">
                 <p>Loading surveys...</p>
               </div>
-              <div v-else class="survey-list">
+              <div v-else-if="projectSurveys.get(project.Id) && projectSurveys.get(project.Id).length > 0" class="survey-list">
                 <div
-                  v-for="survey in projectSurveys.get(project.Id) || []"
+                  v-for="survey in projectSurveys.get(project.Id)"
                   :key="survey.Id"
                   class="survey-item"
                   @click.stop="viewSurvey(project, survey)"
@@ -59,6 +59,9 @@
                   </div>
                 </div>
               </div>
+              <div v-else class="empty-surveys">
+                <p>No surveys found in this project.</p>
+              </div>
             </div>
           </div>
         </div>
@@ -74,11 +77,13 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import axios from 'axios'
 
 const API_URL = 'http://localhost:5107/api'
 const TENANT_ID = 'demo-tenant'
 
+const router = useRouter()
 const loading = ref(true)
 const error = ref(null)
 const allProjects = ref([])
@@ -120,6 +125,9 @@ async function toggleProject(projectId) {
       await loadProjectSurveys(projectId)
     }
   }
+  
+  // Persist to localStorage
+  localStorage.setItem('expandedProjectsList', JSON.stringify([...expandedProjects.value]))
 }
 
 // Load surveys for a specific project
@@ -143,9 +151,8 @@ async function loadProjectSurveys(projectId) {
 
 // View survey details
 function viewSurvey(project, survey = null) {
-  console.log('View survey:', { project, survey })
-  // TODO: Navigate to survey detail view
-  alert(`TODO: View survey\nProject: ${project.ProjectName}\nSurvey: ${survey ? survey.SurveyName : project.ProjectName}`)
+  const surveyId = survey ? survey.Id : project.Id
+  router.push(`/analytics/${surveyId}`)
 }
 
 // Format date helper
@@ -171,8 +178,26 @@ function getStatusLabel(status) {
 }
 
 // Load projects on mount
-onMounted(() => {
-  loadProjects()
+onMounted(async () => {
+  // Restore expanded state from localStorage
+  const savedExpanded = localStorage.getItem('expandedProjectsList')
+  if (savedExpanded) {
+    try {
+      const expandedArray = JSON.parse(savedExpanded)
+      expandedProjects.value = new Set(expandedArray)
+    } catch (e) {
+      console.error('Error parsing expanded projects:', e)
+    }
+  }
+
+  await loadProjects()
+  
+  // Reload surveys for any expanded projects
+  for (const projectId of expandedProjects.value) {
+    if (!projectSurveys.value.has(projectId)) {
+      await loadProjectSurveys(projectId)
+    }
+  }
 })
 </script>
 
@@ -303,6 +328,14 @@ onMounted(() => {
   text-align: center;
   padding: 2rem;
   color: #64748b;
+}
+
+.empty-surveys {
+  text-align: center;
+  padding: 2rem;
+  color: #94a3b8;
+  font-style: italic;
+  font-size: 0.9rem;
 }
 
 .survey-list {

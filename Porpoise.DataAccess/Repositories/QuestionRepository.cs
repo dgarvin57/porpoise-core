@@ -169,8 +169,7 @@ public class QuestionRepository : Repository<Question>, IQuestionRepository
                 MissingLow = @MissingLow,
                 MissingHigh = @MissingHigh,
                 BlkQstStatus = @BlkQstStatus,
-                BlkLabel = @BlkLabel,
-                BlkStem = @BlkStem,
+                BlockId = @BlockId,
                 IsPreferenceBlock = @IsPreferenceBlock,
                 IsPreferenceBlockType = @IsPreferenceBlockType,
                 NumberOfPreferenceItems = @NumberOfPreferenceItems,
@@ -199,8 +198,7 @@ public class QuestionRepository : Repository<Question>, IQuestionRepository
             MissingLow = 0.0,
             MissingHigh = 0.0,
             BlkQstStatus = (int?)question.BlkQstStatus,
-            BlkLabel = question.BlkLabel ?? string.Empty,
-            BlkStem = question.BlkStem ?? string.Empty,
+            BlockId = question.BlockId,
             IsPreferenceBlock = question.IsPreferenceBlock,
             IsPreferenceBlockType = question.IsPreferenceBlockType,
             NumberOfPreferenceItems = question.NumberOfPreferenceItems,
@@ -213,5 +211,24 @@ public class QuestionRepository : Repository<Question>, IQuestionRepository
         });
         
         return question;
+    }
+
+    public async Task<bool> UpdateQuestionNotesAsync(Guid questionId, string questionNotes)
+    {
+        const string sql = @"
+            UPDATE Questions 
+            SET QuestionNotes = @QuestionNotes,
+                ModifiedDate = @ModifiedDate
+            WHERE Id = @Id";
+        
+        using var connection = _context.CreateConnection();
+        var rowsAffected = await connection.ExecuteAsync(sql, new
+        {
+            Id = questionId,
+            QuestionNotes = questionNotes ?? string.Empty,
+            ModifiedDate = DateTime.UtcNow
+        });
+        
+        return rowsAffected > 0;
     }
 }

@@ -65,6 +65,7 @@ public class SurveyPersistenceService
         var blockMap = new Dictionary<string, Guid>(); // blkLabel -> BlockId
         if (survey.QuestionList != null && survey.QuestionList.Count > 0)
         {
+#pragma warning disable CS0618 // Type or member is obsolete
             // Find all unique blocks (first question in each block has the block info)
             var firstQuestionsInBlocks = survey.QuestionList
                 .Where(q => q.BlkQstStatus == BlkQuestionStatusType.FirstQuestionInBlock &&
@@ -86,12 +87,14 @@ public class SurveyPersistenceService
                 var savedBlock = await _questionBlockRepository.AddAsync(questionBlock);
                 blockMap[firstQuestion.BlkLabel] = savedBlock.Id;
             }
+#pragma warning restore CS0618 // Type or member is obsolete
         }
 
         // Step 4: Save questions and their responses
         if (survey.QuestionList != null && survey.QuestionList.Count > 0)
         {
             Guid? currentBlockId = null;
+#pragma warning disable CS0618 // Type or member is obsolete
             
             foreach (var question in survey.QuestionList)
             {
@@ -112,6 +115,7 @@ public class SurveyPersistenceService
                 }
                 // Discrete questions (status 0 or 3) have BlockId = null
                 
+#pragma warning restore CS0618 // Type or member is obsolete
                 var savedQuestion = await _questionRepository.AddAsync(question, savedSurvey.Id);
 
                 // Save responses for this question

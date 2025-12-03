@@ -42,4 +42,9 @@ public interface IQuestionRepository : IRepository<Question>
     /// Add a question with explicit survey ID.
     /// </summary>
     Task<Question> AddAsync(Question question, Guid surveyId);
+
+    /// <summary>
+    /// Update only the QuestionNotes field for a specific question.
+    /// </summary>
+    Task<bool> UpdateQuestionNotesAsync(Guid questionId, string questionNotes);
 }
