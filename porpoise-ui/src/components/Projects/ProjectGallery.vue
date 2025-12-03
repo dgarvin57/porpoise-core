@@ -131,7 +131,7 @@
     <!-- Project List (Folder Tree - Single Column, Centered) -->
     <div v-else class="max-w-6xl mx-auto overflow-x-auto">
       <!-- Column Headers -->
-      <div class="grid grid-cols-[32px_minmax(200px,1fr)_140px_80px_80px_110px_110px_90px] gap-3 items-center px-3 py-2 border-b-2 border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 sticky top-0 min-w-[900px]">
+      <div class="grid grid-cols-[32px_minmax(200px,1fr)_140px_80px_80px_110px_110px_90px_60px] gap-3 items-center px-3 py-2 border-b-2 border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 sticky top-0 min-w-[960px]">
         <span class="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase"></span>
         
         <SortableColumnHeader
@@ -190,6 +190,8 @@
           text-align="center"
           @sort="sortByColumn"
         />
+        
+        <span class="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase text-center"></span>
       </div>
 
       <!-- Project Rows -->
@@ -198,9 +200,9 @@
           <!-- Project Row (All Expandable) -->
           <div>
             <div
-              @click="toggleProjectExpand(project.id)"
-              class="grid grid-cols-[32px_minmax(200px,1fr)_140px_80px_80px_110px_110px_90px] gap-3 items-center px-3 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer group border-b border-gray-100 dark:border-gray-800 min-w-[900px]"
+              class="grid grid-cols-[32px_minmax(200px,1fr)_140px_80px_80px_110px_110px_90px_60px] gap-3 items-center px-3 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 group border-b border-gray-100 dark:border-gray-800 min-w-[960px]"
             >
+              <div @click="toggleProjectExpand(project.id)" class="cursor-pointer contents">
               <div class="flex items-center justify-center space-x-0.5">
                 <svg
                   :class="{ 'rotate-90': expandedProjects.has(project.id) }"
@@ -237,6 +239,19 @@
                 </span>
                 <span v-else class="text-xs text-gray-400">—</span>
               </div>
+              </div>
+              
+              <div class="flex justify-center" @click.stop>
+                <button
+                  @click="deleteProject(project.id, project.name)"
+                  class="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                  title="Delete project"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
             <!-- Expanded Surveys -->
@@ -249,9 +264,8 @@
                 <div
                   v-for="survey in projectSurveys.get(project.id)"
                   :key="survey.id"
-                  @click="navigateToSurvey(survey.id); handleSurveyClick(survey.id)"
                   :class="[
-                    'grid grid-cols-[32px_minmax(200px,1fr)_140px_80px_80px_110px_110px_90px] gap-3 items-center px-3 py-1.5 cursor-pointer group border-b border-gray-100 dark:border-gray-800 min-w-[900px]',
+                    'grid grid-cols-[32px_minmax(200px,1fr)_140px_80px_80px_110px_110px_90px_60px] gap-3 items-center px-3 py-1.5 group border-b border-gray-100 dark:border-gray-800 min-w-[960px]',
                     focusedSurveyId === survey.id
                       ? 'bg-blue-50 dark:bg-blue-900/30'
                       : 'hover:bg-gray-100 dark:hover:bg-gray-800'
@@ -262,7 +276,10 @@
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                   </div>
-                  <span class="text-sm font-medium text-gray-700 dark:text-gray-300 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                  <span 
+                    @click="navigateToSurvey(survey.id); handleSurveyClick(survey.id)"
+                    class="text-sm font-medium text-gray-700 dark:text-gray-300 truncate hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
+                  >
                     {{ survey.name }}
                   </span>
                   <span class="text-xs text-gray-500 dark:text-gray-400">—</span>
@@ -279,6 +296,18 @@
                     {{ formatDateShort(survey.modifiedDate) }}
                   </span>
                   <span class="text-xs text-gray-500 dark:text-gray-400 text-center">—</span>
+                  
+                  <div class="flex justify-center" @click.stop>
+                    <button
+                      @click="deleteSurvey(survey.id, survey.name)"
+                      class="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                      title="Delete survey"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </template>
               <div v-else class="px-3 py-2 ml-8 text-xs text-gray-500 dark:text-gray-400">
@@ -588,6 +617,30 @@ function getStatusClass(status) {
     'Draft': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
   }
   return statusMap[status] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+}
+
+async function deleteProject(projectId, projectName) {
+  if (!confirm(`Delete project "${projectName}"? It will be moved to trash.`)) return
+  
+  try {
+    await axios.post(`http://localhost:5107/api/projects/${projectId}/soft-delete`)
+    await fetchProjects() // Reload the list
+  } catch (error) {
+    console.error('Error deleting project:', error)
+    alert('Failed to delete project: ' + error.message)
+  }
+}
+
+async function deleteSurvey(surveyId, surveyName) {
+  if (!confirm(`Delete survey "${surveyName}"? It will be moved to trash.`)) return
+  
+  try {
+    await axios.post(`http://localhost:5107/api/surveys/${surveyId}/soft-delete`)
+    await fetchProjects() // Reload to update counts
+  } catch (error) {
+    console.error('Error deleting survey:', error)
+    alert('Failed to delete survey: ' + error.message)
+  }
 }
 
 onMounted(async () => {

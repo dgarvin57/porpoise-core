@@ -111,7 +111,7 @@
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5010'
+const API_BASE_URL = 'http://localhost:5107'
 
 const loading = ref(true)
 const error = ref(null)
