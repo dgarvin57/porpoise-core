@@ -636,7 +636,38 @@ async function deleteSurvey(surveyId, surveyName) {
   
   try {
     await axios.post(`http://localhost:5107/api/surveys/${surveyId}/soft-delete`)
+    
+    // Find which project this survey belongs to and reload its surveys
+    let affectedProjectId = null
+    for (const [projectId, surveys] of projectSurveys.value.entries()) {
+      if (surveys.some(s => s.id === surveyId)) {
+        affectedProjectId = projectId
+        break
+      }
+    }
+    
     await fetchProjects() // Reload to update counts
+    
+    // Reload surveys for the affected project if it's still expanded
+    if (affectedProjectId && expandedProjects.value.has(affectedProjectId)) {
+      loadingSurveys.value.add(affectedProjectId)
+      try {
+        const response = await axios.get(`http://localhost:5107/api/projects/${affectedProjectId}/surveys`)
+        projectSurveys.value.set(affectedProjectId, response.data.map(s => ({
+          id: s.id,
+          name: s.name,
+          status: s.status,
+          caseCount: s.caseCount,
+          questionCount: s.questionCount,
+          createdDate: s.createdDate,
+          modifiedDate: s.modifiedDate
+        })))
+      } catch (error) {
+        console.error('Error reloading surveys:', error)
+      } finally {
+        loadingSurveys.value.delete(affectedProjectId)
+      }
+    }
   } catch (error) {
     console.error('Error deleting survey:', error)
     alert('Failed to delete survey: ' + error.message)

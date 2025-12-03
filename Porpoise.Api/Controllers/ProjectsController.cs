@@ -161,14 +161,21 @@ namespace Porpoise.Api.Controllers
         [HttpDelete("{id:guid}/permanent")]
         public async Task<IActionResult> PermanentlyDeleteProject(Guid id)
         {
-            var success = await _projectRepository.PermanentlyDeleteProjectAsync(id);
-            if (!success)
+            try
             {
-                return NotFound();
-            }
+                var success = await _projectRepository.PermanentlyDeleteProjectAsync(id);
+                if (!success)
+                {
+                    return NotFound();
+                }
 
-            await _unitOfWork.CommitAsync();
-            return Ok(new { message = "Project permanently deleted" });
+                await _unitOfWork.CommitAsync();
+                return Ok(new { message = "Project permanently deleted" });
+            }
+            catch (Exception ex)
+            {
+                return Problem($"Error permanently deleting project: {ex.Message}");
+            }
         }
 
         [HttpGet("trash")]

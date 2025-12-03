@@ -275,16 +275,11 @@ public class SurveyRepository : Repository<Survey>, ISurveyRepository
     }
 
     /// <summary>
-    /// Permanently delete a survey and all related data
+    /// Permanently delete a survey and all related data (CASCADE DELETE handles child records)
     /// </summary>
     public async Task<bool> PermanentlyDeleteSurveyAsync(Guid surveyId)
     {
-        const string sql = @"
-            DELETE FROM Responses WHERE SurveyId = @SurveyId;
-            DELETE FROM QuestionBlocks WHERE SurveyId = @SurveyId;
-            DELETE FROM Questions WHERE SurveyId = @SurveyId;
-            DELETE FROM SurveyData WHERE SurveyId = @SurveyId;
-            DELETE FROM Surveys WHERE Id = @SurveyId AND TenantId = @TenantId;";
+        const string sql = "DELETE FROM Surveys WHERE Id = @SurveyId AND TenantId = @TenantId";
 
         using var connection = _context.CreateConnection();
         var rowsAffected = await connection.ExecuteAsync(sql, new

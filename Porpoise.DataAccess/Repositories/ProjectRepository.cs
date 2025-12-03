@@ -171,7 +171,7 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
     {
         const string sql = @"
             SELECT * FROM Projects WHERE Id = @ProjectId AND TenantId = @TenantId;
-            SELECT * FROM Surveys WHERE ProjectId = @ProjectId AND TenantId = @TenantId ORDER BY SurveyName;";
+            SELECT * FROM Surveys WHERE ProjectId = @ProjectId AND TenantId = @TenantId AND (IsDeleted = 0 OR IsDeleted IS NULL) ORDER BY SurveyName;";
 
         using var connection = _context.CreateConnection();
         using var multi = await connection.QueryMultipleAsync(sql, 
@@ -196,6 +196,7 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
             SELECT * FROM Surveys 
             WHERE ProjectId = @ProjectId 
             AND TenantId = @TenantId
+            AND (IsDeleted = 0 OR IsDeleted IS NULL)
             ORDER BY SurveyName";
 
         using var connection = _context.CreateConnection();
@@ -222,6 +223,7 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
             LEFT JOIN SurveyData sd ON s.Id = sd.SurveyId
             WHERE s.ProjectId = @ProjectId 
             AND s.TenantId = @TenantId
+            AND (s.IsDeleted = 0 OR s.IsDeleted IS NULL)
             GROUP BY s.Id, s.SurveyName, s.Status, s.CreatedDate, s.ModifiedDate
             ORDER BY s.SurveyName";
 
@@ -362,25 +364,11 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
     }
 
     /// <summary>
-    /// Permanently delete a project and all related data
+    /// Permanently delete a project and all related data (CASCADE DELETE handles child records)
     /// </summary>
     public async Task<bool> PermanentlyDeleteProjectAsync(Guid projectId)
     {
-        const string sql = @"
-            DELETE FROM Responses WHERE SurveyId IN (
-                SELECT Id FROM Surveys WHERE ProjectId = @ProjectId AND TenantId = @TenantId
-            );
-            DELETE FROM QuestionBlocks WHERE SurveyId IN (
-                SELECT Id FROM Surveys WHERE ProjectId = @ProjectId AND TenantId = @TenantId
-            );
-            DELETE FROM Questions WHERE SurveyId IN (
-                SELECT Id FROM Surveys WHERE ProjectId = @ProjectId AND TenantId = @TenantId
-            );
-            DELETE FROM SurveyData WHERE SurveyId IN (
-                SELECT Id FROM Surveys WHERE ProjectId = @ProjectId AND TenantId = @TenantId
-            );
-            DELETE FROM Surveys WHERE ProjectId = @ProjectId AND TenantId = @TenantId;
-            DELETE FROM Projects WHERE Id = @ProjectId AND TenantId = @TenantId;";
+        const string sql = "DELETE FROM Projects WHERE Id = @ProjectId AND TenantId = @TenantId";
 
         using var connection = _context.CreateConnection();
         var rowsAffected = await connection.ExecuteAsync(sql, new
