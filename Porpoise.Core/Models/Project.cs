@@ -23,12 +23,8 @@ namespace Porpoise.Core.Models
         private string? _brandingSettings;
         private string? _researcherLabel;
         private string? _researcherSubLabel;
-        // Legacy WinForms: public Image? ResearcherLogo { get; set; }
-        // Web version: use URL or base64
-        private string? _researcherLogo = null;
-        //private Image? _researcherLogo;
-        private string? _researcherLogoFilename;
-        private string? _researcherLogoPath;
+        // Logo stored as binary data (byte array)
+        private byte[]? _researcherLogo;
         private ObjectListBase<Survey>? _surveyList;
         private ObjectListBase<SurveySummary>? _surveyListSummary;
         private bool _isDeleted;
@@ -135,28 +131,9 @@ namespace Porpoise.Core.Models
         }
 
         [XmlIgnore]
-        // Legacy WinForms: public Image? ResearcherLogo { get; set; }
-        // Web version: use URL or base64
-        public string? ResearcherLogo { 
+        public byte[]? ResearcherLogo { 
             get => _researcherLogo; 
             set => SetProperty(ref _researcherLogo, value, nameof(ResearcherLogo));
-        }
-        // public Image? ResearcherLogo
-        // {
-        //     get => _researcherLogo;
-        //     set => SetProperty(ref _researcherLogo, value, nameof(ResearcherLogo));
-        // }
-
-        public string? ResearcherLogoFilename
-        {
-            get => _researcherLogoFilename;
-            set => SetProperty(ref _researcherLogoFilename, value, nameof(ResearcherLogoFilename));
-        }
-
-        public string? ResearcherLogoPath
-        {
-            get => _researcherLogoPath;
-            set => SetProperty(ref _researcherLogoPath, value, nameof(ResearcherLogoPath));
         }
 
         [XmlArrayItem(typeof(SurveySummary))]
@@ -272,8 +249,7 @@ namespace Porpoise.Core.Models
                 {
                     Id = s.Id,
                     SurveyName = s.SurveyName,
-                    SurveyFileName = s.SurveyFileName,
-                    SurveyFolder = s.SurveyFolder
+                    SurveyFileName = s.SurveyFileName
                 };
                 list.Add(summary);
             }
@@ -316,10 +292,8 @@ namespace Porpoise.Core.Models
 
         public bool IsMoreThanOneUnlockedSurvey()
         {
-            if (SurveyList == null || SurveyList.Count < 2) return false;
-
-            int unlockedCount = SurveyList.Count(s => s.LockStatus == LockStatusType.Unlocked);
-            return unlockedCount > 1;
+            // Licensing removed - all surveys are now effectively "unlocked"
+            return SurveyList != null && SurveyList.Count > 1;
         }
 
         #endregion

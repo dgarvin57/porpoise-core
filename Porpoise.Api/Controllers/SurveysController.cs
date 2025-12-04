@@ -193,7 +193,7 @@ public class SurveysController : ControllerBase
     }
 
     /// <summary>
-    /// Partially update survey (e.g., just survey notes)
+    /// Partially update survey (e.g., just survey notes, name, or status)
     /// </summary>
     [HttpPatch("{id:guid}")]
     public async Task<IActionResult> PatchSurvey(Guid id, [FromBody] Dictionary<string, object> updates)
@@ -210,6 +210,32 @@ public class SurveysController : ControllerBase
             if (updates.ContainsKey("surveyNotes"))
             {
                 survey.SurveyNotes = updates["surveyNotes"]?.ToString() ?? string.Empty;
+            }
+            
+            if (updates.ContainsKey("surveyName"))
+            {
+                var newName = updates["surveyName"]?.ToString() ?? string.Empty;
+                if (!string.IsNullOrWhiteSpace(newName))
+                {
+                    // Check if name already exists (excluding current survey)
+                    if (await _surveyRepository.SurveyNameExistsAsync(newName, id))
+                    {
+                        return Conflict($"Another survey with name '{newName}' already exists");
+                    }
+                    survey.SurveyName = newName;
+                }
+            }
+            
+            if (updates.ContainsKey("status"))
+            {
+                if (updates["status"] is int statusValue)
+                {
+                    survey.Status = (SurveyStatus)statusValue;
+                }
+                else if (int.TryParse(updates["status"]?.ToString(), out int parsedStatus))
+                {
+                    survey.Status = (SurveyStatus)parsedStatus;
+                }
             }
 
             var updated = await _surveyRepository.UpdateAsync(survey);

@@ -16,7 +16,6 @@ public class SurveySummary : ObjectBase
     private Guid _id = Guid.NewGuid();
     private string _surveyName = string.Empty;
     private string _surveyFileName = string.Empty;
-    private string _surveyFolder = string.Empty;
 
     #endregion
 
@@ -44,12 +43,6 @@ public class SurveySummary : ObjectBase
     {
         get => _surveyFileName;
         set => _surveyFileName = value;
-    }
-
-    public string SurveyFolder
-    {
-        get => _surveyFolder;
-        set => _surveyFolder = value;
     }
 
     #endregion

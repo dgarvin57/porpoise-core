@@ -159,7 +159,6 @@ public class PoolTrendEngine(PoolTrendList poolTrendList)
         var survey = new Survey
         {
             SurveyName = "Pooled Data",
-            LockStatus = LockStatusType.Unlocked,
             Status = SurveyStatus.Verified,
             QuestionList = []
         };
@@ -184,7 +183,6 @@ public class PoolTrendEngine(PoolTrendList poolTrendList)
         var survey = new Survey
         {
             SurveyName = "Trended Data",
-            LockStatus = LockStatusType.Unlocked,
             Status = SurveyStatus.Verified,
             QuestionList = []
         };

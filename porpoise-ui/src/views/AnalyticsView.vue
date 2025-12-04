@@ -4,9 +4,26 @@
     <aside class="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
       <div class="p-4 border-b border-gray-200 dark:border-gray-700">
         <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ projectName }}</p>
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white truncate" :title="surveyName">
-          {{ surveyName }}
-        </h2>
+        <div 
+          class="group relative"
+          @mouseenter="isHoveringName = true"
+          @mouseleave="isHoveringName = false"
+        >
+          <input
+            v-model="editableSurveyName"
+            @focus="isEditingName = true"
+            @blur="saveSurveyName"
+            @keyup.enter="$event.target.blur()"
+            :class="[
+              'w-full text-lg font-semibold bg-transparent outline-none transition-all',
+              'text-gray-900 dark:text-white',
+              isHoveringName || isEditingName 
+                ? 'border-b-2 border-blue-500 dark:border-blue-400 cursor-text' 
+                : 'border-b-2 border-transparent cursor-default'
+            ]"
+            :title="editableSurveyName"
+          />
+        </div>
         <div class="flex items-center space-x-4 mt-2 text-sm text-gray-600 dark:text-gray-400">
           <span>{{ questionCount }} questions</span>
           <span>•</span>
@@ -185,6 +202,9 @@ const router = useRouter()
 
 const surveyId = ref(route.params.id)
 const surveyName = ref('Loading...')
+const editableSurveyName = ref('')
+const isHoveringName = ref(false)
+const isEditingName = ref(false)
 const projectName = ref('')
 const surveyNotes = ref('')
 const totalCases = ref(0)
@@ -314,6 +334,7 @@ async function loadSurveyInfo() {
   try {
     const response = await axios.get(`http://localhost:5107/api/surveys/${surveyId.value}`)
     surveyName.value = response.data.surveyName || response.data.name
+    editableSurveyName.value = surveyName.value
     surveyNotes.value = response.data.surveyNotes || ''
     
     // Load project info
@@ -337,6 +358,28 @@ async function loadSurveyInfo() {
   } catch (error) {
     console.error('Error loading survey info:', error)
     surveyName.value = 'Survey Analytics'
+    editableSurveyName.value = surveyName.value
+  }
+}
+
+async function saveSurveyName() {
+  isEditingName.value = false
+  
+  // Only save if the name has actually changed
+  if (editableSurveyName.value && editableSurveyName.value.trim() !== surveyName.value) {
+    try {
+      await axios.patch(`http://localhost:5107/api/surveys/${surveyId.value}`, {
+        surveyName: editableSurveyName.value.trim()
+      })
+      surveyName.value = editableSurveyName.value.trim()
+    } catch (error) {
+      console.error('Error updating survey name:', error)
+      // Revert to original name on error
+      editableSurveyName.value = surveyName.value
+    }
+  } else {
+    // Revert to original name if empty or unchanged
+    editableSurveyName.value = surveyName.value
   }
 }
 

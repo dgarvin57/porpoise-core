@@ -1,7 +1,16 @@
 <template>
   <div class="trash-view p-6">
     <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold dark:text-white">Trash</h1>
+      <div class="flex items-center space-x-4">
+        <h1 class="text-2xl font-bold dark:text-white">Trash</h1>
+        <span
+          v-if="deletedProjects.length > 0 || deletedSurveys.length > 0"
+          @click="emptyTrash"
+          class="text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 hover:underline cursor-pointer"
+        >
+          Empty Trash
+        </span>
+      </div>
       <button 
         @click="$router.push('/')"
         class="px-4 py-2 text-sm bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded"
@@ -48,13 +57,13 @@
                 <td class="px-4 py-3 text-right space-x-2">
                   <button 
                     @click="restoreProject(project.Id)"
-                    class="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded"
+                    class="px-3 py-1.5 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded"
                   >
                     Restore
                   </button>
                   <button 
                     @click="permanentlyDeleteProject(project.Id, project.ProjectName)"
-                    class="px-3 py-1.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded"
+                    class="px-3 py-1.5 text-xs bg-red-500 hover:bg-red-600 text-white rounded"
                   >
                     Delete Forever
                   </button>
@@ -87,13 +96,13 @@
                 <td class="px-4 py-3 text-right space-x-2">
                   <button 
                     @click="restoreSurvey(survey.Id)"
-                    class="px-3 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded"
+                    class="px-3 py-1.5 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded"
                   >
                     Restore
                   </button>
                   <button 
                     @click="permanentlyDeleteSurvey(survey.Id, survey.SurveyName)"
-                    class="px-3 py-1.5 text-xs bg-red-600 hover:bg-red-700 text-white rounded"
+                    class="px-3 py-1.5 text-xs bg-red-500 hover:bg-red-600 text-white rounded"
                   >
                     Delete Forever
                   </button>
@@ -179,6 +188,46 @@ const permanentlyDeleteSurvey = async (surveyId, surveyName) => {
     await loadDeletedItems()
   } catch (err) {
     alert('Failed to permanently delete survey: ' + err.message)
+  }
+}
+
+const emptyTrash = async () => {
+  const totalItems = deletedProjects.value.length + deletedSurveys.value.length
+  if (!confirm(`PERMANENTLY DELETE ALL ${totalItems} items in trash? This cannot be undone!`)) return
+  
+  try {
+    // Delete all projects and surveys, tracking successes and failures
+    const deletePromises = [
+      ...deletedProjects.value.map(p => 
+        axios.delete(`${API_BASE_URL}/api/projects/${p.Id}/permanent`)
+          .catch(err => ({ error: true, type: 'project', name: p.ProjectName, message: err.message }))
+      ),
+      ...deletedSurveys.value.map(s => 
+        axios.delete(`${API_BASE_URL}/api/surveys/${s.Id}/permanent`)
+          .catch(err => ({ error: true, type: 'survey', name: s.SurveyName, message: err.message }))
+      )
+    ]
+    
+    const results = await Promise.all(deletePromises)
+    const failures = results.filter(r => r && r.error)
+    
+    await loadDeletedItems()
+    
+    if (failures.length > 0) {
+      console.error('Some items failed to delete:', failures)
+      alert(`${totalItems - failures.length} items deleted successfully. ${failures.length} items failed to delete.`)
+    }
+  } catch (err) {
+    alert('Failed to empty trash: ' + err.message)
+  }
+}
+
+const saveSurveyChanges = async (surveyId, surveyName, surveyStatus) => {
+  try {
+    await axios.put(`${API_BASE_URL}/api/surveys/${surveyId}`, { SurveyName: surveyName, SurveyStatus: surveyStatus })
+    alert('Changes saved successfully')
+  } catch (err) {
+    alert('Failed to save changes: ' + err.message)
   }
 }
 

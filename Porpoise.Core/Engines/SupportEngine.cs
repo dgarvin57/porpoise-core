@@ -44,9 +44,8 @@ public static class SupportEngine
             return null;
         }
 
-        survey.SaveAlteredString = SurveyEngine.SurveyIdAlter(survey.Id);
-        SurveyEngine.SurveyIdAlterTest(survey, survey.SaveAlteredString);
-
+        // Survey ID alter operations removed - SaveAlteredString field no longer exists
+        
         return survey;
     }
 
@@ -58,9 +57,8 @@ public static class SupportEngine
         if (!SurveyEngine.LoadSurvey(survey, path, false))
             return null;
 
-        survey.SaveAlteredString = SurveyEngine.SurveyIdAlter(survey.Id);
-        SurveyEngine.SurveyRelock(survey);
-
+        // Survey relock operations removed - SaveAlteredString field no longer exists
+        
         return survey;
     }
 }

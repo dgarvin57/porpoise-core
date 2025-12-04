@@ -443,18 +443,18 @@ public static class QuestionEngine
         foreach (var q in questionList)
         {
             q.Id = Guid.NewGuid();
-            q.CreatedOn = DateTime.Now;
+            q.CreatedDate = DateTime.Now;
             q.CreatedBy = Environment.UserName;
             q.ModifiedBy = string.Empty;
-            q.ModifiedOn = DateTime.MinValue;
+            q.ModifiedDate = DateTime.MinValue;
 
             foreach (var r in q.Responses)
             {
                 r.Id = Guid.NewGuid();
-                r.CreatedOn = DateTime.Now;
+                r.CreatedDate = DateTime.Now;
                 r.CreatedBy = Environment.UserName;
                 r.ModifiedBy = string.Empty;
-                r.ModifiedOn = DateTime.MinValue;
+                r.ModifiedDate = DateTime.MinValue;
                 r.IsDirty = false;
                 r.ResultFrequency = 0;
                 r.ResultPercent = 0;
@@ -473,12 +473,12 @@ public static class QuestionEngine
         foreach (var q in questions.Where(q => q.IsDirty))
         {
             q.ModifiedBy = Environment.UserName;
-            q.ModifiedOn = DateTime.Now;
+            q.ModifiedDate = DateTime.Now;
 
             foreach (var r in q.Responses.Where(r => r.IsDirty))
             {
                 r.ModifiedBy = Environment.UserName;
-                r.ModifiedOn = DateTime.Now;
+                r.ModifiedDate = DateTime.Now;
             }
         }
     }

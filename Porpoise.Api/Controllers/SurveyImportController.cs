@@ -149,8 +149,7 @@ public class SurveyImportController : ControllerBase
             {
                 surveySummaries.Add(new SurveySummary
                 {
-                    SurveyFileName = Path.GetFileName(file),
-                    SurveyFolder = Path.GetDirectoryName(file)
+                    SurveyFileName = Path.GetFileName(file)
                 });
             }
             
@@ -203,23 +202,9 @@ public class SurveyImportController : ControllerBase
             try
             {
                 var projectFolder = Path.GetDirectoryName(projectFilePath) ?? directory;
-                string? expectedSurveyPath = null;
-                if (!string.IsNullOrEmpty(surveySummary.SurveyFolder))
-                {
-                    if (Path.IsPathRooted(surveySummary.SurveyFolder))
-                    {
-                        expectedSurveyPath = Path.Combine(surveySummary.SurveyFolder, surveySummary.SurveyFileName);
-                    }
-                    else
-                    {
-                        expectedSurveyPath = Path.Combine(projectFolder, surveySummary.SurveyFolder, surveySummary.SurveyFileName);
-                    }
-                }
-                else
-                {
-                    expectedSurveyPath = Path.Combine(projectFolder, surveySummary.SurveyFileName);
-                }
-
+                // Surveys are expected in the same folder as the project file
+                string expectedSurveyPath = Path.Combine(projectFolder, surveySummary.SurveyFileName);
+                
                 string fallbackSurveyPath = Path.Combine(projectFolder, surveySummary.SurveyFileName);
                 string surveyPath = System.IO.File.Exists(expectedSurveyPath) ? expectedSurveyPath : (System.IO.File.Exists(fallbackSurveyPath) ? fallbackSurveyPath : expectedSurveyPath);
                 

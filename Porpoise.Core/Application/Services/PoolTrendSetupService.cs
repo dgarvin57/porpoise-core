@@ -160,7 +160,7 @@ public class PoolTrendSetupService : ApplicationServiceBase
 
     private void OnResetOrder(object? sender, EventArgs e)
     {
-        _view.PoolTrendList.SurveyList.Sort((x, y) => x.Survey.CreatedOn.CompareTo(y.Survey.CreatedOn));
+        _view.PoolTrendList.SurveyList.Sort((x, y) => x.Survey.CreatedDate.CompareTo(y.Survey.CreatedDate));
         _view.RefreshSurveyList();
         FormatSurveyItems();
     }
@@ -234,7 +234,7 @@ public class PoolTrendSetupService : ApplicationServiceBase
     {
         _view.UpdateSurveyInfo(
             survey.SurveyName,
-            survey.CreatedOn,
+            survey.CreatedDate,
             survey.Data.DataList.Count,
             survey.QuestionList.Count,
             survey.ErrorsExist || survey.LockStatus == LockStatusType.Locked);

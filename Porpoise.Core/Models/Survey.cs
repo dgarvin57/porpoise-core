@@ -24,16 +24,8 @@ public class Survey : ObjectBase
     private int _tenantId;
     private string _surveyName = string.Empty;
     private SurveyStatus _status = SurveyStatus.Initial;
-    private LockStatusType _lockStatus = LockStatusType.Locked;
-    private string _unlockKeyName = string.Empty;
-    private KeyType _unlockKeyType = KeyType.None;
-    private string _saveAlteredString = string.Empty;
     private string _surveyFileName = string.Empty;
     private string _dataFileName = string.Empty;
-    private string _origDataFilePath = string.Empty;
-    private string _surveyPath = string.Empty;
-    private string _surveyFolder = string.Empty;
-    private string _fullProjectFolder = string.Empty;
     private ObjectListBase<Question> _questionList = [];
     private SurveyData? _data;
     private bool _errorsExist = true;
@@ -87,30 +79,6 @@ public class Survey : ObjectBase
         set => SetProperty(ref _status, value, nameof(Status));
     }
 
-    public LockStatusType LockStatus
-    {
-        get => _lockStatus;
-        set => SetProperty(ref _lockStatus, value, "License");
-    }
-
-    public string UnlockKeyName
-    {
-        get => _unlockKeyName;
-        set => SetProperty(ref _unlockKeyName, value, nameof(UnlockKeyName));
-    }
-
-    public KeyType UnlockKeyType
-    {
-        get => _unlockKeyType;
-        set => SetProperty(ref _unlockKeyType, value, nameof(UnlockKeyType));
-    }
-
-    public string SaveAlteredString
-    {
-        get => _saveAlteredString;
-        set => SetProperty(ref _saveAlteredString, value, nameof(SaveAlteredString));
-    }
-
     public string SurveyFileName
     {
         get => _surveyFileName;
@@ -121,32 +89,6 @@ public class Survey : ObjectBase
     {
         get => _dataFileName;
         set => SetProperty(ref _dataFileName, value, "PathToDataFile");
-    }
-
-    public string OrigDataFilePath
-    {
-        get => _origDataFilePath;
-        set => SetProperty(ref _origDataFilePath, value, nameof(OrigDataFilePath));
-    }
-
-    [XmlIgnore]
-    public string FullProjectFolder
-    {
-        get => _fullProjectFolder;
-        set => _fullProjectFolder = value;
-    }
-
-    [XmlIgnore]
-    public string SurveyPath
-    {
-        get => _surveyPath;
-        set => SetProperty(ref _surveyPath, value, nameof(SurveyPath));
-    }
-
-    public string SurveyFolder
-    {
-        get => _surveyFolder;
-        set => SetProperty(ref _surveyFolder, value, nameof(SurveyFolder));
     }
 
     [XmlArrayItem(typeof(Question))]

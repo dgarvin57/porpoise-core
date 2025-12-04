@@ -182,8 +182,6 @@ public class PorpzImportService : IDisposable
                     if (File.Exists(surveyPath))
                     {
                         LegacyDataAccess.Read(ref survey, surveyPath);
-                        survey.FullProjectFolder = destinationProjectFolder;
-                        survey.SurveyPath = surveyPath;
 
                         // Clear any metadata-based data list from .porps file
                         // The .porps file contains survey metadata, not actual response data

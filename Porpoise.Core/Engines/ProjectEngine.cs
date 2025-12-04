@@ -37,7 +37,7 @@ public static class ProjectEngine
         IOUtils.CreateDirectory(project.FullFolder ?? string.Empty);
 
         project.ModifiedBy = Environment.UserName;
-        project.ModifiedOn = DateTime.Now;
+        project.ModifiedDate = DateTime.Now;
 
         if (project.IsNew)
         {
@@ -48,26 +48,29 @@ public static class ProjectEngine
         {
             foreach (var survey in project.SurveyList)
             {
-                survey.FullProjectFolder = project.FullFolder ?? string.Empty;
+                // Ensure survey data path is set
+                if (survey.Data != null && string.IsNullOrEmpty(survey.Data.DataFilePath))
+                {
+                    var surveyFolder = Path.Combine(project.FullFolder ?? string.Empty, survey.SurveyName);
+                    survey.Data.DataFilePath = Path.Combine(surveyFolder, survey.DataFileName);
+                }
                 SurveyEngine.SaveSurvey(survey, project.IsExported);
             }
 
             project.SummarizeSurveyList();
         }
 
-        // Save researcher logo as PNG if present
-        if (project.ResearcherLogo != null && project.FullFolder != null)
-        {
-            var logoPath = Path.Combine(project.FullFolder, project.ResearcherLogoFilename ?? "logo.png");
-            if (!File.Exists(logoPath))
-            {
-                var pngName = Path.GetFileNameWithoutExtension(project.ResearcherLogoFilename ?? "logo") + ".png";
-                var pngPath = Path.Combine(project.FullFolder, pngName);
-                //TODO: Convert base64 or URL to image and save
-//                project.ResearcherLogo.Save(pngPath, System.Drawing.Imaging.ImageFormat.Png);
-//                project.ResearcherLogoFilename = pngName;
-            }
-        }
+        // Legacy: Save researcher logo as PNG if present (now stored in database as binary)
+        // if (project.ResearcherLogo != null && project.FullFolder != null)
+        // {
+        //     var logoPath = Path.Combine(project.FullFolder, project.ResearcherLogoFilename ?? "logo.png");
+        //     if (!File.Exists(logoPath))
+        //     {
+        //         var pngName = Path.GetFileNameWithoutExtension(project.ResearcherLogoFilename ?? "logo") + ".png";
+        //         var pngPath = Path.Combine(project.FullFolder, pngName);
+        //         // Convert byte[] to image and save if needed
+        //     }
+        // }
 
         bool success = LegacyDataAccess.Write(project, path);
 
@@ -92,12 +95,8 @@ public static class ProjectEngine
 
             foreach (var summary in project.SurveyListSummary)
             {
-                var surveyPath = Path.Combine(project.FullFolder, summary.SurveyFolder ?? string.Empty, summary.SurveyFileName ?? string.Empty);
-                var survey = new Survey
-                {
-                    FullProjectFolder = project.FullFolder,
-                    SurveyPath = surveyPath
-                };
+                var surveyPath = Path.Combine(project.FullFolder ?? string.Empty, summary.SurveyFileName ?? string.Empty);
+                var survey = new Survey();
 
                 SurveyEngine.LoadSurvey(survey, surveyPath, project.IsExported);
                 surveyList.Add(survey);
@@ -106,15 +105,15 @@ public static class ProjectEngine
             project.SurveyList = surveyList;
         }
 
-        // Load researcher logo
-        if (!string.IsNullOrEmpty(project.ResearcherLogoFilename) && project.FullFolder != null)
-        {
-            var imagePath = Path.Combine(project.FullFolder, project.ResearcherLogoFilename);
-            if (File.Exists(imagePath))
-            {
-                project.ResearcherLogo = IOUtils.GetImageUsingFileStream(imagePath);
-            }
-        }
+        // Legacy: Load researcher logo from file (now stored in database as binary)
+        // if (!string.IsNullOrEmpty(project.ResearcherLogoFilename) && project.FullFolder != null)
+        // {
+        //     var imagePath = Path.Combine(project.FullFolder, project.ResearcherLogoFilename);
+        //     if (File.Exists(imagePath))
+        //     {
+        //         project.ResearcherLogo = File.ReadAllBytes(imagePath);
+        //     }
+        // }
 
         project.MarkClean();
         project.MarkAsOld();

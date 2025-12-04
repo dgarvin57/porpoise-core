@@ -145,14 +145,12 @@ public class SurveyRepository : Repository<Survey>, ISurveyRepository
         
         const string sql = @"
             INSERT INTO Surveys (
-                Id, ProjectId, TenantId, SurveyName, Status, LockStatus, UnlockKeyName, UnlockKeyType,
-                SaveAlteredString, SurveyFileName, DataFileName, OrigDataFilePath,
-                SurveyPath, SurveyFolder, FullProjectFolder, ErrorsExist, SurveyNotes,
+                Id, ProjectId, TenantId, SurveyName, Status,
+                SurveyFileName, DataFileName, ErrorsExist, SurveyNotes,
                 IsDeleted, CreatedDate, ModifiedDate
             ) VALUES (
-                @Id, @ProjectId, @TenantId, @SurveyName, @Status, @LockStatus, @UnlockKeyName, @UnlockKeyType,
-                @SaveAlteredString, @SurveyFileName, @DataFileName, @OrigDataFilePath,
-                @SurveyPath, @SurveyFolder, @FullProjectFolder, @ErrorsExist, @SurveyNotes,
+                @Id, @ProjectId, @TenantId, @SurveyName, @Status,
+                @SurveyFileName, @DataFileName, @ErrorsExist, @SurveyNotes,
                 @IsDeleted, @CreatedDate, @ModifiedDate
             )";
         
@@ -166,16 +164,8 @@ public class SurveyRepository : Repository<Survey>, ISurveyRepository
             survey.TenantId,
             survey.SurveyName,
             Status = (int)survey.Status,
-            LockStatus = (int)survey.LockStatus,
-            survey.UnlockKeyName,
-            UnlockKeyType = (int)survey.UnlockKeyType,
-            survey.SaveAlteredString,
             survey.SurveyFileName,
             survey.DataFileName,
-            survey.OrigDataFilePath,
-            survey.SurveyPath,
-            survey.SurveyFolder,
-            survey.FullProjectFolder,
             survey.ErrorsExist,
             survey.SurveyNotes,
             survey.IsDeleted,
@@ -193,16 +183,8 @@ public class SurveyRepository : Repository<Survey>, ISurveyRepository
                 ProjectId = @ProjectId,
                 SurveyName = @SurveyName,
                 Status = @Status,
-                LockStatus = @LockStatus,
-                UnlockKeyName = @UnlockKeyName,
-                UnlockKeyType = @UnlockKeyType,
-                SaveAlteredString = @SaveAlteredString,
                 SurveyFileName = @SurveyFileName,
                 DataFileName = @DataFileName,
-                OrigDataFilePath = @OrigDataFilePath,
-                SurveyPath = @SurveyPath,
-                SurveyFolder = @SurveyFolder,
-                FullProjectFolder = @FullProjectFolder,
                 ErrorsExist = @ErrorsExist,
                 SurveyNotes = @SurveyNotes,
                 ModifiedDate = @ModifiedDate
@@ -215,16 +197,8 @@ public class SurveyRepository : Repository<Survey>, ISurveyRepository
             ProjectId = survey.ProjectId?.ToString(),
             survey.SurveyName,
             Status = (int)survey.Status,
-            LockStatus = (int)survey.LockStatus,
-            survey.UnlockKeyName,
-            UnlockKeyType = (int)survey.UnlockKeyType,
-            survey.SaveAlteredString,
             survey.SurveyFileName,
             survey.DataFileName,
-            survey.OrigDataFilePath,
-            survey.SurveyPath,
-            survey.SurveyFolder,
-            survey.FullProjectFolder,
             survey.ErrorsExist,
             survey.SurveyNotes,
             ModifiedDate = DateTime.UtcNow

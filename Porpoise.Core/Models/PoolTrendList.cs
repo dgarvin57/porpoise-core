@@ -172,7 +172,7 @@ public class PoolTrendList
     {
         var latestSurvey = new Survey
         {
-            CreatedOn = new DateTime(1900, 1, 1)
+            CreatedDate = new DateTime(1900, 1, 1)
         };
 
         if (type == PoolTrendType.Pool)
@@ -180,7 +180,7 @@ public class PoolTrendList
             // Pool
             foreach (var sl in PoolSurveyList)
             {
-                if (sl.PoolSurveySelected && sl.Survey.CreatedOn > latestSurvey.CreatedOn)
+                if (sl.PoolSurveySelected && sl.Survey.CreatedDate > latestSurvey.CreatedDate)
                 {
                     latestSurvey = sl.Survey;
                 }
@@ -191,14 +191,14 @@ public class PoolTrendList
             // Trend
             foreach (var sl in TrendSurveyList)
             {
-                if (sl.TrendSurveySelected && sl.Survey.CreatedOn > latestSurvey.CreatedOn)
+                if (sl.TrendSurveySelected && sl.Survey.CreatedDate > latestSurvey.CreatedDate)
                 {
                     latestSurvey = sl.Survey;
                 }
             }
         }
 
-        return latestSurvey.CreatedOn.Year > 1900 ? latestSurvey : null;
+        return latestSurvey.CreatedDate.Year > 1900 ? latestSurvey : null;
     }
 
     public void MarkClean()

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Porpoise.Core.Application.Interfaces;
 using Porpoise.Core.Models;
+using Porpoise.Api.Models;
 
 namespace Porpoise.Api.Controllers
 {
@@ -32,7 +33,32 @@ namespace Porpoise.Api.Controllers
             {
                 return NotFound();
             }
-            return Ok(project);
+
+            // Convert to response DTO with base64 logo
+            var response = new ProjectResponse
+            {
+                Id = project.Id,
+                TenantId = project.TenantId,
+                ProjectName = project.ProjectName,
+                ClientName = project.ClientName,
+                Description = project.Description,
+                StartDate = project.StartDate,
+                EndDate = project.EndDate,
+                DefaultWeightingScheme = project.DefaultWeightingScheme,
+                BrandingSettings = project.BrandingSettings,
+                ResearcherLabel = project.ResearcherLabel,
+                ResearcherSubLabel = project.ResearcherSubLabel,
+                ResearcherLogoBase64 = project.ResearcherLogo != null 
+                    ? Convert.ToBase64String(project.ResearcherLogo) 
+                    : null,
+                IsDeleted = project.IsDeleted,
+                DeletedDate = project.DeletedDate,
+                // Date fields now match database column names
+                CreatedDate = project.CreatedDate,
+                ModifiedDate = project.ModifiedDate
+            };
+
+            return Ok(response);
         }
 
         [HttpPost]
@@ -50,7 +76,7 @@ namespace Porpoise.Api.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateProject(Guid id, [FromBody] Project project)
+        public async Task<IActionResult> UpdateProject(Guid id, [FromBody] UpdateProjectRequest request)
         {
             if (!ModelState.IsValid)
             {
@@ -63,13 +89,34 @@ namespace Porpoise.Api.Controllers
                 return NotFound();
             }
 
-            existingProject.ProjectName = project.ProjectName;
-            existingProject.ClientName = project.ClientName;
-            existingProject.Description = project.Description;
-            existingProject.StartDate = project.StartDate;
-            existingProject.EndDate = project.EndDate;
-            existingProject.DefaultWeightingScheme = project.DefaultWeightingScheme;
-            existingProject.BrandingSettings = project.BrandingSettings;
+            existingProject.ProjectName = request.ProjectName;
+            existingProject.ClientName = request.ClientName;
+            existingProject.Description = request.Description;
+            existingProject.StartDate = request.StartDate;
+            existingProject.EndDate = request.EndDate;
+            existingProject.ResearcherLabel = request.ResearcherLabel;
+            existingProject.ResearcherSubLabel = request.ResearcherSubLabel;
+            existingProject.DefaultWeightingScheme = request.DefaultWeightingScheme;
+            existingProject.BrandingSettings = request.BrandingSettings;
+
+            // Convert base64 logo to byte array if provided
+            if (!string.IsNullOrEmpty(request.ResearcherLogoBase64))
+            {
+                try
+                {
+                    // Remove data URL prefix if present (e.g., "data:image/png;base64,")
+                    var base64Data = request.ResearcherLogoBase64;
+                    if (base64Data.Contains(","))
+                    {
+                        base64Data = base64Data.Split(',')[1];
+                    }
+                    existingProject.ResearcherLogo = Convert.FromBase64String(base64Data);
+                }
+                catch (FormatException)
+                {
+                    return BadRequest("Invalid logo image format");
+                }
+            }
 
             await _projectRepository.UpdateAsync(existingProject);
             await _unitOfWork.CommitAsync();
@@ -97,6 +144,20 @@ namespace Porpoise.Api.Controllers
         {
             var projects = await _projectRepository.GetProjectsWithSurveyCountAsync();
             return Ok(projects);
+        }
+
+        [HttpGet("logos")]
+        public async Task<IActionResult> GetProjectLogos()
+        {
+            var projects = await _projectRepository.GetAllAsync();
+            var logos = projects
+                .Where(p => p.ResearcherLogo != null)
+                .Select(p => new
+                {
+                    id = p.Id.ToString(),
+                    researcherLogoBase64 = Convert.ToBase64String(p.ResearcherLogo)
+                });
+            return Ok(logos);
         }
 
         [HttpGet("multi-survey")]

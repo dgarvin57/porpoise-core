@@ -71,12 +71,12 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
             INSERT INTO Projects (
                 Id, TenantId, ProjectName, ClientName, Description, StartDate, EndDate,
                 DefaultWeightingScheme, BrandingSettings, ResearcherLabel, ResearcherSubLabel,
-                ResearcherLogo, ResearcherLogoFilename, ResearcherLogoPath, ProjectFile,
+                ResearcherLogo, ProjectFile,
                 IsExported, IsDeleted, CreatedBy
             ) VALUES (
                 @Id, @TenantId, @ProjectName, @ClientName, @Description, @StartDate, @EndDate,
                 @DefaultWeightingScheme, @BrandingSettings, @ResearcherLabel, @ResearcherSubLabel,
-                @ResearcherLogo, @ResearcherLogoFilename, @ResearcherLogoPath, @ProjectFile,
+                @ResearcherLogo, @ProjectFile,
                 @IsExported, @IsDeleted, @CreatedBy
             )";
 
@@ -95,8 +95,6 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
             project.ResearcherLabel,
             project.ResearcherSubLabel,
             project.ResearcherLogo,
-            project.ResearcherLogoFilename,
-            project.ResearcherLogoPath,
             project.ProjectFile,
             project.IsExported,
             project.IsDeleted,
@@ -120,8 +118,6 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
                 ResearcherLabel = @ResearcherLabel,
                 ResearcherSubLabel = @ResearcherSubLabel,
                 ResearcherLogo = @ResearcherLogo,
-                ResearcherLogoFilename = @ResearcherLogoFilename,
-                ResearcherLogoPath = @ResearcherLogoPath,
                 ProjectFile = @ProjectFile,
                 IsExported = @IsExported,
                 ModifiedBy = @ModifiedBy
@@ -141,8 +137,6 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
             project.ResearcherLabel,
             project.ResearcherSubLabel,
             project.ResearcherLogo,
-            project.ResearcherLogoFilename,
-            project.ResearcherLogoPath,
             project.ProjectFile,
             project.IsExported,
             project.ModifiedBy,
@@ -247,6 +241,10 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
                 p.StartDate as startDate,
                 p.EndDate as endDate,
                 p.CreatedDate as createdAt,
+                p.ModifiedDate as modifiedDate,
+                p.ResearcherLabel as researcherLabel,
+                p.ResearcherSubLabel as researcherSubLabel,
+                p.DefaultWeightingScheme as defaultWeightingScheme,
                 MAX(s.ModifiedDate) as lastModified,
                 COUNT(DISTINCT s.Id) as surveyCount,
                 CAST(MAX(s.Id) AS CHAR) as firstSurveyId,
@@ -260,7 +258,7 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
             LEFT JOIN Questions q ON s.Id = q.SurveyId
             LEFT JOIN SurveyData sd ON s.Id = sd.SurveyId
             WHERE p.TenantId = @TenantId AND (p.IsDeleted = 0 OR p.IsDeleted IS NULL)
-            GROUP BY p.Id, p.ProjectName, p.ClientName, p.Description, p.StartDate, p.EndDate, p.CreatedDate
+            GROUP BY p.Id, p.ProjectName, p.ClientName, p.Description, p.StartDate, p.EndDate, p.CreatedDate, p.ModifiedDate, p.ResearcherLabel, p.ResearcherSubLabel, p.DefaultWeightingScheme
             ORDER BY p.ProjectName";
 
         using var connection = _context.CreateConnection();

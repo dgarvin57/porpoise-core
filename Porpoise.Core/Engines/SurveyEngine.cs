@@ -32,13 +32,6 @@ public static partial class SurveyEngine
 
         // Use modern return pattern instead of ref
         survey = LegacyDataAccess.Read(survey, surveyPath) ?? survey;
-        survey.SurveyPath = surveyPath ?? string.Empty;
-
-        if (string.IsNullOrEmpty(survey.FullProjectFolder))
-        {
-            var fullPath = IOUtils.GetFullProjectPathFromSurveyPath(surveyPath ?? string.Empty, survey.SurveyFolder, survey.SurveyFileName);
-            survey.FullProjectFolder = fullPath ?? string.Empty;
-        }
 
         if (!LoadSurveyData(survey, false, exported))
             return false;
@@ -49,11 +42,9 @@ public static partial class SurveyEngine
     public static bool LoadSurveyData(Survey survey, bool useOriginalDataPath, bool exported)
     {
         if (survey == null) return false;
-        if (string.IsNullOrEmpty(survey.FullProjectFolder)) return false;
+        if (survey.Data?.DataFilePath == null) return false;
 
-        string dataPath = useOriginalDataPath
-            ? survey.OrigDataFilePath
-            : Path.Combine(survey.FullProjectFolder, survey.SurveyFolder, survey.DataFileName);
+        string dataPath = survey.Data.DataFilePath;
 
         if (string.IsNullOrEmpty(dataPath))
             throw new ArgumentException("Survey data file path is required.", nameof(useOriginalDataPath));
@@ -62,14 +53,9 @@ public static partial class SurveyEngine
 
         try
         {
-            if (Path.GetExtension(survey.DataFileName)?.Equals(".porpd", StringComparison.OrdinalIgnoreCase) == true)
+            if (Path.GetExtension(dataPath)?.Equals(".porpd", StringComparison.OrdinalIgnoreCase) == true)
             {
-                var binaryPath = Path.Combine(survey.FullProjectFolder, survey.SurveyName,
-                    Path.GetFileNameWithoutExtension(survey.DataFileName) + ".porpd");
-                survey.DataFileName = Path.GetFileName(binaryPath) ?? "data.porpd";
-                if (survey.Data != null)
-                    survey.Data.DataFilePath = binaryPath;
-                data = LegacyDataAccess.ReadSurveyDataFromBinary(binaryPath);
+                data = LegacyDataAccess.ReadSurveyDataFromBinary(dataPath);
             }
             else
             {
@@ -87,8 +73,8 @@ public static partial class SurveyEngine
                 : ex.Message;
 
             throw new SurveyDataFileLoadException(
-                message, ex.InnerException, survey.SurveyPath, dataPath,
-                survey.Id, survey.OrigDataFilePath, exported);
+                message, ex.InnerException, string.Empty, dataPath,
+                survey.Id, string.Empty, exported);
         }
 
         if (data == null) return false;
@@ -117,8 +103,10 @@ public static partial class SurveyEngine
         survey = LegacyDataAccess.Read(survey, surveyPath) ?? survey;
         var originalDataPath = survey.Data?.DataFilePath ?? string.Empty;
 
-        survey.OrigDataFilePath = newFile;
-        survey.FullProjectFolder = fullProjectPath;
+        // Set data file path for loading
+        if (survey.Data == null)
+            survey.Data = new SurveyData();
+        survey.Data.DataFilePath = newFile;
 
         if (!LoadSurveyData(survey, true, false))
             return false;
@@ -273,21 +261,20 @@ public static partial class SurveyEngine
 
     public static bool SaveSurvey(Survey survey, bool exporting)
     {
-        if (string.IsNullOrEmpty(survey.FullProjectFolder)) throw new ArgumentException("Project folder required.", nameof(survey));
         if (string.IsNullOrEmpty(survey.SurveyName)) throw new ArgumentException("Survey name required.", nameof(survey));
         if (string.IsNullOrEmpty(survey.DataFileName)) throw new ArgumentException("Data file name required.", nameof(survey));
         if (survey.Data == null) throw new ArgumentException("Survey data required.", nameof(survey));
+        if (string.IsNullOrEmpty(survey.Data.DataFilePath)) throw new ArgumentException("Data file path required.", nameof(survey));
 
         survey.Data.RemoveWeightsFromDataList();
         survey.Data.RemoveMovementColumn();
 
-        var surveyFolder = Path.Combine(survey.FullProjectFolder, survey.SurveyName);
-        survey.SurveyFolder = survey.SurveyName;
+        var surveyFolder = Path.GetDirectoryName(survey.Data.DataFilePath) ?? throw new ArgumentException("Invalid data file path");
         var dataPath = Path.Combine(surveyFolder, survey.DataFileName);
-        survey.SurveyPath = Path.Combine(surveyFolder, survey.SurveyName + ".porps");
+        var surveyPath = Path.Combine(surveyFolder, survey.SurveyName + ".porps");
         survey.SurveyFileName = survey.SurveyName + ".porps";
 
-        survey.ModifiedOn = DateTime.Now;
+        survey.ModifiedDate = DateTime.Now;
         survey.ModifiedBy = Environment.UserName;
 
         if (!IOUtils.CreateDirectory(surveyFolder)) return false;
@@ -310,7 +297,7 @@ public static partial class SurveyEngine
                 return false;
         }
 
-        var result = LegacyDataAccess.Write(survey, survey.SurveyPath);
+        var result = LegacyDataAccess.Write(survey, surveyPath);
         if (result)
         {
             survey.MarkClean();
@@ -324,23 +311,13 @@ public static partial class SurveyEngine
 
     public static bool SurveyIdAlterTest(Survey survey, string tested)
     {
-        if (tested == SurveyIdAlter(survey.Id))
-        {
-            survey.LockStatus = LockStatusType.Unlocked;
-            survey.UnlockKeyName = "Manual Unlock";
-            survey.UnlockKeyType = KeyType.Manual;
-            LegacyDataAccess.Write(survey, survey.SurveyPath);
-            return true;
-        }
-        return false;
+        // Licensing removed - this method is deprecated
+        return tested == SurveyIdAlter(survey.Id);
     }
 
     public static bool SurveyRelock(Survey survey)
     {
-        survey.LockStatus = LockStatusType.Locked;
-        survey.UnlockKeyName = "";
-        survey.UnlockKeyType = KeyType.None;
-        LegacyDataAccess.Write(survey, survey.SurveyPath);
+        // Licensing removed - this method is deprecated
         return true;
     }
 

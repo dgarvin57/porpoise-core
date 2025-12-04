@@ -32,9 +32,9 @@ public class ObjectBase : INotifyPropertyChanged, ICloneable
 
     protected internal bool _isDirty;
     private bool _isNew = true;
-    private DateTime _createdOn = DateTime.Now;
+    private DateTime _createdDate = DateTime.Now;
     private string _createdBy = Environment.UserName;
-    private DateTime _modifiedOn;
+    private DateTime _modifiedDate;
     private string _modifiedBy = string.Empty;
 
     [XmlIgnore]
@@ -50,10 +50,10 @@ public class ObjectBase : INotifyPropertyChanged, ICloneable
 
     public bool IsNew => _isNew;
 
-    public DateTime CreatedOn
+    public DateTime CreatedDate
     {
-        get => _createdOn;
-        set => SetProperty(ref _createdOn, value, nameof(CreatedOn));
+        get => _createdDate;
+        set => SetProperty(ref _createdDate, value, nameof(CreatedDate));
     }
 
     public string CreatedBy
@@ -62,10 +62,10 @@ public class ObjectBase : INotifyPropertyChanged, ICloneable
         set => SetProperty(ref _createdBy, value, nameof(CreatedBy));
     }
 
-    public DateTime ModifiedOn
+    public DateTime ModifiedDate
     {
-        get => _modifiedOn;
-        set => SetProperty(ref _modifiedOn, value, nameof(ModifiedOn));
+        get => _modifiedDate;
+        set => SetProperty(ref _modifiedDate, value, nameof(ModifiedDate));
     }
 
     public string ModifiedBy

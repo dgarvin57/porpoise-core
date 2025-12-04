@@ -83,9 +83,12 @@ public class CreateSurveyWizardService : ApplicationServiceBase
         {
             _view.SurveyName = _view.OrcaExportObject.FileName;
             _view.Survey.DataFileName = Path.GetFileName(_view.OrcaExportObject.CSVPath);
-            _view.Survey.OrigDataFilePath = _view.OrcaExportObject.CSVPath;
             _view.DataFilePath = _view.OrcaExportObject.CSVPath;
             _view.OrcaXmlPath = _view.OrcaExportObject.XMLPath;
+            // Initialize survey data if needed
+            if (_view.Survey.Data == null)
+                _view.Survey.Data = new SurveyData();
+            _view.Survey.Data.DataFilePath = _view.OrcaExportObject.CSVPath;
             _view.DisableDataFileBrowser();
         }
     }
@@ -210,8 +213,10 @@ public class CreateSurveyWizardService : ApplicationServiceBase
 
     private async Task<bool> LoadSurveyDataAsync()
     {
-        _view.Survey.OrigDataFilePath = _view.DataFilePath;
-        _view.Survey.FullProjectFolder = _view.Project.FullFolder;
+        // Initialize survey data if needed
+        if (_view.Survey.Data == null)
+            _view.Survey.Data = new SurveyData();
+        _view.Survey.Data.DataFilePath = _view.DataFilePath;
 
         return await Task.Run(() => SurveyEngine.LoadSurveyData(_view.Survey, true, _view.Project.IsExported));
     }

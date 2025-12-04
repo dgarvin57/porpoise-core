@@ -139,11 +139,23 @@
         @clear-all="handleClearAll"
         @delete-project="deleteProject"
         @delete-survey="deleteSurvey"
+        @project-updated="handleProjectUpdated"
       />
     </div>
 
     <!-- Project List (Folder Tree - Single Column, Centered) -->
     <div v-else class="max-w-6xl mx-auto overflow-x-auto">
+      <!-- Collapse All (Always visible, left-aligned) -->
+      <div class="flex justify-start mb-1 px-3">
+        <span
+          @click="expandedProjects.size > 0 && collapseAll()"
+          :class="expandedProjects.size === 0 ? 'text-gray-400 dark:text-gray-600 cursor-not-allowed' : 'text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline cursor-pointer'"
+          class="text-xs transition-colors"
+        >
+          Collapse All
+        </span>
+      </div>
+      
       <!-- Column Headers -->
       <div class="grid grid-cols-[32px_minmax(200px,1fr)_140px_80px_80px_110px_110px_90px_60px] gap-3 items-center px-3 py-2 border-b-2 border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 sticky top-0 min-w-[960px]">
         <span class="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase"></span>
@@ -286,17 +298,21 @@
                       : 'hover:bg-gray-100 dark:hover:bg-gray-800'
                   ]"
                 >
-                  <div class="flex justify-center ml-4">
-                    <svg class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
+                  <div class="flex justify-center">
                   </div>
-                  <span 
-                    @click="navigateToSurvey(survey.id); handleSurveyClick(survey.id)"
-                    class="text-sm font-medium text-gray-700 dark:text-gray-300 truncate hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
-                  >
-                    {{ survey.name }}
-                  </span>
+                  <div class="flex items-center space-x-2">
+                    <div class="flex-shrink-0">
+                      <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <span 
+                      @click="navigateToSurvey(survey.id); handleSurveyClick(survey.id)"
+                      class="text-sm text-gray-600 dark:text-gray-400 truncate hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
+                    >
+                      {{ survey.name }}
+                    </span>
+                  </div>
                   <span class="text-xs text-gray-500 dark:text-gray-400">—</span>
                   <span class="text-xs text-gray-500 dark:text-gray-400 text-right tabular-nums">
                     {{ survey.caseCount || 0 }}
@@ -338,14 +354,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onActivated, watch } from 'vue'
 import axios from 'axios'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import ProjectCard from './ProjectCard.vue'
 import ProjectFilters from './ProjectFilters.vue'
 import SortableColumnHeader from '../UI/SortableColumnHeader.vue'
 
 const router = useRouter()
+const route = useRoute()
 const projects = ref([])
 const loading = ref(true)
 const error = ref(null)
@@ -353,7 +370,9 @@ const sortBy = ref('modified')
 const sortDirection = ref('desc') // 'asc' or 'desc'
 const viewMode = ref(localStorage.getItem('projectViewMode') || 'grid') // 'grid' or 'list', persisted
 const showFilters = ref(false)
-const expandedProjects = ref(new Set(JSON.parse(localStorage.getItem('expandedProjects') || '[]')))
+// Load expansion state based on current view mode
+const storageKey = viewMode.value === 'grid' ? 'expandedProjectsGrid' : 'expandedProjectsList'
+const expandedProjects = ref(new Set(JSON.parse(localStorage.getItem(storageKey) || '[]')))
 const windowWidth = ref(window.innerWidth)
 const focusedProjectId = ref(localStorage.getItem('focusedProjectId') || null)
 const focusedSurveyId = ref(localStorage.getItem('focusedSurveyId') || null)
@@ -372,7 +391,13 @@ async function fetchProjects() {
   error.value = null
   
   try {
+    // Fetch projects with counts
     const response = await axios.get('http://localhost:5107/api/projects/with-counts')
+    
+    // Fetch logos separately
+    const logosResponse = await axios.get('http://localhost:5107/api/projects/logos')
+    const logosMap = new Map(logosResponse.data.map(l => [l.id, l.researcherLogoBase64]))
+    
     // Map API response to component format
     projects.value = response.data.map(p => ({
       id: p.id,
@@ -383,10 +408,15 @@ async function fetchProjects() {
       caseCount: p.caseCount,
       questionCount: p.questionCount,
       createdAt: p.createdAt,
-      lastModified: p.lastModified || p.createdAt,
+      lastModified: p.modifiedDate || p.lastModified || p.createdAt,
       startDate: p.startDate,
       endDate: p.endDate,
-      status: p.status || getStatusFromDates(p.startDate, p.endDate)
+      status: p.status || getStatusFromDates(p.startDate, p.endDate),
+      // Merge logos and other researcher fields
+      researcherLogoBase64: logosMap.get(p.id),
+      researcherLabel: p.researcherLabel,
+      researcherSubLabel: p.researcherSubLabel,
+      defaultWeightingScheme: p.defaultWeightingScheme
     }))
   } catch (err) {
     error.value = 'Failed to load projects. Please try again.'
@@ -504,24 +534,32 @@ watch(sortBy, (newVal) => {
   }
 })
 
-// Persist view mode preference
-watch(viewMode, (newVal) => {
+// Persist view mode preference and switch expansion state when changing views
+watch(viewMode, (newVal, oldVal) => {
   localStorage.setItem('projectViewMode', newVal)
+  
+  // Save current expansion state for the old view
+  const oldStorageKey = oldVal === 'grid' ? 'expandedProjectsGrid' : 'expandedProjectsList'
+  localStorage.setItem(oldStorageKey, JSON.stringify([...expandedProjects.value]))
+  
+  // Load expansion state for the new view
+  const newStorageKey = newVal === 'grid' ? 'expandedProjectsGrid' : 'expandedProjectsList'
+  expandedProjects.value = new Set(JSON.parse(localStorage.getItem(newStorageKey) || '[]'))
 })
 
 function handleToggleExpand(projectId) {
   if (expandedProjects.value.has(projectId)) {
     expandedProjects.value.delete(projectId)
   } else {
-    // Clear other expanded projects before expanding this one
+    // In grid view, only allow one project to be expanded at a time
     expandedProjects.value.clear()
     expandedProjects.value.add(projectId)
   }
   // Clear focused survey when toggling expansion
   focusedSurveyId.value = null
   localStorage.removeItem('focusedSurveyId')
-  // Persist to localStorage
-  localStorage.setItem('expandedProjects', JSON.stringify([...expandedProjects.value]))
+  // Persist to localStorage using grid-specific key
+  localStorage.setItem('expandedProjectsGrid', JSON.stringify([...expandedProjects.value]))
 }
 
 function handleClearAll() {
@@ -529,9 +567,20 @@ function handleClearAll() {
   expandedProjects.value.clear()
   focusedSurveyId.value = null
   focusedProjectId.value = null
-  localStorage.removeItem('expandedProjects')
+  localStorage.removeItem('expandedProjectsGrid')
+  localStorage.removeItem('expandedProjectsList')
   localStorage.removeItem('focusedSurveyId')
   localStorage.removeItem('focusedProjectId')
+}
+
+function collapseAll() {
+  // Collapse all expanded projects in list view
+  expandedProjects.value.clear()
+  focusedSurveyId.value = null
+  localStorage.removeItem('expandedProjectsList')
+  localStorage.removeItem('focusedSurveyId')
+  // Trigger reactivity
+  expandedProjects.value = new Set(expandedProjects.value)
 }
 
 function handleSetFocus(projectId) {
@@ -558,8 +607,7 @@ async function toggleProjectExpand(projectId) {
   if (expandedProjects.value.has(projectId)) {
     expandedProjects.value.delete(projectId)
   } else {
-    // Clear other expanded projects before expanding this one
-    expandedProjects.value.clear()
+    // Allow multiple projects to stay expanded
     expandedProjects.value.add(projectId)
     
     // Fetch surveys if not already loaded
@@ -586,8 +634,8 @@ async function toggleProjectExpand(projectId) {
   // Clear focused survey when toggling expansion
   focusedSurveyId.value = null
   localStorage.removeItem('focusedSurveyId')
-  // Persist to localStorage
-  localStorage.setItem('expandedProjects', JSON.stringify([...expandedProjects.value]))
+  // Persist to localStorage using list-specific key
+  localStorage.setItem('expandedProjectsList', JSON.stringify([...expandedProjects.value]))
   // Trigger reactivity
   expandedProjects.value = new Set(expandedProjects.value)
   loadingSurveys.value = new Set(loadingSurveys.value)
@@ -692,6 +740,28 @@ async function deleteSurvey(surveyId, surveyName) {
   }
 }
 
+async function handleProjectUpdated(projectId, updatedData) {
+  // Update the project in place without resorting - keeps card position stable for better UX
+  const index = projects.value.findIndex(p => p.id === projectId)
+  if (index !== -1) {
+    // Update with the data from the modal (already has all fields)
+    // Note: We intentionally do NOT update lastModified here to prevent re-sorting
+    // The database has the correct modified date, which will be shown on next page load
+    projects.value[index] = {
+      ...projects.value[index], // Keep existing fields like surveyCount, status, lastModified
+      name: updatedData.projectName,
+      clientName: updatedData.clientName,
+      description: updatedData.description,
+      researcherLabel: updatedData.researcherLabel,
+      researcherSubLabel: updatedData.researcherSubLabel,
+      researcherLogoBase64: updatedData.researcherLogoBase64,
+      defaultWeightingScheme: updatedData.defaultWeightingScheme,
+      startDate: updatedData.startDate,
+      endDate: updatedData.endDate
+    }
+  }
+}
+
 onMounted(async () => {
   await fetchProjects()
   
@@ -729,5 +799,17 @@ onMounted(async () => {
   
   // Cleanup
   return () => window.removeEventListener('resize', handleResize)
+})
+
+// Refetch projects when navigating back to the gallery (e.g., from a survey)
+onActivated(async () => {
+  await fetchProjects()
+})
+
+// Watch route changes to refetch when coming back to gallery
+watch(() => route.path, async (newPath) => {
+  if (newPath === '/projects' || newPath === '/') {
+    await fetchProjects()
+  }
 })
 </script>

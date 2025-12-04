@@ -138,7 +138,8 @@ public class QuestionDefinitionService : ApplicationServiceBase
 
     private void OnSeeData(object? sender, EventArgs e)
     {
-        CommonApplicationMethods.SeeSurveyData(_view.Survey.OrigDataFilePath, Shell, _view.Project.IsExported);
+        var dataPath = _view.Survey.Data?.DataFilePath ?? string.Empty;
+        CommonApplicationMethods.SeeSurveyData(dataPath, Shell, _view.Project.IsExported);
     }
 
     private void OnApplyChanges(WhatToChange changes)
