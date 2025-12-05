@@ -152,15 +152,7 @@
       />
 
       <!-- Crosstab View -->
-      <div v-else-if="activeSection === 'crosstab'" class="h-full flex items-center justify-center">
-        <div class="text-center">
-          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-          </svg>
-          <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Crosstab Analysis</h3>
-          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Coming soon...</p>
-        </div>
-      </div>
+      <CrosstabView v-else-if="activeSection === 'crosstab'" :surveyId="surveyId" />
 
       <!-- Questions View -->
       <QuestionsView v-else-if="activeSection === 'questions'" :surveyId="surveyId" />
@@ -195,6 +187,7 @@ import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import ResultsView from '../components/Analytics/ResultsView.vue'
+import CrosstabView from '../components/Analytics/CrosstabView.vue'
 import QuestionsView from '../components/Analytics/QuestionsView.vue'
 
 const route = useRoute()

@@ -3,6 +3,7 @@ using Porpoise.Core.Application.Interfaces;
 using Porpoise.Core.Engines;
 using Porpoise.Core.Models;
 using Porpoise.Core.Services;
+using System.Data;
 using System.Text;
 
 namespace Porpoise.Api.Controllers;
@@ -12,13 +13,22 @@ namespace Porpoise.Api.Controllers;
 public class SurveyAnalysisController : ControllerBase
 {
     private readonly ISurveyRepository _surveyRepository;
+    private readonly IQuestionRepository _questionRepository;
+    private readonly ISurveyDataRepository _surveyDataRepository;
+    private readonly IResponseRepository _responseRepository;
     private readonly AIInsightsService _aiService;
 
     public SurveyAnalysisController(
         ISurveyRepository surveyRepository,
+        IQuestionRepository questionRepository,
+        ISurveyDataRepository surveyDataRepository,
+        IResponseRepository responseRepository,
         AIInsightsService aiService)
     {
         _surveyRepository = surveyRepository;
+        _questionRepository = questionRepository;
+        _surveyDataRepository = surveyDataRepository;
+        _responseRepository = responseRepository;
         _aiService = aiService;
     }
 
@@ -349,4 +359,166 @@ Provide data-driven insights about patterns, notable findings, and implications:
 
         return insights;
     }
+
+    /// <summary>
+    /// Generate crosstab analysis between two questions
+    /// </summary>
+    [HttpPost("{surveyId:guid}/crosstab")]
+    public async Task<IActionResult> GetCrosstab(
+        Guid surveyId,
+        [FromBody] CrosstabRequest request)
+    {
+        try
+        {
+            var survey = await _surveyRepository.GetByIdAsync(surveyId);
+            if (survey == null)
+                return NotFound($"Survey with ID {surveyId} not found");
+
+            // Load questions from database
+            var questions = await _questionRepository.GetBySurveyIdAsync(surveyId);
+            var questionsList = questions.ToList();
+            
+            if (questionsList.Count == 0)
+                return BadRequest("Survey has no questions");
+
+            // Load survey data
+            var surveyData = await _surveyDataRepository.GetBySurveyIdAsync(surveyId);
+            
+            if (surveyData == null || surveyData.DataList == null || surveyData.DataList.Count == 0)
+                return BadRequest("Survey has no response data");
+
+            // Find the two questions
+            var firstQuestion = questionsList.FirstOrDefault(q => q.Id == request.FirstQuestionId);
+            var secondQuestion = questionsList.FirstOrDefault(q => q.Id == request.SecondQuestionId);
+
+            if (firstQuestion == null)
+                return NotFound($"First question with ID {request.FirstQuestionId} not found");
+
+            if (secondQuestion == null)
+                return NotFound($"Second question with ID {request.SecondQuestionId} not found");
+
+            // Load responses for both questions
+            var firstResponses = await _responseRepository.GetByQuestionIdAsync(firstQuestion.Id);
+            var firstResponseList = new ObjectListBase<Response>();
+            foreach (var resp in firstResponses)
+            {
+                firstResponseList.Add(resp);
+            }
+            firstQuestion.Responses = firstResponseList;
+
+            var secondResponses = await _responseRepository.GetByQuestionIdAsync(secondQuestion.Id);
+            var secondResponseList = new ObjectListBase<Response>();
+            foreach (var resp in secondResponses)
+            {
+                secondResponseList.Add(resp);
+            }
+            secondQuestion.Responses = secondResponseList;
+
+            // Validate that questions are suitable for crosstab
+            // Crosstab requires categorical questions with numeric response values
+            if (firstQuestion.Responses.Count == 0)
+                return BadRequest($"First question '{firstQuestion.QstLabel}' has no response categories defined. Crosstab analysis requires categorical questions.");
+            
+            if (secondQuestion.Responses.Count == 0)
+                return BadRequest($"Second question '{secondQuestion.QstLabel}' has no response categories defined. Crosstab analysis requires categorical questions.");
+
+            // Create crosstab with error handling
+            Crosstab crosstab;
+            try
+            {
+                crosstab = new Crosstab(surveyData, firstQuestion, secondQuestion, false, false);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error creating crosstab: {ex.Message}. This may occur if the selected questions contain non-numeric or incompatible data.");
+            }
+
+            // Build response
+            var response = new CrosstabResponse
+            {
+                FirstQuestion = new QuestionInfo
+                {
+                    Id = firstQuestion.Id,
+                    Label = firstQuestion.QstLabel,
+                    VariableType = (int)firstQuestion.VariableType
+                },
+                SecondQuestion = new QuestionInfo
+                {
+                    Id = secondQuestion.Id,
+                    Label = secondQuestion.QstLabel,
+                    VariableType = (int)secondQuestion.VariableType
+                },
+                TotalN = crosstab.TotalN,
+                ChiSquare = crosstab.ChiSquare,
+                Significant = crosstab.Significant,
+                Phi = crosstab.Phi,
+                ContingencyCoefficient = crosstab.ContingencyCoefficient,
+                CramersV = crosstab.CramersV,
+                Table = ConvertDataTableToList(crosstab.CxTable),
+                IVIndexes = crosstab.CxIVIndexes.Select(idx => new IVIndexInfo
+                {
+                    Label = idx.IVLabel,
+                    Index = idx.Index
+                }).ToList()
+            };
+
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Error generating crosstab: {ex.Message}");
+        }
+    }
+
+    private List<Dictionary<string, object>> ConvertDataTableToList(DataTable? table)
+    {
+        if (table == null) return new List<Dictionary<string, object>>();
+
+        var result = new List<Dictionary<string, object>>();
+        
+        foreach (DataRow row in table.Rows)
+        {
+            var dict = new Dictionary<string, object>();
+            foreach (DataColumn col in table.Columns)
+            {
+                dict[col.ColumnName] = row[col] ?? DBNull.Value;
+            }
+            result.Add(dict);
+        }
+
+        return result;
+    }
+}
+
+public class CrosstabRequest
+{
+    public Guid FirstQuestionId { get; set; }
+    public Guid SecondQuestionId { get; set; }
+}
+
+public class CrosstabResponse
+{
+    public QuestionInfo FirstQuestion { get; set; } = null!;
+    public QuestionInfo SecondQuestion { get; set; } = null!;
+    public int TotalN { get; set; }
+    public double ChiSquare { get; set; }
+    public string Significant { get; set; } = string.Empty;
+    public double Phi { get; set; }
+    public double ContingencyCoefficient { get; set; }
+    public double CramersV { get; set; }
+    public List<Dictionary<string, object>> Table { get; set; } = new();
+    public List<IVIndexInfo> IVIndexes { get; set; } = new();
+}
+
+public class QuestionInfo
+{
+    public Guid Id { get; set; }
+    public string Label { get; set; } = string.Empty;
+    public int VariableType { get; set; }
+}
+
+public class IVIndexInfo
+{
+    public string Label { get; set; } = string.Empty;
+    public double Index { get; set; }
 }

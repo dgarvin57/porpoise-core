@@ -198,8 +198,22 @@ public class SurveyData : ObjectBase, ICloneable
         foreach (DataColumn c in dt.Columns) headers.Add(c.ColumnName);
         list.Add(headers);
 
+        bool isFirstRow = true;
         foreach (DataRow r in dt.Rows)
         {
+            // Skip first row if it's a duplicate header (contains question numbers like "q1", "q2")
+            if (isFirstRow && r.ItemArray.Length > 1)
+            {
+                var secondCell = r.ItemArray[1]?.ToString() ?? "";
+                // If second cell looks like a question number (starts with 'q' followed by digit), skip this row
+                if (secondCell.Length >= 2 && secondCell.StartsWith('q') && char.IsDigit(secondCell[1]))
+                {
+                    isFirstRow = false;
+                    continue;
+                }
+            }
+            isFirstRow = false;
+
             List<string> row = [];
             foreach (var item in r.ItemArray)
                 row.Add(item?.ToString() ?? "");
