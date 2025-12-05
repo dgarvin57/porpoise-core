@@ -1,7 +1,7 @@
 <template>
   <div class="container mx-auto px-6 py-6">
     <div class="max-w-5xl mx-auto">
-      <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Settings</h1>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 mt-12">Account Settings</h1>
       
       <div class="flex gap-6 justify-center">
         <!-- Left Sidebar Navigation -->
