@@ -1,5 +1,20 @@
--- Rebuild Porpoise Database from Scratch with TenantId as GUID
--- This script drops and recreates the entire database with proper GUID support
+-- =============================================================================
+-- Porpoise Database Schema - Complete Rebuild
+-- =============================================================================
+-- This script creates a fresh database with the current schema.
+-- It SUPERSEDES all previous migration scripts (01-09).
+--
+-- Version: 2.1
+-- Date: December 2025
+-- Changes included:
+--   - Multi-tenant architecture with GUID-based TenantId (VARCHAR(36))
+--   - Separated branding: ClientLogo (Projects) vs OrganizationLogo (Tenants)
+--   - Normalized question blocks with proper relationships
+--   - Complete survey data model with responses and analytics support
+--   - Sample data for testing (5 projects, 8 surveys)
+--
+-- CAUTION: This script DROPS and RECREATES the entire database!
+-- =============================================================================
 
 DROP DATABASE IF EXISTS porpoise_dev;
 CREATE DATABASE porpoise_dev CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
