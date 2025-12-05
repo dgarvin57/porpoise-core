@@ -2,14 +2,18 @@
 
 ## Current Schema
 
-### `00_RebuildDatabase.sql` - **Use This for Fresh Installations**
+### `00_RebuildDatabase.sql` - **The ONLY Script You Need**
 
-This is the **authoritative database schema** that creates a complete, up-to-date database from scratch. It includes:
+This is the **complete, authoritative database schema** that creates everything from scratch. All previous migrations (01-09) have been incorporated into this single file.
+
+**What it includes:**
 - All tables with proper schema (Tenants, Projects, Surveys, Questions, Responses, etc.)
 - GUID-based TenantId (VARCHAR(36))
-- Proper foreign key relationships
+- Organization branding (OrganizationName, OrganizationLogo, OrganizationTagline)
+- Client branding per project (ClientLogo)
+- Proper foreign key relationships with CASCADE DELETE
 - Indexes for performance
-- Sample data for testing
+- Sample data for testing (5 projects, 8 surveys)
 
 **When to use:**
 - Setting up a new development environment
@@ -22,62 +26,20 @@ This is the **authoritative database schema** that creates a complete, up-to-dat
 mysql -u root -p < 00_RebuildDatabase.sql
 ```
 
-## Active Migrations
-
-These migrations should be applied **in order** to an existing database:
-
-### `07_RefactorTenantAndProjectLogos.sql`
-- Adds organization branding to Tenants table (OrganizationName, OrganizationLogo, OrganizationTagline)
-- Renames ResearcherLogo → ClientLogo in Projects
-- Removes ResearcherLabel, ResearcherSubLabel, BrandingSettings from Projects
-- **Status:** Applied to current schema
-
-### `08_ConvertTenantIdToGuid.sql`
-- Converts TenantId from INT to GUID (VARCHAR(36))
-- Updates all foreign key relationships
-- **Status:** Superseded by 00_RebuildDatabase.sql
-
-### `08b_FinishTenantIdMigration.sql`
-- Cleanup script for TenantId migration
-- **Status:** Superseded by 00_RebuildDatabase.sql
-
-### `08c_CompleteTenantMigration.sql`
-- Final steps for TenantId migration
-- **Status:** Superseded by 00_RebuildDatabase.sql
-
 ## Archived Migrations
 
-Old migration scripts have been moved to `archive/` folder. These are kept for historical reference but are **not needed** for new installations since `00_RebuildDatabase.sql` includes all their changes.
+All migration scripts have been moved to `archive/` folder. They are kept for **historical reference only** and should **not be run** since `00_RebuildDatabase.sql` includes all their changes.
 
-Archived scripts:
-- `01_CreateDatabase.sql` - Initial database creation
-- `02_RecreateTables.sql` - Early table definitions
-- `03_AddMultiTenancy.sql` - Added tenant support
-- `04_CleanupProjects.sql` - Project table cleanup
-- `04_NormalizeQuestionBlocks.sql` - Question block normalization
-- `04b_FixBlockLinks.sql` - Block relationship fixes
-- `05_TestData.sql` - Early test data
-- `05_UpdateResearcherLogo.sql` - Logo field updates
-- `06_*` - Various data and schema updates
-- `07_ResetAndLoadCleanTestData.sql` - Test data reset
-- `08_ExpandQuestionFields.sql` - Question field additions
-- `09_RemoveCalculatedFields.sql` - Field cleanup
+### Why archived?
 
-## Migration Strategy Going Forward
+The rebuild script is the single source of truth. Running old migrations could:
+- Create inconsistencies
+- Miss dependencies between migrations
+- Cause errors with updated schema
 
-### For New Environments
-1. Run `00_RebuildDatabase.sql`
-2. Done! You have the latest schema with sample data
+## Creating New Migrations
 
-### For Existing Production Databases
-1. Create new migration scripts numbered sequentially (10, 11, 12, etc.)
-2. Test migrations on a copy of production data
-3. Apply migrations in order
-4. Update `00_RebuildDatabase.sql` to include the changes for future fresh installs
-
-### Creating New Migrations
-
-When you need to modify the schema:
+When you need to modify the schema going forward:
 
 1. **Create a new numbered script** (e.g., `10_AddNewFeature.sql`)
 2. **Write forward migration** (ALTER TABLE, ADD COLUMN, etc.)
