@@ -31,14 +31,14 @@ public class TenantMiddleware
             return;
         }
 
-        // Extract tenant key from header (default to 'demo-tenant' if missing for dev convenience)
+        // Extract tenant key from header (default to 'demo' if missing for dev convenience)
         if (!context.Request.Headers.TryGetValue("X-Tenant-Id", out var tenantKeyValues))
         {
-            _logger.LogInformation("Missing X-Tenant-Id header, defaulting to 'demo-tenant' for request: {Path}", context.Request.Path);
-            tenantKeyValues = "demo-tenant";
+            _logger.LogInformation("Missing X-Tenant-Id header, defaulting to 'demo' for request: {Path}", context.Request.Path);
+            tenantKeyValues = "demo";
         }
 
-        var tenantKey = tenantKeyValues.FirstOrDefault() ?? "demo-tenant";
+        var tenantKey = tenantKeyValues.FirstOrDefault() ?? "demo";
         if (string.IsNullOrWhiteSpace(tenantKey))
         {
             _logger.LogWarning("Empty X-Tenant-Id header for request: {Path}", context.Request.Path);

@@ -77,9 +77,9 @@
               </span>
             </button>
             <hr class="my-1 border-gray-200 dark:border-gray-700">
-            <a href="#" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+            <router-link to="/settings" @click="closeSettingsMenu" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
               Preferences
-            </a>
+            </router-link>
             <a href="#" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
               About
             </a>
@@ -87,7 +87,7 @@
         </div>
 
         <!-- User Avatar -->
-        <div class="relative">
+        <div class="relative" v-click-outside="closeUserMenu">
           <button @click="toggleUserMenu" class="bg-transparent flex items-center space-x-2 focus:outline-none">
             <img
               src="https://ui-avatars.com/api/?name=User&background=3b82f6&color=fff"
@@ -101,9 +101,9 @@
             <a href="#" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
               Profile
             </a>
-            <a href="#" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
+            <router-link to="/settings" @click="closeUserMenu" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
               Account Settings
-            </a>
+            </router-link>
             <hr class="my-1 border-gray-200 dark:border-gray-700">
             <a href="#" class="block px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700">
               Sign Out

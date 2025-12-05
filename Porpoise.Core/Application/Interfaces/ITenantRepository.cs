@@ -4,10 +4,10 @@ namespace Porpoise.Core.Application.Interfaces;
 
 public interface ITenantRepository
 {
-    Task<Tenant?> GetByIdAsync(int tenantId);
+    Task<Tenant?> GetByIdAsync(string tenantId);
     Task<Tenant?> GetByKeyAsync(string tenantKey);
     Task<IEnumerable<Tenant>> GetAllAsync();
-    Task<int> AddAsync(Tenant tenant);
+    Task<string> AddAsync(Tenant tenant);  // Returns GUID as string
     Task<bool> UpdateAsync(Tenant tenant);
-    Task<bool> DeleteAsync(int tenantId);
+    Task<bool> DeleteAsync(string tenantId);
 }

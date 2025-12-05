@@ -30,8 +30,8 @@ public class TenantController : ControllerBase
     /// <summary>
     /// Get tenant by ID (admin only)
     /// </summary>
-    [HttpGet("{id:int}")]
-    public async Task<ActionResult<Tenant>> GetById(int id)
+    [HttpGet("{id}")]
+    public async Task<ActionResult<Tenant>> GetById(string id)
     {
         var tenant = await _tenantRepository.GetByIdAsync(id);
         if (tenant == null)
@@ -97,8 +97,8 @@ public class TenantController : ControllerBase
     /// <summary>
     /// Update tenant (admin only)
     /// </summary>
-    [HttpPut("{id:int}")]
-    public async Task<ActionResult<Tenant>> Update(int id, [FromBody] UpdateTenantRequest request)
+    [HttpPut("{id}")]
+    public async Task<ActionResult<Tenant>> Update(string id, [FromBody] UpdateTenantRequest request)
     {
         var tenant = await _tenantRepository.GetByIdAsync(id);
         if (tenant == null)
@@ -130,8 +130,8 @@ public class TenantController : ControllerBase
     /// <summary>
     /// Delete tenant (admin only - use with caution!)
     /// </summary>
-    [HttpDelete("{id:int}")]
-    public async Task<ActionResult> Delete(int id)
+    [HttpDelete("{id}")]
+    public async Task<ActionResult> Delete(string id)
     {
         var tenant = await _tenantRepository.GetByIdAsync(id);
         if (tenant == null)

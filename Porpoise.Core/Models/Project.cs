@@ -13,18 +13,15 @@ namespace Porpoise.Core.Models
         #region Fields
 
         private Guid _id = Guid.NewGuid();
-        private int _tenantId;
+        private string _tenantId = string.Empty;
         private string? _projectName;
         private string? _clientName;
         private string? _description;
         private DateTime? _startDate;
         private DateTime? _endDate;
         private string? _defaultWeightingScheme;
-        private string? _brandingSettings;
-        private string? _researcherLabel;
-        private string? _researcherSubLabel;
-        // Logo stored as binary data (byte array)
-        private byte[]? _researcherLogo;
+        // Client logo stored as binary data (byte array)
+        private byte[]? _clientLogo;
         private ObjectListBase<Survey>? _surveyList;
         private ObjectListBase<SurveySummary>? _surveyListSummary;
         private bool _isDeleted;
@@ -70,7 +67,7 @@ namespace Porpoise.Core.Models
             set => SetProperty(ref _id, value, nameof(Id));
         }
 
-        public int TenantId
+        public string TenantId
         {
             get => _tenantId;
             set => SetProperty(ref _tenantId, value, nameof(TenantId));
@@ -112,28 +109,10 @@ namespace Porpoise.Core.Models
             set => SetProperty(ref _defaultWeightingScheme, value, nameof(DefaultWeightingScheme));
         }
 
-        public string? BrandingSettings
-        {
-            get => _brandingSettings;
-            set => SetProperty(ref _brandingSettings, value, nameof(BrandingSettings));
-        }
-
-        public string? ResearcherLabel
-        {
-            get => _researcherLabel;
-            set => SetProperty(ref _researcherLabel, value, nameof(ResearcherLabel));
-        }
-
-        public string? ResearcherSubLabel
-        {
-            get => _researcherSubLabel;
-            set => SetProperty(ref _researcherSubLabel, value, nameof(ResearcherSubLabel));
-        }
-
         [XmlIgnore]
-        public byte[]? ResearcherLogo { 
-            get => _researcherLogo; 
-            set => SetProperty(ref _researcherLogo, value, nameof(ResearcherLogo));
+        public byte[]? ClientLogo { 
+            get => _clientLogo; 
+            set => SetProperty(ref _clientLogo, value, nameof(ClientLogo));
         }
 
         [XmlArrayItem(typeof(SurveySummary))]

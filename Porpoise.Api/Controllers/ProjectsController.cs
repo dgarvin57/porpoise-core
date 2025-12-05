@@ -45,11 +45,8 @@ namespace Porpoise.Api.Controllers
                 StartDate = project.StartDate,
                 EndDate = project.EndDate,
                 DefaultWeightingScheme = project.DefaultWeightingScheme,
-                BrandingSettings = project.BrandingSettings,
-                ResearcherLabel = project.ResearcherLabel,
-                ResearcherSubLabel = project.ResearcherSubLabel,
-                ResearcherLogoBase64 = project.ResearcherLogo != null 
-                    ? Convert.ToBase64String(project.ResearcherLogo) 
+                ClientLogoBase64 = project.ClientLogo != null 
+                    ? Convert.ToBase64String(project.ClientLogo) 
                     : null,
                 IsDeleted = project.IsDeleted,
                 DeletedDate = project.DeletedDate,
@@ -94,23 +91,20 @@ namespace Porpoise.Api.Controllers
             existingProject.Description = request.Description;
             existingProject.StartDate = request.StartDate;
             existingProject.EndDate = request.EndDate;
-            existingProject.ResearcherLabel = request.ResearcherLabel;
-            existingProject.ResearcherSubLabel = request.ResearcherSubLabel;
             existingProject.DefaultWeightingScheme = request.DefaultWeightingScheme;
-            existingProject.BrandingSettings = request.BrandingSettings;
 
             // Convert base64 logo to byte array if provided
-            if (!string.IsNullOrEmpty(request.ResearcherLogoBase64))
+            if (!string.IsNullOrEmpty(request.ClientLogoBase64))
             {
                 try
                 {
                     // Remove data URL prefix if present (e.g., "data:image/png;base64,")
-                    var base64Data = request.ResearcherLogoBase64;
+                    var base64Data = request.ClientLogoBase64;
                     if (base64Data.Contains(","))
                     {
                         base64Data = base64Data.Split(',')[1];
                     }
-                    existingProject.ResearcherLogo = Convert.FromBase64String(base64Data);
+                    existingProject.ClientLogo = Convert.FromBase64String(base64Data);
                 }
                 catch (FormatException)
                 {
@@ -151,11 +145,11 @@ namespace Porpoise.Api.Controllers
         {
             var projects = await _projectRepository.GetAllAsync();
             var logos = projects
-                .Where(p => p.ResearcherLogo != null)
+                .Where(p => p.ClientLogo != null)
                 .Select(p => new
                 {
                     id = p.Id.ToString(),
-                    researcherLogoBase64 = Convert.ToBase64String(p.ResearcherLogo)
+                    clientLogoBase64 = Convert.ToBase64String(p.ClientLogo)
                 });
             return Ok(logos);
         }

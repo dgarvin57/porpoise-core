@@ -197,19 +197,28 @@ public class SurveyImportController : ControllerBase
         }
 
         // Import each survey referenced in the project
+        Console.WriteLine($"[IMPORT] Starting to import {project.SurveyListSummary.Count} survey(s)");
         foreach (var surveySummary in project.SurveyListSummary)
         {
+            Console.WriteLine($"[IMPORT] Processing survey: {surveySummary.SurveyFileName}");
             try
             {
-                var projectFolder = Path.GetDirectoryName(projectFilePath) ?? directory;
-                // Surveys are expected in the same folder as the project file
-                string expectedSurveyPath = Path.Combine(projectFolder, surveySummary.SurveyFileName);
+                // Search for the survey file in the extraction directory (recursively)
+                var surveyFileName = Path.GetFileName(surveySummary.SurveyFileName);
+                var foundSurveyFiles = Directory.GetFiles(directory, surveyFileName, SearchOption.AllDirectories);
                 
-                string fallbackSurveyPath = Path.Combine(projectFolder, surveySummary.SurveyFileName);
-                string surveyPath = System.IO.File.Exists(expectedSurveyPath) ? expectedSurveyPath : (System.IO.File.Exists(fallbackSurveyPath) ? fallbackSurveyPath : expectedSurveyPath);
+                if (foundSurveyFiles.Length == 0)
+                {
+                    Console.WriteLine($"[ERROR] Survey file not found: {surveyFileName}");
+                    errors.Add($"Survey file not found: {surveySummary.SurveyFileName}");
+                    continue;
+                }
+                
+                string surveyPath = foundSurveyFiles[0];
+                Console.WriteLine($"[IMPORT] Found survey at: {surveyPath}");
                 
                 // Construct data path - should be in same directory as survey file, with .porpd extension
-                var surveyDir = Path.GetDirectoryName(surveyPath) ?? projectFolder;
+                var surveyDir = Path.GetDirectoryName(surveyPath) ?? directory;
                 var surveyBaseName = Path.GetFileNameWithoutExtension(surveyPath);
                 
                 // Try multiple patterns for the data file
@@ -242,17 +251,18 @@ public class SurveyImportController : ControllerBase
                     if (porpdFiles.Length > 0)
                     {
                         dataPath = porpdFiles[0];
+                        Console.WriteLine($"[IMPORT] Found data file: {dataPath}");
                     }
-                }
-
-                if (!System.IO.File.Exists(surveyPath))
-                {
-                    errors.Add($"Survey file not found: {surveySummary.SurveyFileName}\nTried: {expectedSurveyPath}\nAlso tried: {fallbackSurveyPath}");
-                    continue;
+                    else
+                    {
+                        Console.WriteLine($"[IMPORT] No .porpd file found in {surveyDir}");
+                    }
                 }
 
                 // Load the survey - use data path if exists, otherwise pass surveyPath (will return empty data)
                 var actualDataPath = dataPath ?? surveyPath;
+                Console.WriteLine($"[IMPORT] Loading survey from: {surveyPath}");
+                Console.WriteLine($"[IMPORT] Loading data from: {actualDataPath}");
                 var (survey, _, data) = ProjectLoader.LoadProject(
                     surveyPath,
                     projectFilePath,
@@ -287,13 +297,28 @@ public class SurveyImportController : ControllerBase
 
                 // Save using persistence service if available, otherwise use basic repository
                 Survey savedSurvey;
-                if (_persistenceService != null)
+                try
                 {
-                    savedSurvey = await _persistenceService.SaveSurveyWithDetailsAsync(survey, project);
+                    Console.WriteLine($"[IMPORT] Saving survey: {survey.SurveyName} with {survey.QuestionList?.Count ?? 0} questions");
+                    if (_persistenceService != null)
+                    {
+                        savedSurvey = await _persistenceService.SaveSurveyWithDetailsAsync(survey, project);
+                    }
+                    else
+                    {
+                        savedSurvey = await _surveyRepository.AddAsync(survey);
+                    }
+                    Console.WriteLine($"[IMPORT] Survey saved with ID: {savedSurvey.Id}");
                 }
-                else
+                catch (Exception saveEx)
                 {
-                    savedSurvey = await _surveyRepository.AddAsync(survey);
+                    Console.WriteLine($"[ERROR] Failed to save survey {survey.SurveyName}: {saveEx.Message}");
+                    Console.WriteLine($"[ERROR] Stack trace: {saveEx.StackTrace}");
+                    if (saveEx.InnerException != null)
+                    {
+                        Console.WriteLine($"[ERROR] Inner exception: {saveEx.InnerException.Message}");
+                    }
+                    throw; // Re-throw to be caught by outer catch
                 }
 
                 importedSurveys.Add(new
@@ -306,6 +331,8 @@ public class SurveyImportController : ControllerBase
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[ERROR] Error importing {surveySummary.SurveyFileName}: {ex.Message}");
+                Console.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
                 errors.Add($"Error importing {surveySummary.SurveyFileName}: {ex.Message}");
             }
         }
@@ -443,7 +470,13 @@ public class SurveyImportController : ControllerBase
         }
         catch (Exception ex)
         {
-            return Problem($"Error importing survey: {ex.Message}");
+            Console.WriteLine($"[ERROR] Survey import failed: {ex.Message}");
+            Console.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"[ERROR] Inner exception: {ex.InnerException.Message}");
+            }
+            return Problem($"Error importing survey: {ex.Message}\n{ex.StackTrace}");
         }
     }
 
@@ -552,6 +585,15 @@ public class SurveyImportController : ControllerBase
 
             // Extract the zip file
             ZipFile.ExtractToDirectory(tempZipPath, extractDir);
+
+            // List extracted files for debugging
+            Console.WriteLine($"[IMPORT] Extracted to: {extractDir}");
+            var allExtractedFiles = Directory.GetFiles(extractDir, "*", SearchOption.AllDirectories).ToList();
+            Console.WriteLine($"[IMPORT] Found {allExtractedFiles.Count} files:");
+            foreach (var file in allExtractedFiles)
+            {
+                Console.WriteLine($"[IMPORT]   - {Path.GetRelativePath(extractDir, file)}");
+            }
 
             // List extracted files
             var extractedFiles = Directory.GetFiles(extractDir, "*", SearchOption.AllDirectories)

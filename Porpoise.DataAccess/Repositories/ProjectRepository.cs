@@ -70,13 +70,11 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
         const string sql = @"
             INSERT INTO Projects (
                 Id, TenantId, ProjectName, ClientName, Description, StartDate, EndDate,
-                DefaultWeightingScheme, BrandingSettings, ResearcherLabel, ResearcherSubLabel,
-                ResearcherLogo, ProjectFile,
+                DefaultWeightingScheme, ClientLogo, ProjectFile,
                 IsExported, IsDeleted, CreatedBy
             ) VALUES (
                 @Id, @TenantId, @ProjectName, @ClientName, @Description, @StartDate, @EndDate,
-                @DefaultWeightingScheme, @BrandingSettings, @ResearcherLabel, @ResearcherSubLabel,
-                @ResearcherLogo, @ProjectFile,
+                @DefaultWeightingScheme, @ClientLogo, @ProjectFile,
                 @IsExported, @IsDeleted, @CreatedBy
             )";
 
@@ -91,10 +89,7 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
             project.StartDate,
             project.EndDate,
             project.DefaultWeightingScheme,
-            project.BrandingSettings,
-            project.ResearcherLabel,
-            project.ResearcherSubLabel,
-            project.ResearcherLogo,
+            project.ClientLogo,
             project.ProjectFile,
             project.IsExported,
             project.IsDeleted,
@@ -114,10 +109,7 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
                 StartDate = @StartDate,
                 EndDate = @EndDate,
                 DefaultWeightingScheme = @DefaultWeightingScheme,
-                BrandingSettings = @BrandingSettings,
-                ResearcherLabel = @ResearcherLabel,
-                ResearcherSubLabel = @ResearcherSubLabel,
-                ResearcherLogo = @ResearcherLogo,
+                ClientLogo = @ClientLogo,
                 ProjectFile = @ProjectFile,
                 IsExported = @IsExported,
                 ModifiedBy = @ModifiedBy
@@ -133,10 +125,7 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
             project.StartDate,
             project.EndDate,
             project.DefaultWeightingScheme,
-            project.BrandingSettings,
-            project.ResearcherLabel,
-            project.ResearcherSubLabel,
-            project.ResearcherLogo,
+            project.ClientLogo,
             project.ProjectFile,
             project.IsExported,
             project.ModifiedBy,
@@ -242,8 +231,6 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
                 p.EndDate as endDate,
                 p.CreatedDate as createdAt,
                 p.ModifiedDate as modifiedDate,
-                p.ResearcherLabel as researcherLabel,
-                p.ResearcherSubLabel as researcherSubLabel,
                 p.DefaultWeightingScheme as defaultWeightingScheme,
                 MAX(s.ModifiedDate) as lastModified,
                 COUNT(DISTINCT s.Id) as surveyCount,
@@ -258,7 +245,7 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
             LEFT JOIN Questions q ON s.Id = q.SurveyId
             LEFT JOIN SurveyData sd ON s.Id = sd.SurveyId
             WHERE p.TenantId = @TenantId AND (p.IsDeleted = 0 OR p.IsDeleted IS NULL)
-            GROUP BY p.Id, p.ProjectName, p.ClientName, p.Description, p.StartDate, p.EndDate, p.CreatedDate, p.ModifiedDate, p.ResearcherLabel, p.ResearcherSubLabel, p.DefaultWeightingScheme
+            GROUP BY p.Id, p.ProjectName, p.ClientName, p.Description, p.StartDate, p.EndDate, p.CreatedDate, p.ModifiedDate, p.DefaultWeightingScheme
             ORDER BY p.ProjectName";
 
         using var connection = _context.CreateConnection();

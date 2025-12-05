@@ -996,6 +996,13 @@ watch(activeInfoTab, (newValue) => {
   emit('info-tab-changed', newValue)
 })
 
+// Watch for surveyId changes (important when using keep-alive)
+watch(() => props.surveyId, (newSurveyId, oldSurveyId) => {
+  if (newSurveyId && newSurveyId !== oldSurveyId) {
+    loadQuestions()
+  }
+})
+
 onMounted(() => {
   loadQuestions()
 })

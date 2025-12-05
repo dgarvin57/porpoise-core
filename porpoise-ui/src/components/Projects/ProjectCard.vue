@@ -1,14 +1,14 @@
 <template>
   <div class="relative h-full">
     <div :class="[
-      'bg-white dark:bg-gray-800 shadow-sm overflow-hidden h-full flex flex-col border-2 min-h-[200px]',
+      'bg-white dark:bg-gray-800 shadow-sm h-full flex flex-col border-2 min-h-[200px]',
       props.isExpanded 
         ? 'rounded-t-lg border-b-0 border-blue-600/70 dark:border-blue-500/70'
         : props.isFocused
-          ? 'rounded-lg border-blue-500/50 dark:border-blue-400/50'
+          ? 'rounded-lg border-blue-500/50 dark:border-blue-400/50 overflow-hidden'
           : isActive
-            ? 'rounded-lg border-blue-600/70 dark:border-blue-500/70'
-            : 'rounded-lg border-gray-200 dark:border-gray-700 hover:shadow-md'
+            ? 'rounded-lg border-blue-600/70 dark:border-blue-500/70 overflow-hidden'
+            : 'rounded-lg border-gray-200 dark:border-gray-700 hover:shadow-md overflow-hidden'
     ]">
     <!-- All Projects - Expandable -->
     <div class="flex-1 flex flex-col relative">
@@ -110,18 +110,18 @@
         </div>
       </div>
       
-      <!-- Researcher Logo - positioned absolutely on right side, vertically centered, aligned with dropdown -->
+      <!-- Client Logo - positioned absolutely on right side, vertically centered, aligned with dropdown -->
       <img
-        v-if="project.researcherLogoBase64"
-        :src="`data:image/png;base64,${project.researcherLogoBase64}`"
-        alt="Researcher Logo"
+        v-if="clientLogo"
+        :src="clientLogo"
+        alt="Client Logo"
         class="absolute right-12 top-1/2 -translate-y-1/2 max-h-20 max-w-32 object-contain pointer-events-none"
       />
 
       <!-- Expanded Survey List -->
       <div
         v-if="props.isExpanded"
-        class="absolute left-0 right-0 top-full z-50 bg-gray-50 dark:bg-gray-900/95 backdrop-blur-sm rounded-b-lg border-x-2 border-b-2 border-blue-600/70 dark:border-blue-500/70 shadow-2xl overflow-hidden"
+        class="absolute left-[-2px] right-[-2px] top-full z-[60] bg-gray-50 dark:bg-gray-900/95 backdrop-blur-sm rounded-b-lg border-x-2 border-b-2 border-blue-600/70 dark:border-blue-500/70 shadow-2xl overflow-hidden"
       >
         <div class="px-6 py-4">
           <div v-if="loadingSurveys" class="flex items-center justify-center py-4">
@@ -149,7 +149,7 @@
     />
   </div>
 </template><script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import SurveyList from './SurveyList.vue'
@@ -178,15 +178,61 @@ const emit = defineEmits(['toggle-expand', 'set-focus', 'survey-click', 'clear-a
 
 const router = useRouter()
 const isActive = ref(false)
+const showSettingsModal = ref(false)
 const surveys = ref([])
 const loadingSurveys = ref(false)
-const showSettingsModal = ref(false)
+const logoBase64 = ref(null)
+
+// Load logo lazily on mount
+onMounted(async () => {
+  if (!logoBase64.value && !props.project.clientLogoBase64) {
+    try {
+      const response = await axios.get(`http://localhost:5107/api/projects/${props.project.id}`)
+      if (response.data.clientLogoBase64) {
+        logoBase64.value = response.data.clientLogoBase64
+      }
+    } catch (error) {
+      // Silently fail - logo is optional
+      console.debug('No logo for project:', props.project.id)
+    }
+  }
+})
+
+// Computed property for client logo - ensures reactivity when project updates
+const clientLogo = computed(() => {
+  // Use locally loaded logo if available, otherwise fall back to prop
+  const base64Data = logoBase64.value || props.project.clientLogoBase64
+  if (!base64Data) return null
+  
+  // If it already has the data URL prefix, return as-is
+  if (base64Data.startsWith('data:')) {
+    return base64Data
+  }
+  
+  // Detect image type from base64 signature or default to PNG
+  let mimeType = 'image/png'
+  if (base64Data.startsWith('/9j/')) {
+    mimeType = 'image/jpeg'
+  } else if (base64Data.startsWith('iVBORw0KGgo')) {
+    mimeType = 'image/png'
+  } else if (base64Data.startsWith('R0lGOD')) {
+    mimeType = 'image/gif'
+  } else if (base64Data.startsWith('UklGR')) {
+    mimeType = 'image/webp'
+  }
+  
+  return `data:${mimeType};base64,${base64Data}`
+})
 
 async function deleteProject() {
   emit('delete-project', props.project.id, props.project.name)
 }
 
 function handleProjectSaved(updatedData) {
+  // Update locally cached logo if it changed
+  if (updatedData.clientLogoBase64) {
+    logoBase64.value = updatedData.clientLogoBase64
+  }
   // Emit event to parent with the updated data (no need to refetch from API)
   emit('project-updated', props.project.id, updatedData)
 }

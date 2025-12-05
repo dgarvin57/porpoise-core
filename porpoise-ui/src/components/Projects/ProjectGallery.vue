@@ -391,12 +391,8 @@ async function fetchProjects() {
   error.value = null
   
   try {
-    // Fetch projects with counts
+    // Fetch projects with counts (logos loaded on-demand per card)
     const response = await axios.get('http://localhost:5107/api/projects/with-counts')
-    
-    // Fetch logos separately
-    const logosResponse = await axios.get('http://localhost:5107/api/projects/logos')
-    const logosMap = new Map(logosResponse.data.map(l => [l.id, l.researcherLogoBase64]))
     
     // Map API response to component format
     projects.value = response.data.map(p => ({
@@ -412,10 +408,8 @@ async function fetchProjects() {
       startDate: p.startDate,
       endDate: p.endDate,
       status: p.status || getStatusFromDates(p.startDate, p.endDate),
-      // Merge logos and other researcher fields
-      researcherLogoBase64: logosMap.get(p.id),
-      researcherLabel: p.researcherLabel,
-      researcherSubLabel: p.researcherSubLabel,
+      // Logo will be loaded on-demand by ProjectCard
+      clientLogoBase64: null,
       defaultWeightingScheme: p.defaultWeightingScheme
     }))
   } catch (err) {
@@ -742,36 +736,36 @@ async function deleteSurvey(surveyId, surveyName) {
 
 async function handleProjectUpdated(projectId, updatedData) {
   // Update the project in place without resorting - keeps card position stable for better UX
-  const index = projects.value.findIndex(p => p.id === projectId)
-  if (index !== -1) {
-    // Update with the data from the modal (already has all fields)
+  const project = projects.value.find(p => p.id === projectId)
+  if (project) {
+    // Update properties individually to maintain Vue reactivity
     // Note: We intentionally do NOT update lastModified here to prevent re-sorting
     // The database has the correct modified date, which will be shown on next page load
-    projects.value[index] = {
-      ...projects.value[index], // Keep existing fields like surveyCount, status, lastModified
-      name: updatedData.projectName,
-      clientName: updatedData.clientName,
-      description: updatedData.description,
-      researcherLabel: updatedData.researcherLabel,
-      researcherSubLabel: updatedData.researcherSubLabel,
-      researcherLogoBase64: updatedData.researcherLogoBase64,
-      defaultWeightingScheme: updatedData.defaultWeightingScheme,
-      startDate: updatedData.startDate,
-      endDate: updatedData.endDate
-    }
+    project.name = updatedData.projectName
+    project.clientName = updatedData.clientName
+    project.description = updatedData.description
+    project.clientLogoBase64 = updatedData.clientLogoBase64
+    project.defaultWeightingScheme = updatedData.defaultWeightingScheme
+    project.startDate = updatedData.startDate
+    project.endDate = updatedData.endDate
   }
 }
 
 onMounted(async () => {
   await fetchProjects()
   
-  // Load surveys for any expanded projects
+  // Pre-load surveys for any expanded projects (from localStorage)
+  const surveysToLoad = []
   for (const projectId of expandedProjects.value) {
     const project = projects.value.find(p => p.id === projectId)
-    
-    // Load surveys if expanded and either multi-survey OR doesn't have surveys yet
-    if (project && (project.surveyCount > 1 || !projectSurveys.value.has(projectId))) {
-      loadingSurveys.value.add(projectId)
+    if (project && !projectSurveys.value.has(projectId)) {
+      surveysToLoad.push(projectId)
+    }
+  }
+  
+  // Load all surveys in parallel
+  if (surveysToLoad.length > 0) {
+    await Promise.all(surveysToLoad.map(async (projectId) => {
       try {
         const response = await axios.get(`http://localhost:5107/api/projects/${projectId}/surveys`)
         projectSurveys.value.set(projectId, response.data.map(s => ({
@@ -785,10 +779,8 @@ onMounted(async () => {
         })))
       } catch (err) {
         console.error('Error loading surveys:', err)
-      } finally {
-        loadingSurveys.value.delete(projectId)
       }
-    }
+    }))
   }
   
   // Update window width on resize
@@ -802,13 +794,44 @@ onMounted(async () => {
 })
 
 // Refetch projects when navigating back to the gallery (e.g., from a survey)
+// Only refetch if projects are empty or stale
 onActivated(async () => {
-  await fetchProjects()
+  // Only refetch if we don't have projects loaded
+  if (projects.value.length === 0) {
+    await fetchProjects()
+  }
+  
+  // Re-load surveys for expanded projects if needed
+  const surveysToLoad = []
+  for (const projectId of expandedProjects.value) {
+    if (!projectSurveys.value.has(projectId)) {
+      surveysToLoad.push(projectId)
+    }
+  }
+  
+  if (surveysToLoad.length > 0) {
+    await Promise.all(surveysToLoad.map(async (projectId) => {
+      try {
+        const response = await axios.get(`http://localhost:5107/api/projects/${projectId}/surveys`)
+        projectSurveys.value.set(projectId, response.data.map(s => ({
+          id: s.id,
+          name: s.name,
+          status: s.status,
+          caseCount: s.caseCount,
+          questionCount: s.questionCount,
+          createdDate: s.createdDate,
+          modifiedDate: s.modifiedDate
+        })))
+      } catch (err) {
+        console.error('Error loading surveys:', err)
+      }
+    }))
+  }
 })
 
-// Watch route changes to refetch when coming back to gallery
+// Watch route changes - only refetch if needed
 watch(() => route.path, async (newPath) => {
-  if (newPath === '/projects' || newPath === '/') {
+  if ((newPath === '/projects' || newPath === '/') && projects.value.length === 0) {
     await fetchProjects()
   }
 })

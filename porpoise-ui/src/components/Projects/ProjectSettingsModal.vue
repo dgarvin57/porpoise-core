@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isOpen" class="fixed inset-0 z-[100] overflow-y-auto" @click.self="closeModal">
+  <div v-if="isOpen" class="fixed inset-0 z-[200] overflow-y-auto" @click.self="closeModal">
     <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:p-0">
       <!-- Background overlay -->
       <div class="fixed inset-0 transition-opacity bg-gray-900/50 dark:bg-black/70 backdrop-blur-sm" @click="closeModal"></div>
@@ -55,49 +55,10 @@
             />
           </div>
 
-          <!-- Description -->
+          <!-- Client Logo -->
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Description
-            </label>
-            <textarea
-              v-model="formData.description"
-              rows="3"
-              class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-shadow"
-              placeholder="Enter project description"
-            ></textarea>
-          </div>
-
-          <!-- Researcher Label -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Researcher Label
-            </label>
-            <input
-              v-model="formData.researcherLabel"
-              type="text"
-              class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
-              placeholder="Enter researcher label"
-            />
-          </div>
-
-          <!-- Researcher SubLabel -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Researcher Sub-Label
-            </label>
-            <input
-              v-model="formData.researcherSubLabel"
-              type="text"
-              class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
-              placeholder="Enter researcher sub-label"
-            />
-          </div>
-
-          <!-- Researcher Logo -->
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Researcher Logo
+              Client Logo
             </label>
             <div class="flex items-start space-x-4">
               <div class="flex items-center space-x-3">
@@ -118,8 +79,8 @@
                 <span v-if="logoFileName" class="text-sm text-gray-600 dark:text-gray-400 truncate">
                   {{ logoFileName }}
                 </span>
-                <span v-else-if="formData.researcherLogoFilename" class="text-sm text-gray-600 dark:text-gray-400 truncate">
-                  {{ formData.researcherLogoFilename }}
+                <span v-else-if="formData.clientLogoFilename" class="text-sm text-gray-600 dark:text-gray-400 truncate">
+                  {{ formData.clientLogoFilename }}
                 </span>
                 <span v-else class="text-sm text-gray-400 dark:text-gray-500">
                   No file chosen
@@ -130,6 +91,19 @@
                 <img :src="logoPreviewUrl" alt="Logo preview" class="max-h-20 max-w-[120px] object-contain shadow-md rounded" />
               </div>
             </div>
+          </div>
+
+          <!-- Description -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Description
+            </label>
+            <textarea
+              v-model="formData.description"
+              rows="3"
+              class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-shadow"
+              placeholder="Enter project description"
+            ></textarea>
           </div>
 
           <!-- Default Weighting Scheme -->
@@ -208,9 +182,7 @@ const formData = ref({
   projectName: '',
   clientName: '',
   description: '',
-  researcherLabel: '',
-  researcherSubLabel: '',
-  researcherLogoBase64: '',
+  clientLogoBase64: '',
   defaultWeightingScheme: '',
   startDate: '',
   endDate: ''
@@ -237,9 +209,7 @@ watch(() => props.isOpen, async (isOpen) => {
         projectName: projectData.projectName || '',
         clientName: projectData.clientName || '',
         description: projectData.description || '',
-        researcherLabel: projectData.researcherLabel || '',
-        researcherSubLabel: projectData.researcherSubLabel || '',
-        researcherLogoBase64: projectData.researcherLogoBase64 || '',
+        clientLogoBase64: projectData.clientLogoBase64 || '',
         defaultWeightingScheme: projectData.defaultWeightingScheme || '',
         startDate: projectData.startDate ? projectData.startDate.split('T')[0] : '',
         endDate: projectData.endDate ? projectData.endDate.split('T')[0] : ''
@@ -257,8 +227,8 @@ watch(() => props.isOpen, async (isOpen) => {
       }
       
       // Load existing logo from base64 if available
-      if (projectData.researcherLogoBase64) {
-        logoPreviewUrl.value = `data:image/png;base64,${projectData.researcherLogoBase64}`
+      if (projectData.clientLogoBase64) {
+        logoPreviewUrl.value = `data:image/png;base64,${projectData.clientLogoBase64}`
       }
       
       hasChanges.value = false
@@ -279,9 +249,7 @@ watch(() => props.project, (newProject) => {
       projectName: newProject.name || '',
       clientName: newProject.clientName || '',
       description: newProject.description || '',
-      researcherLabel: newProject.researcherLabel || '',
-      researcherSubLabel: newProject.researcherSubLabel || '',
-      researcherLogoBase64: newProject.researcherLogoBase64 || '',
+      clientLogoBase64: newProject.clientLogoBase64 || '',
       defaultWeightingScheme: newProject.defaultWeightingScheme || '',
       startDate: newProject.startDate ? newProject.startDate.split('T')[0] : '',
       endDate: newProject.endDate ? newProject.endDate.split('T')[0] : ''
@@ -298,8 +266,8 @@ watch(() => props.project, (newProject) => {
     }
     
     // Load existing logo from base64 if available
-    if (newProject.researcherLogoBase64) {
-      logoPreviewUrl.value = `data:image/png;base64,${newProject.researcherLogoBase64}`
+    if (newProject.clientLogoBase64) {
+      logoPreviewUrl.value = `data:image/png;base64,${newProject.clientLogoBase64}`
     }
     
     hasChanges.value = false
@@ -328,7 +296,7 @@ function handleFileUpload(event) {
     reader.onload = (e) => {
       // Get the full data URL (includes data:image/png;base64, prefix)
       const dataUrl = e.target.result
-      formData.value.researcherLogoBase64 = dataUrl
+      formData.value.clientLogoBase64 = dataUrl
       
       // Create preview URL
       if (logoPreviewUrl.value && logoPreviewUrl.value.startsWith('blob:')) {
@@ -349,14 +317,19 @@ async function saveChanges() {
 
   saving.value = true
   try {
+    // Extract just the base64 data without the data URL prefix
+    let logoBase64 = formData.value.clientLogoBase64
+    if (logoBase64 && logoBase64.startsWith('data:')) {
+      // Remove the "data:image/...;base64," prefix
+      logoBase64 = logoBase64.split(',')[1]
+    }
+    
     // Prepare the data to send
     const updateData = {
       projectName: formData.value.projectName.trim(),
       clientName: formData.value.clientName?.trim() || null,
       description: formData.value.description?.trim() || null,
-      researcherLabel: formData.value.researcherLabel?.trim() || null,
-      researcherSubLabel: formData.value.researcherSubLabel?.trim() || null,
-      researcherLogoBase64: formData.value.researcherLogoBase64 || null,
+      clientLogoBase64: logoBase64 || null,
       defaultWeightingScheme: formData.value.defaultWeightingScheme?.trim() || null,
       startDate: formData.value.startDate || null,
       endDate: formData.value.endDate || null
@@ -364,7 +337,16 @@ async function saveChanges() {
     
     await axios.put(`http://localhost:5107/api/projects/${props.project.id}`, updateData)
     
-    emit('saved', formData.value)
+    // Emit with proper field mapping for parent component
+    emit('saved', {
+      projectName: updateData.projectName,
+      clientName: updateData.clientName,
+      description: updateData.description,
+      clientLogoBase64: updateData.clientLogoBase64,
+      defaultWeightingScheme: updateData.defaultWeightingScheme,
+      startDate: updateData.startDate,
+      endDate: updateData.endDate
+    })
     closeModal()
   } catch (error) {
     console.error('Error saving project:', error)

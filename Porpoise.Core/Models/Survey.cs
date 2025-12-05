@@ -21,7 +21,7 @@ public class Survey : ObjectBase
 
     private Guid _id = Guid.NewGuid();
     private Guid? _projectId;
-    private int _tenantId;
+    private string _tenantId = string.Empty;
     private string _surveyName = string.Empty;
     private SurveyStatus _status = SurveyStatus.Initial;
     private string _surveyFileName = string.Empty;
@@ -61,7 +61,7 @@ public class Survey : ObjectBase
         set => SetProperty(ref _projectId, value, nameof(ProjectId));
     }
 
-    public int TenantId
+    public string TenantId
     {
         get => _tenantId;
         set => SetProperty(ref _tenantId, value, nameof(TenantId));

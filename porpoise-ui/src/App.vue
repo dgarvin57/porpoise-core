@@ -2,7 +2,11 @@
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
     <TopNav />
     <main class="pt-10">
-      <router-view />
+      <router-view v-slot="{ Component }">
+        <keep-alive>
+          <component :is="Component" />
+        </keep-alive>
+      </router-view>
     </main>
   </div>
 </template>

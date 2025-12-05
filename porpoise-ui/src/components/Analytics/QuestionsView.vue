@@ -161,7 +161,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import axios from 'axios'
 
 const props = defineProps({
@@ -275,6 +275,14 @@ const loadQuestions = async () => {
     loading.value = false
   }
 }
+
+// Watch for surveyId changes (important when using keep-alive)
+watch(() => props.surveyId, (newSurveyId, oldSurveyId) => {
+  if (newSurveyId && newSurveyId !== oldSurveyId) {
+    selectedQuestion.value = null
+    loadQuestions()
+  }
+})
 
 onMounted(() => {
   loadQuestions()
