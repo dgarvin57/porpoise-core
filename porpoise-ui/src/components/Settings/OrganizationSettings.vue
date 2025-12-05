@@ -1,11 +1,9 @@
 <template>
-  <div class="max-w-4xl mx-auto p-6">
-    <!-- Header -->
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-        Organization Settings
-      </h1>
-      <p class="text-gray-600 dark:text-gray-400">
+  <div>
+    <!-- Organization heading -->
+    <div class="mb-4">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-1">Organization</h2>
+      <p class="text-sm text-gray-600 dark:text-gray-400">
         Manage your organization's branding and information
       </p>
     </div>
@@ -16,16 +14,16 @@
     </div>
 
     <!-- Form -->
-    <form v-else @submit.prevent="saveChanges" class="space-y-6">
+    <form v-else @submit.prevent="saveChanges" class="space-y-4">
       <!-- Organization Name -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Organization Name
         </label>
         <input
           v-model="formData.organizationName"
           type="text"
-          class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+          class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
           placeholder="Enter your organization name"
         />
         <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
@@ -34,8 +32,8 @@
       </div>
 
       <!-- Organization Logo -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Organization Logo
         </label>
         
@@ -52,7 +50,7 @@
             <button
               type="button"
               @click="$refs.fileInput.click()"
-              class="px-5 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+              class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
             >
               Choose Logo File
             </button>
@@ -68,7 +66,7 @@
               v-if="logoPreviewUrl"
               type="button"
               @click="clearLogo"
-              class="ml-3 px-4 py-3 text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
+              class="ml-3 px-3 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
             >
               Remove Logo
             </button>
@@ -92,14 +90,14 @@
       </div>
 
       <!-- Organization Tagline -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4">
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
           Organization Tagline
         </label>
         <input
           v-model="formData.organizationTagline"
           type="text"
-          class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+          class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
           placeholder="Enter a tagline or subtitle"
         />
         <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
@@ -108,11 +106,11 @@
       </div>
 
       <!-- Save Button -->
-      <div class="flex justify-end pt-4">
+      <div class="flex justify-end pt-2">
         <button
           type="submit"
           :disabled="saving || !hasChanges"
-          class="px-6 py-3 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+          class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
         >
           {{ saving ? 'Saving...' : 'Save Changes' }}
         </button>
