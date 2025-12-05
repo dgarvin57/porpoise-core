@@ -25,6 +25,7 @@ public class Crosstab
     private DataTable? _cxTable;
     private readonly List<CxIVIndex> _cxIVIndexes = [];
     private double _chiSquare;
+    private double _pValue;
     private string _significant = string.Empty;
     private double _phi;
     private double _contingencyCoefficient;
@@ -48,6 +49,12 @@ public class Crosstab
     {
         get => _chiSquare;
         set => _chiSquare = value;
+    }
+
+    public double PValue
+    {
+        get => _pValue;
+        set => _pValue = value;
     }
 
     public string Significant
@@ -124,7 +131,7 @@ public class Crosstab
     private void CreateCxTable()
     {
         var table = new DataTable();
-        table.Columns.Add("Blank1");
+        table.Columns.Add("");
         foreach (var response in _indVarQ.Responses)
             table.Columns.Add(response.Label);
 
@@ -427,12 +434,23 @@ public class Crosstab
             {32.67f, 38.93f}, {33.92f, 40.29f}, {35.17f, 41.64f}, {36.42f, 42.9f}, {37.65f, 44.31f}
         };
 
+        // Calculate approximate p-value using chi-square distribution
+        // This is a simplified approximation based on critical values
         if (_chiSquare > chiDistribution[chiDf, 1])
+        {
             _significant = "Significant (p<.01)";
+            _pValue = 0.005; // Approximate: less than .01
+        }
         else if (_chiSquare > chiDistribution[chiDf, 0])
+        {
             _significant = "Significant (p<.05)";
+            _pValue = 0.03; // Approximate: between .01 and .05
+        }
         else
+        {
             _significant = "Not significant";
+            _pValue = 0.10; // Approximate: greater than .05
+        }
 
         _phi = Math.Sqrt(_chiSquare / _totalN);
         _contingencyCoefficient = Math.Sqrt(_chiSquare / (_totalN + _chiSquare));

@@ -10,14 +10,7 @@
         <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
           Edit Survey
         </h2>
-        <button
-          @click="closeModal"
-          class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-        >
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
+        <CloseButton @click="closeModal" />
       </div>
 
       <!-- Form -->
@@ -80,6 +73,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import axios from 'axios'
+import CloseButton from '../common/CloseButton.vue'
 
 const props = defineProps({
   isOpen: {

@@ -285,7 +285,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 
@@ -511,17 +511,33 @@ const loadInspectData = async () => {
   if (!successfulFile || !successfulFile.surveyId) return
   
   try {
-    // This would call the InspectPorpd tool via an API endpoint
-    // For now, showing placeholder
-    inspectData.value = `Survey ID: ${successfulFile.surveyId}\n\nRaw data inspection would appear here...`
+    const response = await axios.get(`http://localhost:5107/api/surveys/${successfulFile.surveyId}/data`)
+    const data = response.data
+    
+    // Format the data for display
+    let output = `Survey ID: ${successfulFile.surveyId}\n`
+    output += `Data File: ${data.dataFilePath}\n`
+    output += `Total Rows: ${data.totalRows} (${data.dataRows} data rows + 1 header)\n`
+    output += `Columns: ${data.headerRow.length}\n\n`
+    output += `Header Row:\n${data.headerRow.join(', ')}\n\n`
+    output += `First 10 Data Rows:\n`
+    
+    const previewRows = data.dataList.slice(1, Math.min(11, data.dataList.length))
+    previewRows.forEach((row, idx) => {
+      output += `Row ${idx + 1}: ${row.join(', ')}\n`
+    })
+    
+    inspectData.value = output
   } catch (error) {
-    inspectData.value = 'Failed to load inspection data'
+    console.error('Error loading survey data:', error)
+    inspectData.value = `Survey ID: ${successfulFile.surveyId}\n\nFailed to load data: ${error.response?.data || error.message}`
   }
 }
 
 // Watch for inspect modal opening
-const originalShowInspectModal = showInspectModal.value
-if (showInspectModal.value) {
-  loadInspectData()
-}
+watch(showInspectModal, (newValue) => {
+  if (newValue) {
+    loadInspectData()
+  }
+})
 </script>

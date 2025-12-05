@@ -43,10 +43,13 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
         const string sql = @"
             SELECT * FROM Projects 
             WHERE ProjectName = @ProjectName 
-            AND TenantId = @TenantId";
+            AND TenantId = @TenantId
+            AND IsDeleted = 0
+            ORDER BY ModifiedDate DESC
+            LIMIT 1";
 
         using var connection = _context.CreateConnection();
-        return await connection.QuerySingleOrDefaultAsync<Project>(sql, 
+        return await connection.QueryFirstOrDefaultAsync<Project>(sql, 
             new { ProjectName = projectName, TenantId = _tenantContext.TenantId });
     }
 

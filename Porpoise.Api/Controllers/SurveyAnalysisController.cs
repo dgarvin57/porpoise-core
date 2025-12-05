@@ -397,6 +397,32 @@ Provide data-driven insights about patterns, notable findings, and implications:
             if (secondQuestion == null)
                 return NotFound($"Second question with ID {request.SecondQuestionId} not found");
 
+            // Set DataFileCol for both questions by finding the column index in survey data
+            if (surveyData.DataList != null && surveyData.DataList.Count > 0)
+            {
+                var headerRow = surveyData.DataList[0];
+                
+                int firstQuestionIndex = headerRow.FindIndex(col => 
+                    string.Equals(col, firstQuestion.QstNumber, StringComparison.OrdinalIgnoreCase));
+                int secondQuestionIndex = headerRow.FindIndex(col => 
+                    string.Equals(col, secondQuestion.QstNumber, StringComparison.OrdinalIgnoreCase));
+                
+                if (firstQuestionIndex < 0)
+                {
+                    var availableCols = string.Join(", ", headerRow);
+                    return BadRequest($"First question number '{firstQuestion.QstNumber}' not found in survey data header. Available columns: {availableCols}");
+                }
+                    
+                if (secondQuestionIndex < 0)
+                {
+                    var availableCols = string.Join(", ", headerRow);
+                    return BadRequest($"Second question number '{secondQuestion.QstNumber}' not found in survey data header. Available columns: {availableCols}");
+                }
+                
+                firstQuestion.DataFileCol = (short)firstQuestionIndex;
+                secondQuestion.DataFileCol = (short)secondQuestionIndex;
+            }
+
             // Load responses for both questions
             var firstResponses = await _responseRepository.GetByQuestionIdAsync(firstQuestion.Id);
             var firstResponseList = new ObjectListBase<Response>();
@@ -450,7 +476,9 @@ Provide data-driven insights about patterns, notable findings, and implications:
                 },
                 TotalN = crosstab.TotalN,
                 ChiSquare = crosstab.ChiSquare,
+                PValue = crosstab.PValue,
                 Significant = crosstab.Significant,
+                ChiSquareSignificant = crosstab.Significant.Contains("Significant", StringComparison.OrdinalIgnoreCase) && !crosstab.Significant.Contains("Not", StringComparison.OrdinalIgnoreCase),
                 Phi = crosstab.Phi,
                 ContingencyCoefficient = crosstab.ContingencyCoefficient,
                 CramersV = crosstab.CramersV,
@@ -458,7 +486,9 @@ Provide data-driven insights about patterns, notable findings, and implications:
                 IVIndexes = crosstab.CxIVIndexes.Select(idx => new IVIndexInfo
                 {
                     Label = idx.IVLabel,
-                    Index = idx.Index
+                    Index = idx.Index,
+                    PosIndex = idx.PosIndex,
+                    NegIndex = idx.NegIndex
                 }).ToList()
             };
 
@@ -468,6 +498,87 @@ Provide data-driven insights about patterns, notable findings, and implications:
         {
             return StatusCode(500, $"Error generating crosstab: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// Generate AI analysis for crosstab results
+    /// </summary>
+    [HttpPost("{surveyId:guid}/analyze-crosstab")]
+    public async Task<IActionResult> AnalyzeCrosstab(Guid surveyId, [FromBody] CrosstabAnalysisRequest request)
+    {
+        try
+        {
+            var survey = await _surveyRepository.GetByIdAsync(surveyId);
+            if (survey == null)
+                return NotFound($"Survey with ID {surveyId} not found");
+
+            // Build context for AI analysis
+            var prompt = BuildCrosstabAnalysisPrompt(request);
+            
+            var analysis = await _aiService.CallAIAPI(prompt);
+            
+            return Ok(new { analysis });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
+    private string BuildCrosstabAnalysisPrompt(CrosstabAnalysisRequest request)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("CRITICAL: You are analyzing real survey data. Accuracy is paramount. Any error will damage user trust.");
+        sb.AppendLine();
+        sb.AppendLine("=== DATA (DO NOT ALTER OR MISINTERPRET) ===");
+        sb.AppendLine($"Independent Variable: {request.IndependentVariable}");
+        sb.AppendLine($"Dependent Variable: {request.DependentVariable}");
+        sb.AppendLine($"Sample Size (N): {request.TotalN}");
+        sb.AppendLine();
+        
+        // Make significance status crystal clear with explicit boolean check
+        var significanceStatus = request.ChiSquareSignificant 
+            ? "STATISTICALLY SIGNIFICANT (p<0.05)" 
+            : "NOT STATISTICALLY SIGNIFICANT (p≥0.05)";
+        var relationshipStatement = request.ChiSquareSignificant
+            ? "There IS a statistically significant relationship between these variables."
+            : "There is NO statistically significant relationship between these variables.";
+            
+        sb.AppendLine($"Chi-Square Test: {request.ChiSquare:F3}");
+        sb.AppendLine($"Result: {significanceStatus}");
+        sb.AppendLine($"INTERPRETATION: {relationshipStatement}");
+        sb.AppendLine($"Cramér's V: {request.CramersV:F3} (0=no association, 0.1=weak, 0.3=moderate, 0.5=strong)");
+        sb.AppendLine();
+        
+        if (request.Indexes != null && request.Indexes.Count > 0)
+        {
+            sb.AppendLine("Index Values by Category (Scale: 0-200, where 100=neutral):");
+            foreach (var idx in request.Indexes)
+            {
+                var sentiment = idx.Index > 100 ? "positive" : idx.Index < 100 ? "negative" : "neutral";
+                sb.AppendLine($"  • {idx.Label}: Index={idx.Index} ({sentiment}), Positive={idx.PosIndex:F1}%, Negative={idx.NegIndex:F1}%");
+            }
+        }
+        
+        sb.AppendLine();
+        sb.AppendLine("=== OUTPUT FORMAT (REQUIRED) ===");
+        sb.AppendLine("Write exactly 4 paragraphs, separated by blank lines:");
+        sb.AppendLine();
+        sb.AppendLine($"Paragraph 1 (Summary): Write ONE sentence that briefly summarizes the key finding or meaning of this crosstab analysis. This should be a clear, concise statement about the relationship between {request.IndependentVariable} and {request.DependentVariable}.");
+        sb.AppendLine();
+        sb.AppendLine($"Paragraph 2 (Statistical Result): Start with this EXACT phrase: 'The analysis {(request.ChiSquareSignificant ? "shows a statistically significant relationship" : "found no statistically significant relationship")} between {request.IndependentVariable} and {request.DependentVariable}.' Then explain what this means in 1-2 additional sentences.");
+        sb.AppendLine();
+        sb.AppendLine("Paragraph 3 (Category Comparison): Compare the categories. State which has the highest index value and which has the lowest, citing the EXACT numbers from the data above. Use format: 'The [category name] category shows the highest sentiment (Index=[number], [X]% positive), while [category name] has the lowest (Index=[number], [X]% positive).'");
+        sb.AppendLine();
+        sb.AppendLine("Paragraph 4 (Actionable Insight): Provide one actionable insight for decision-makers based on the actual data patterns.");
+        sb.AppendLine();
+        sb.AppendLine("VALIDATION RULES:");
+        sb.AppendLine($"- Paragraph 2 MUST state '{(request.ChiSquareSignificant ? "significant relationship" : "no significant relationship")}'");
+        sb.AppendLine("- All numbers MUST exactly match the data above");
+        sb.AppendLine("- Do NOT invent or estimate any values");
+        sb.AppendLine("- Separate paragraphs with blank lines (\\n\\n)");
+        
+        return sb.ToString();
     }
 
     private List<Dictionary<string, object>> ConvertDataTableToList(DataTable? table)
@@ -481,7 +592,11 @@ Provide data-driven insights about patterns, notable findings, and implications:
             var dict = new Dictionary<string, object>();
             foreach (DataColumn col in table.Columns)
             {
-                dict[col.ColumnName] = row[col] ?? DBNull.Value;
+                // Replace auto-generated column names like "Column1" with a space to keep data but hide header
+                string columnName = col.ColumnName.StartsWith("Column", StringComparison.OrdinalIgnoreCase) 
+                    ? " " 
+                    : col.ColumnName;
+                dict[columnName] = row[col] ?? DBNull.Value;
             }
             result.Add(dict);
         }
@@ -502,7 +617,9 @@ public class CrosstabResponse
     public QuestionInfo SecondQuestion { get; set; } = null!;
     public int TotalN { get; set; }
     public double ChiSquare { get; set; }
+    public double PValue { get; set; }
     public string Significant { get; set; } = string.Empty;
+    public bool ChiSquareSignificant { get; set; } // Boolean version for AI analysis
     public double Phi { get; set; }
     public double ContingencyCoefficient { get; set; }
     public double CramersV { get; set; }
@@ -520,5 +637,19 @@ public class QuestionInfo
 public class IVIndexInfo
 {
     public string Label { get; set; } = string.Empty;
-    public double Index { get; set; }
+    public int Index { get; set; }
+    public double PosIndex { get; set; }
+    public double NegIndex { get; set; }
+}
+
+public class CrosstabAnalysisRequest
+{
+    public string IndependentVariable { get; set; } = string.Empty;
+    public string DependentVariable { get; set; } = string.Empty;
+    public int TotalN { get; set; }
+    public double ChiSquare { get; set; }
+    public bool ChiSquareSignificant { get; set; }
+    public double Phi { get; set; }
+    public double CramersV { get; set; }
+    public List<IVIndexInfo>? Indexes { get; set; }
 }

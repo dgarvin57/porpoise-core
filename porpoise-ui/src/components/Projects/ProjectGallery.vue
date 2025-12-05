@@ -831,7 +831,8 @@ onActivated(async () => {
 
 // Watch route changes - only refetch if needed
 watch(() => route.path, async (newPath) => {
-  if ((newPath === '/projects' || newPath === '/') && projects.value.length === 0) {
+  if (newPath === '/projects' || newPath === '/') {
+    // Always refetch when returning to project gallery to pick up new imports
     await fetchProjects()
   }
 })

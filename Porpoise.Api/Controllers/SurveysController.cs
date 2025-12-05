@@ -401,13 +401,6 @@ public class SurveysController : ControllerBase
                 .OrderBy(q => q.DataFileCol)
                 .ToList();
             
-            // Log question order for debugging
-            Console.WriteLine($"Questions ordered by DataFileCol for survey {id}:");
-            foreach (var q in questions)
-            {
-                Console.WriteLine($"  DataFileCol={q.DataFileCol}, QstNumber={q.QstNumber}, Label={q.QstLabel}, BlkQstStatus={q.BlkQstStatus}, BlkLabel={q.BlkLabel}");
-            }
-            
             // Get survey data (actual responses from survey takers)
             var surveyData = await _surveyDataRepository.GetBySurveyIdAsync(id);
             
@@ -647,4 +640,94 @@ public class SurveysController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Get raw survey data (DataList) for a survey
+    /// </summary>
+    [HttpGet("{id:guid}/data")]
+    public async Task<IActionResult> GetSurveyData(Guid id)
+    {
+        try
+        {
+            var surveyData = await _surveyDataRepository.GetBySurveyIdAsync(id);
+            
+            if (surveyData == null || surveyData.DataList == null || surveyData.DataList.Count == 0)
+            {
+                return NotFound($"No data found for survey {id}");
+            }
+
+            return Ok(new
+            {
+                TotalRows = surveyData.DataList.Count,
+                HeaderRow = surveyData.DataList[0],
+                DataRows = surveyData.DataList.Count - 1,
+                DataList = surveyData.DataList,
+                DataFilePath = surveyData.DataFilePath
+            });
+        }
+        catch (Exception ex)
+        {
+            return Problem($"Error retrieving survey data: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Get results for a specific question in a survey
+    /// </summary>
+    [HttpGet("{id:guid}/questions/{questionId:guid}/results")]
+    public async Task<IActionResult> GetQuestionResults(Guid id, Guid questionId)
+    {
+        try
+        {
+            var survey = await _surveyRepository.GetByIdAsync(id);
+            if (survey == null)
+            {
+                return NotFound($"Survey with ID {id} not found");
+            }
+
+            var question = await _questionRepository.GetByIdAsync(questionId);
+            if (question == null)
+            {
+                return NotFound($"Question with ID {questionId} not found");
+            }
+
+            // Load responses for the question
+            var responses = await _responseRepository.GetByQuestionIdAsync(questionId);
+            question.Responses = new ObjectListBase<Response>(responses);
+
+            // Load survey data for calculations
+            var surveyData = await _surveyDataRepository.GetBySurveyIdAsync(id);
+            survey.Data = surveyData;
+
+            // Calculate statistics for this question
+            QuestionEngine.CalculateQuestionAndResponseStatistics(survey, question);
+
+            // Return question data with calculated results
+            var results = question.Responses
+                .Where(r => !question.MissingValues.Contains(r.RespValue))
+                .Select(r => new
+                {
+                    r.RespValue,
+                    RespLabel = r.Label,
+                    Count = r.ResultFrequency,
+                    Percent = Math.Round((decimal)r.ResultPercent * 100, 1)
+                })
+                .ToList();
+
+            return Ok(new
+            {
+                question.Id,
+                Label = question.QstLabel,
+                question.QstNumber,
+                question.VariableType,
+                question.TotalN,
+                Results = results
+            });
+        }
+        catch (Exception ex)
+        {
+            return Problem($"Error retrieving question results: {ex.Message}");
+        }
+    }
+
 }
+

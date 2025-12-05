@@ -201,12 +201,26 @@ public class SurveyData : ObjectBase, ICloneable
         bool isFirstRow = true;
         foreach (DataRow r in dt.Rows)
         {
-            // Skip first row if it's a duplicate header (contains question numbers like "q1", "q2")
+            // Skip first data row if it's a duplicate of the header row
             if (isFirstRow && r.ItemArray.Length > 1)
             {
-                var secondCell = r.ItemArray[1]?.ToString() ?? "";
-                // If second cell looks like a question number (starts with 'q' followed by digit), skip this row
-                if (secondCell.Length >= 2 && secondCell.StartsWith('q') && char.IsDigit(secondCell[1]))
+                // Check if this row matches the header - compare first few cells
+                int matchCount = 0;
+                int cellsToCheck = Math.Min(5, Math.Min(headers.Count, r.ItemArray.Length));
+                
+                for (int i = 0; i < cellsToCheck; i++)
+                {
+                    var cellValue = r.ItemArray[i]?.ToString() ?? "";
+                    var headerValue = headers[i];
+                    
+                    if (string.Equals(cellValue, headerValue, StringComparison.OrdinalIgnoreCase))
+                    {
+                        matchCount++;
+                    }
+                }
+                
+                // If 3 or more of first 5 cells match the header, it's a duplicate row - skip it
+                if (matchCount >= 3)
                 {
                     isFirstRow = false;
                     continue;
@@ -410,6 +424,7 @@ public class SurveyData : ObjectBase, ICloneable
         List<CrosstabItem> list = [];
         bool both = ivQ is not null;
 
+        // Start at row 1 to skip header row (row 0 contains question numbers)
         for (int row = 1; row < DataList.Count; row++)
         {
             int dvVal = int.Parse(DataList[row][dvQ.DataFileCol]);
