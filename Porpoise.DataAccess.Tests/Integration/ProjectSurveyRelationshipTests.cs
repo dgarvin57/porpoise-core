@@ -1,7 +1,6 @@
 using FluentAssertions;
 using Porpoise.Core.Models;
 using Porpoise.Core.Services;
-using Porpoise.DataAccess.Context;
 using Porpoise.DataAccess.Repositories;
 using Xunit;
 
@@ -10,23 +9,20 @@ namespace Porpoise.DataAccess.Tests.Integration;
 /// <summary>
 /// Integration tests for Project-Survey relationships.
 /// Tests the foreign key relationship and repository operations.
+/// Creates and cleans up its own test tenant automatically.
 /// </summary>
-public class ProjectSurveyRelationshipTests : IDisposable
+[Collection("Database")]
+public class ProjectSurveyRelationshipTests : IntegrationTestBase
 {
-    private readonly DapperContext _context;
     private readonly ProjectRepository _projectRepository;
     private readonly SurveyRepository _surveyRepository;
     private readonly TenantContext _tenantContext;
 
-    public ProjectSurveyRelationshipTests()
+    public ProjectSurveyRelationshipTests(DatabaseFixture fixture) : base(fixture)
     {
-        var connectionString = Environment.GetEnvironmentVariable("PORPOISE_TEST_CONNECTION") 
-            ?? "Server=localhost;Port=3306;Database=porpoise_dev;User=root;Password=Dg5901%1;CharSet=utf8mb4;";
-        
-        _context = new DapperContext(connectionString);
-        _tenantContext = new TenantContext { TenantId = 1, TenantKey = "demo-tenant" };
-        _projectRepository = new ProjectRepository(_context, _tenantContext);
-        _surveyRepository = new SurveyRepository(_context, _tenantContext);
+        _tenantContext = new TenantContext { TenantId = TestTenantId, TenantKey = TestTenantKey };
+        _projectRepository = new ProjectRepository(Context, _tenantContext);
+        _surveyRepository = new SurveyRepository(Context, _tenantContext);
     }
 
     [Fact(Skip = "Requires MySQL database")]
@@ -38,7 +34,6 @@ public class ProjectSurveyRelationshipTests : IDisposable
             Id = Guid.NewGuid(),
             ProjectName = "Test Project",
             ClientName = "Test Client",
-            CreatedOn = DateTime.UtcNow
         };
 
         var survey1 = new Survey
@@ -47,7 +42,6 @@ public class ProjectSurveyRelationshipTests : IDisposable
             SurveyName = "Survey 1",
             ProjectId = project.Id,
             Status = SurveyStatus.Initial,
-            CreatedOn = DateTime.UtcNow
         };
 
         var survey2 = new Survey
@@ -56,7 +50,6 @@ public class ProjectSurveyRelationshipTests : IDisposable
             SurveyName = "Survey 2",
             ProjectId = project.Id,
             Status = SurveyStatus.Initial,
-            CreatedOn = DateTime.UtcNow
         };
 
         // Act
@@ -90,7 +83,6 @@ public class ProjectSurveyRelationshipTests : IDisposable
             Id = Guid.NewGuid(),
             ProjectName = "Project with Surveys",
             ClientName = "Test Client",
-            CreatedOn = DateTime.UtcNow
         };
 
         var survey = new Survey
@@ -99,7 +91,6 @@ public class ProjectSurveyRelationshipTests : IDisposable
             SurveyName = "Attached Survey",
             ProjectId = project.Id,
             Status = SurveyStatus.Verified,
-            CreatedOn = DateTime.UtcNow
         };
 
         await _projectRepository.AddAsync(project);
@@ -129,7 +120,6 @@ public class ProjectSurveyRelationshipTests : IDisposable
             Id = Guid.NewGuid(),
             ProjectName = "Project 1",
             ClientName = "Client A",
-            CreatedOn = DateTime.UtcNow
         };
 
         var project2 = new Project
@@ -137,7 +127,6 @@ public class ProjectSurveyRelationshipTests : IDisposable
             Id = Guid.NewGuid(),
             ProjectName = "Project 2",
             ClientName = "Client B",
-            CreatedOn = DateTime.UtcNow
         };
 
         var survey = new Survey
@@ -146,7 +135,6 @@ public class ProjectSurveyRelationshipTests : IDisposable
             SurveyName = "Movable Survey",
             ProjectId = project1.Id,
             Status = SurveyStatus.Initial,
-            CreatedOn = DateTime.UtcNow
         };
 
         await _projectRepository.AddAsync(project1);
@@ -180,7 +168,6 @@ public class ProjectSurveyRelationshipTests : IDisposable
             Id = Guid.NewGuid(),
             ProjectName = "Test Project",
             ClientName = "Test Client",
-            CreatedOn = DateTime.UtcNow
         };
 
         var survey = new Survey
@@ -189,7 +176,6 @@ public class ProjectSurveyRelationshipTests : IDisposable
             SurveyName = "Survey with Project",
             ProjectId = project.Id,
             Status = SurveyStatus.Initial,
-            CreatedOn = DateTime.UtcNow
         };
 
         await _projectRepository.AddAsync(project);
@@ -221,7 +207,6 @@ public class ProjectSurveyRelationshipTests : IDisposable
             Id = Guid.NewGuid(),
             ProjectName = "Empty Project",
             ClientName = "Test Client",
-            CreatedOn = DateTime.UtcNow
         };
 
         await _projectRepository.AddAsync(project);
@@ -255,7 +240,6 @@ public class ProjectSurveyRelationshipTests : IDisposable
             Id = Guid.NewGuid(),
             ProjectName = "Pooled Project",
             ClientName = "Research Client",
-            CreatedOn = DateTime.UtcNow
         };
 
         var surveys = new List<Survey>();
@@ -267,7 +251,6 @@ public class ProjectSurveyRelationshipTests : IDisposable
                 SurveyName = $"Wave {i}",
                 ProjectId = project.Id,
                 Status = SurveyStatus.Verified,
-                CreatedOn = DateTime.UtcNow
             });
         }
 
@@ -304,7 +287,6 @@ public class ProjectSurveyRelationshipTests : IDisposable
             Id = Guid.NewGuid(),
             ProjectName = "Project to Delete",
             ClientName = "Test Client",
-            CreatedOn = DateTime.UtcNow
         };
 
         var survey = new Survey
@@ -313,7 +295,6 @@ public class ProjectSurveyRelationshipTests : IDisposable
             SurveyName = "Orphaned Survey",
             ProjectId = project.Id,
             Status = SurveyStatus.Initial,
-            CreatedOn = DateTime.UtcNow
         };
 
         await _projectRepository.AddAsync(project);
@@ -343,7 +324,6 @@ public class ProjectSurveyRelationshipTests : IDisposable
             Id = Guid.NewGuid(),
             ProjectName = "Client Project 1",
             ClientName = "Acme Corp",
-            CreatedOn = DateTime.UtcNow
         };
 
         var project2 = new Project
@@ -351,7 +331,6 @@ public class ProjectSurveyRelationshipTests : IDisposable
             Id = Guid.NewGuid(),
             ProjectName = "Client Project 2",
             ClientName = "Acme Corp",
-            CreatedOn = DateTime.UtcNow
         };
 
         var survey1 = new Survey
@@ -360,7 +339,6 @@ public class ProjectSurveyRelationshipTests : IDisposable
             SurveyName = "Survey for P1",
             ProjectId = project1.Id,
             Status = SurveyStatus.Initial,
-            CreatedOn = DateTime.UtcNow
         };
 
         var survey2 = new Survey
@@ -369,7 +347,6 @@ public class ProjectSurveyRelationshipTests : IDisposable
             SurveyName = "Survey for P2",
             ProjectId = project2.Id,
             Status = SurveyStatus.Verified,
-            CreatedOn = DateTime.UtcNow
         };
 
         await _projectRepository.AddAsync(project1);
@@ -392,10 +369,5 @@ public class ProjectSurveyRelationshipTests : IDisposable
         await _surveyRepository.DeleteAsync(survey2.Id);
         await _projectRepository.DeleteAsync(project1.Id);
         await _projectRepository.DeleteAsync(project2.Id);
-    }
-
-    public void Dispose()
-    {
-        // Context cleanup if needed
     }
 }

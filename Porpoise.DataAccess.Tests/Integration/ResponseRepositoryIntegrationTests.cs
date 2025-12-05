@@ -4,7 +4,6 @@ using Dapper;
 using FluentAssertions;
 using Porpoise.Core.Models;
 using Porpoise.Core.Services;
-using Porpoise.DataAccess.Context;
 using Porpoise.DataAccess.Repositories;
 
 namespace Porpoise.DataAccess.Tests.Integration;
@@ -12,11 +11,11 @@ namespace Porpoise.DataAccess.Tests.Integration;
 /// <summary>
 /// Integration tests for ResponseRepository using real MySQL database.
 /// Tests all CRUD operations and query methods with actual database persistence.
+/// Creates and cleans up its own test tenant automatically.
 /// </summary>
-[Collection("MySQL Integration")]
-public class ResponseRepositoryIntegrationTests : IAsyncLifetime
+[Collection("Database")]
+public class ResponseRepositoryIntegrationTests : IntegrationTestBase
 {
-    private readonly DapperContext _context;
     private readonly SurveyRepository _surveyRepository;
     private readonly ResponseRepository _responseRepository;
     private readonly TenantContext _tenantContext;
@@ -24,20 +23,16 @@ public class ResponseRepositoryIntegrationTests : IAsyncLifetime
     private readonly List<Guid> _createdQuestionIds = new();
     private readonly List<Guid> _createdResponseIds = new();
 
-    public ResponseRepositoryIntegrationTests()
+    public ResponseRepositoryIntegrationTests(DatabaseFixture fixture) : base(fixture)
     {
-        var connectionString = Environment.GetEnvironmentVariable("PORPOISE_TEST_CONNECTION") 
-            ?? "Server=localhost;Port=3306;Database=porpoise_dev;User=root;Password=Dg5901%1;CharSet=utf8mb4;";
-        
-        _context = new DapperContext(connectionString);
-        _tenantContext = new TenantContext { TenantId = 1, TenantKey = "demo-tenant" };
-        _surveyRepository = new SurveyRepository(_context, _tenantContext);
-        _responseRepository = new ResponseRepository(_context);
+        _tenantContext = new TenantContext { TenantId = TestTenantId, TenantKey = TestTenantKey };
+        _surveyRepository = new SurveyRepository(Context, _tenantContext);
+        _responseRepository = new ResponseRepository(Context);
     }
 
-    public Task InitializeAsync() => Task.CompletedTask;
+    public override Task InitializeAsync() => Task.CompletedTask;
 
-    public async Task DisposeAsync()
+    public override async Task DisposeAsync()
     {
         // Clean up in reverse order due to foreign keys
         foreach (var responseId in _createdResponseIds)
@@ -81,7 +76,7 @@ public class ResponseRepositoryIntegrationTests : IAsyncLifetime
             VariableType = QuestionVariableType.Dependent
         };
 
-        using var connection = _context.CreateConnection();
+        using var connection = Context.CreateConnection();
         await connection.ExecuteAsync(@"
             INSERT INTO Questions (Id, SurveyId, QstNumber, QstLabel, DataFileColumn, VariableType, CreatedDate, ModifiedDate)
             VALUES (@Id, @SurveyId, @QstNumber, @QstLabel, @DataFileColumn, @VariableType, @CreatedDate, @ModifiedDate)",
@@ -109,23 +104,19 @@ public class ResponseRepositoryIntegrationTests : IAsyncLifetime
             Id = Guid.NewGuid(),
             RespValue = respValue,
             Label = label,
-            ResultPercent = 0,
-            ResultFrequency = 0,
             IndexType = indexType
         };
 
-        using var connection = _context.CreateConnection();
+        using var connection = Context.CreateConnection();
         await connection.ExecuteAsync(@"
-            INSERT INTO Responses (Id, QuestionId, RespValue, Label, Percentage, Frequency, IndexType, CreatedDate, ModifiedDate)
-            VALUES (@Id, @QuestionId, @RespValue, @Label, @Percentage, @Frequency, @IndexType, @CreatedDate, @ModifiedDate)",
+            INSERT INTO Responses (Id, QuestionId, RespValue, Label, IndexType, CreatedDate, ModifiedDate)
+            VALUES (@Id, @QuestionId, @RespValue, @Label, @IndexType, @CreatedDate, @ModifiedDate)",
             new
             {
                 response.Id,
                 QuestionId = questionId,
                 response.RespValue,
                 response.Label,
-                Percentage = response.ResultPercent,
-                Frequency = response.ResultFrequency,
                 IndexType = response.IndexType.ToString(),
                 CreatedDate = DateTime.UtcNow,
                 ModifiedDate = DateTime.UtcNow
@@ -137,7 +128,7 @@ public class ResponseRepositoryIntegrationTests : IAsyncLifetime
 
     private async Task DeleteQuestionAsync(Guid questionId)
     {
-        using var connection = _context.CreateConnection();
+        using var connection = Context.CreateConnection();
         await connection.ExecuteAsync("DELETE FROM Questions WHERE Id = @Id", new { Id = questionId });
     }
 
@@ -241,14 +232,14 @@ public class ResponseRepositoryIntegrationTests : IAsyncLifetime
 
         // Act
         response.Label = "Updated Label";
-        response.ResultPercent = 25.5m;
+        response.RespValue = 2;
         await _responseRepository.UpdateAsync(response);
 
         // Assert
         var retrieved = await _responseRepository.GetByIdAsync(response.Id);
         retrieved.Should().NotBeNull();
         retrieved!.Label.Should().Be("Updated Label");
-        retrieved.ResultPercent.Should().Be(25.5m);
+        retrieved.RespValue.Should().Be(2);
     }
 
     [Fact]

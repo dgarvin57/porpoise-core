@@ -165,9 +165,13 @@ public class QuestionEngineCalculationTests
             }
         };
 
-        // Act & Assert - Division by zero when unweightedN is 0
+        // Act - Method now handles zero gracefully, returns 0 instead of throwing
         var act = () => QuestionEngine.CalculateStatisticsHelper(question, 0);
-        act.Should().Throw<DivideByZeroException>();
+        act.Should().NotThrow();
+        
+        // Assert - Verify calculations are safe with zero
+        question.Responses[0].ResultPercent.Should().Be(0m);
+        question.Responses[0].SamplingError.Should().Be(0);
     }
 
     [Fact]

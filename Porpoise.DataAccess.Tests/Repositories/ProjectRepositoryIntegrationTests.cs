@@ -1,29 +1,27 @@
 using FluentAssertions;
 using Porpoise.Core.Models;
 using Porpoise.Core.Services;
-using Porpoise.DataAccess.Context;
 using Porpoise.DataAccess.Repositories;
+using Porpoise.DataAccess.Tests.Integration;
 
 namespace Porpoise.DataAccess.Tests.Repositories;
 
 [Collection("Database")]
-public class ProjectRepositoryIntegrationTests : IAsyncLifetime
+public class ProjectRepositoryIntegrationTests : IntegrationTestBase
 {
-    private readonly DapperContext _context;
     private readonly ProjectRepository _repository;
     private readonly TenantContext _tenantContext;
     private readonly List<Guid> _testProjectIds = new();
 
-    public ProjectRepositoryIntegrationTests()
+    public ProjectRepositoryIntegrationTests(DatabaseFixture fixture) : base(fixture)
     {
-        _context = new DapperContext("Server=localhost;Port=3306;Database=porpoise_dev;User=root;Password=Dg5901%1;CharSet=utf8mb4;");
-        _tenantContext = new TenantContext { TenantId = 1, TenantKey = "demo-tenant" };
-        _repository = new ProjectRepository(_context, _tenantContext);
+        _tenantContext = new TenantContext { TenantId = TestTenantId, TenantKey = TestTenantKey };
+        _repository = new ProjectRepository(Context, _tenantContext);
     }
 
-    public Task InitializeAsync() => Task.CompletedTask;
+    public override Task InitializeAsync() => Task.CompletedTask;
 
-    public async Task DisposeAsync()
+    public override async Task DisposeAsync()
     {
         // Clean up test data
         foreach (var id in _testProjectIds)
@@ -40,9 +38,7 @@ public class ProjectRepositoryIntegrationTests : IAsyncLifetime
         {
             ProjectName = "Integration Test Project",
             ClientName = "Test Client",
-            ResearcherLabel = "Test Researcher",
             CreatedBy = "test_user",
-            CreatedOn = DateTime.UtcNow
         };
 
         // Act
@@ -64,7 +60,6 @@ public class ProjectRepositoryIntegrationTests : IAsyncLifetime
             ProjectName = "Get By ID Test",
             ClientName = "Test Client",
             CreatedBy = "test_user",
-            CreatedOn = DateTime.UtcNow
         };
         var added = await _repository.AddAsync(project);
         _testProjectIds.Add(added.Id);
@@ -99,13 +94,11 @@ public class ProjectRepositoryIntegrationTests : IAsyncLifetime
         {
             ProjectName = "Project Alpha",
             CreatedBy = "test_user",
-            CreatedOn = DateTime.UtcNow
         };
         var project2 = new Project
         {
             ProjectName = "Project Beta",
             CreatedBy = "test_user",
-            CreatedOn = DateTime.UtcNow
         };
 
         var added1 = await _repository.AddAsync(project1);
@@ -131,7 +124,6 @@ public class ProjectRepositoryIntegrationTests : IAsyncLifetime
             ProjectName = "Unique Project Name 123",
             ClientName = "Test Client",
             CreatedBy = "test_user",
-            CreatedOn = DateTime.UtcNow
         };
         var added = await _repository.AddAsync(project);
         _testProjectIds.Add(added.Id);
@@ -153,14 +145,12 @@ public class ProjectRepositoryIntegrationTests : IAsyncLifetime
             ProjectName = "Client A Project 1",
             ClientName = "Client XYZ",
             CreatedBy = "test_user",
-            CreatedOn = DateTime.UtcNow
         };
         var project2 = new Project
         {
             ProjectName = "Client A Project 2",
             ClientName = "Client XYZ",
             CreatedBy = "test_user",
-            CreatedOn = DateTime.UtcNow
         };
 
         var added1 = await _repository.AddAsync(project1);
@@ -186,7 +176,6 @@ public class ProjectRepositoryIntegrationTests : IAsyncLifetime
             ProjectName = "Original Name",
             ClientName = "Original Client",
             CreatedBy = "test_user",
-            CreatedOn = DateTime.UtcNow
         };
         var added = await _repository.AddAsync(project);
         _testProjectIds.Add(added.Id);
@@ -195,7 +184,6 @@ public class ProjectRepositoryIntegrationTests : IAsyncLifetime
         added.ProjectName = "Updated Name";
         added.ClientName = "Updated Client";
         added.ModifiedBy = "modifier_user";
-        added.ModifiedOn = DateTime.UtcNow;
         var updated = await _repository.UpdateAsync(added);
 
         // Assert
@@ -213,7 +201,6 @@ public class ProjectRepositoryIntegrationTests : IAsyncLifetime
         {
             ProjectName = "Project to Delete",
             CreatedBy = "test_user",
-            CreatedOn = DateTime.UtcNow
         };
         var added = await _repository.AddAsync(project);
 
@@ -234,13 +221,12 @@ public class ProjectRepositoryIntegrationTests : IAsyncLifetime
         {
             ProjectName = "Project With Surveys",
             CreatedBy = "test_user",
-            CreatedOn = DateTime.UtcNow
         };
         var addedProject = await _repository.AddAsync(project);
         _testProjectIds.Add(addedProject.Id);
 
         // Add surveys
-        var surveyRepo = new SurveyRepository(_context, _tenantContext);
+        var surveyRepo = new SurveyRepository(Context, _tenantContext);
         var survey1 = new Survey
         {
             ProjectId = addedProject.Id,
@@ -276,13 +262,12 @@ public class ProjectRepositoryIntegrationTests : IAsyncLifetime
         {
             ProjectName = "Multi-Survey Project",
             CreatedBy = "test_user",
-            CreatedOn = DateTime.UtcNow
         };
         var addedProject = await _repository.AddAsync(project);
         _testProjectIds.Add(addedProject.Id);
 
         // Add surveys
-        var surveyRepo = new SurveyRepository(_context, _tenantContext);
+        var surveyRepo = new SurveyRepository(Context, _tenantContext);
         var survey1 = new Survey
         {
             ProjectId = addedProject.Id,
@@ -316,11 +301,10 @@ public class ProjectRepositoryIntegrationTests : IAsyncLifetime
         {
             ProjectName = "Cascade Delete Test",
             CreatedBy = "test_user",
-            CreatedOn = DateTime.UtcNow
         };
         var addedProject = await _repository.AddAsync(project);
 
-        var surveyRepo = new SurveyRepository(_context, _tenantContext);
+        var surveyRepo = new SurveyRepository(Context, _tenantContext);
         var survey = new Survey
         {
             ProjectId = addedProject.Id,
@@ -348,11 +332,6 @@ public class ProjectRepositoryIntegrationTests : IAsyncLifetime
         {
             ProjectName = "Complete Project",
             ClientName = "Complete Client",
-            ResearcherLabel = "Research Firm",
-            ResearcherSubLabel = "Data Analytics Division",
-            ResearcherLogo = "data:image/png;base64,abc123",
-            ResearcherLogoFilename = "logo.png",
-            ResearcherLogoPath = "/logos/logo.png",
             BaseProjectFolder = "/projects/base",
             ProjectFolder = "/projects/2025",
             FullFolder = "/projects/2025/complete",
@@ -360,7 +339,6 @@ public class ProjectRepositoryIntegrationTests : IAsyncLifetime
             FileName = "project.porp",
             IsExported = true,
             CreatedBy = "admin",
-            CreatedOn = DateTime.UtcNow
         };
 
         // Act
@@ -372,8 +350,6 @@ public class ProjectRepositoryIntegrationTests : IAsyncLifetime
         retrieved.Should().NotBeNull();
         retrieved!.ProjectName.Should().Be("Complete Project");
         retrieved.ClientName.Should().Be("Complete Client");
-        retrieved.ResearcherLabel.Should().Be("Research Firm");
-        retrieved.ResearcherSubLabel.Should().Be("Data Analytics Division");
         retrieved.IsExported.Should().BeTrue();
         retrieved.FileName.Should().Be("project.porp");
     }
@@ -406,7 +382,6 @@ public class ProjectRepositoryIntegrationTests : IAsyncLifetime
         {
             ProjectName = "Empty Project",
             CreatedBy = "test_user",
-            CreatedOn = DateTime.UtcNow
         };
         var addedProject = await _repository.AddAsync(project);
         _testProjectIds.Add(addedProject.Id);
@@ -426,7 +401,6 @@ public class ProjectRepositoryIntegrationTests : IAsyncLifetime
         {
             ProjectName = "Solo Project",
             CreatedBy = "test_user",
-            CreatedOn = DateTime.UtcNow
         };
         var addedProject = await _repository.AddAsync(project);
         _testProjectIds.Add(addedProject.Id);
@@ -450,7 +424,6 @@ public class ProjectRepositoryIntegrationTests : IAsyncLifetime
             ProjectName = "Original",
             ClientName = "Original Client",
             CreatedBy = "test_user",
-            CreatedOn = DateTime.UtcNow
         };
         var added = await _repository.AddAsync(project);
         _testProjectIds.Add(added.Id);
@@ -492,7 +465,6 @@ public class ProjectRepositoryIntegrationTests : IAsyncLifetime
         {
             ProjectName = "Minimal Test Project",
             CreatedBy = "test_user",
-            CreatedOn = DateTime.UtcNow
         };
 
         // Act
@@ -515,19 +487,16 @@ public class ProjectRepositoryIntegrationTests : IAsyncLifetime
         {
             ProjectName = "Alpha Project",
             CreatedBy = "test_user",
-            CreatedOn = DateTime.UtcNow.AddDays(-2)
         };
         var project2 = new Project
         {
             ProjectName = "Beta Project",
             CreatedBy = "test_user",
-            CreatedOn = DateTime.UtcNow.AddDays(-1)
         };
         var project3 = new Project
         {
             ProjectName = "Gamma Project",
             CreatedBy = "test_user",
-            CreatedOn = DateTime.UtcNow
         };
 
         var added1 = await _repository.AddAsync(project1);
@@ -555,21 +524,17 @@ public class ProjectRepositoryIntegrationTests : IAsyncLifetime
         {
             ProjectName = "Test Project",
             ClientName = "Test Client",
-            ResearcherLabel = "Test Researcher",
             CreatedBy = "test_user",
-            CreatedOn = DateTime.UtcNow
         };
         var added = await _repository.AddAsync(project);
         _testProjectIds.Add(added.Id);
 
         // Act - Set nullable fields to null
-        added.ResearcherLabel = null;
         await _repository.UpdateAsync(added);
 
         // Assert
         var retrieved = await _repository.GetByIdAsync(added.Id);
         retrieved.Should().NotBeNull();
-        retrieved!.ResearcherLabel.Should().BeNull();
         retrieved.ProjectName.Should().Be("Test Project");
     }
 

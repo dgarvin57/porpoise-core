@@ -1,5 +1,7 @@
 # Re-enabling Application Layer - Step-by-Step Guide
 
+> **Historical Note:** This document describes a migration that has been completed. The Application layer is now fully enabled and functional. Keep for reference if similar refactoring is needed in the future.
+
 ## When You're Ready to Work on Application Layer Services
 
 Follow these steps to incrementally re-enable and fix the Application layer.

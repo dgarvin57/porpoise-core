@@ -10,12 +10,22 @@ namespace Porpoise.Api.Tests.Controllers;
 public class SurveysControllerTests
 {
     private readonly Mock<ISurveyRepository> _mockRepository;
+    private readonly Mock<IQuestionRepository> _mockQuestionRepository;
+    private readonly Mock<IResponseRepository> _mockResponseRepository;
+    private readonly Mock<ISurveyDataRepository> _mockSurveyDataRepository;
     private readonly SurveysController _controller;
 
     public SurveysControllerTests()
     {
         _mockRepository = new Mock<ISurveyRepository>();
-        _controller = new SurveysController(_mockRepository.Object);
+        _mockQuestionRepository = new Mock<IQuestionRepository>();
+        _mockResponseRepository = new Mock<IResponseRepository>();
+        _mockSurveyDataRepository = new Mock<ISurveyDataRepository>();
+        _controller = new SurveysController(
+            _mockRepository.Object,
+            _mockQuestionRepository.Object,
+            _mockResponseRepository.Object,
+            _mockSurveyDataRepository.Object);
     }
 
     [Fact]
@@ -285,9 +295,16 @@ public class SurveysControllerTests
     {
         // Arrange
         var surveyId = Guid.NewGuid();
-        _mockRepository.Setup(r => r.ExistsAsync(surveyId)).ReturnsAsync(true);
-        _mockRepository.Setup(r => r.GetQuestionCountAsync(surveyId)).ReturnsAsync(10);
-        _mockRepository.Setup(r => r.GetResponseCountAsync(surveyId)).ReturnsAsync(50);
+        var survey = new Survey { Id = surveyId, SurveyName = "Test Survey" };
+        var questions = new List<Question>
+        {
+            new() { Id = Guid.NewGuid(), QstNumber = "Q1" },
+            new() { Id = Guid.NewGuid(), QstNumber = "Q2" }
+        };
+        
+        _mockRepository.Setup(r => r.GetByIdAsync(surveyId)).ReturnsAsync(survey);
+        _mockQuestionRepository.Setup(r => r.GetBySurveyIdAsync(surveyId)).ReturnsAsync(questions);
+        _mockSurveyDataRepository.Setup(r => r.GetCaseCountBySurveyIdAsync(surveyId)).ReturnsAsync(50);
 
         // Act
         var result = await _controller.GetSurveyStats(surveyId);

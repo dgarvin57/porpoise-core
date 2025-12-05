@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Porpoise.Api.Controllers;
+using Porpoise.Api.Models;
 using Porpoise.Core.Application.Interfaces;
 using Porpoise.Core.Models;
 using System.Collections.Generic;
@@ -68,7 +69,7 @@ namespace Porpoise.Api.Tests.Controllers
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);
-            var returnValue = Assert.IsType<Project>(okResult.Value);
+            var returnValue = Assert.IsType<ProjectResponse>(okResult.Value);
             Assert.Equal(projectId, returnValue.Id);
         }
 
@@ -109,7 +110,7 @@ namespace Porpoise.Api.Tests.Controllers
             _mockProjectRepository.Setup(repo => repo.GetByIdAsync(It.IsAny<Guid>())).ReturnsAsync(null as Project);
 
             // Act
-            var result = await _controller.UpdateProject(Guid.NewGuid(), new Project());
+            var result = await _controller.UpdateProject(Guid.NewGuid(), new UpdateProjectRequest { ProjectName = "Test" });
 
             // Assert
             Assert.IsType<NotFoundResult>(result);
@@ -126,7 +127,7 @@ namespace Porpoise.Api.Tests.Controllers
             _mockUnitOfWork.Setup(uow => uow.CommitAsync()).ReturnsAsync(1);
 
             // Act
-            var result = await _controller.UpdateProject(projectId, new Project { ProjectName = "Updated Project" });
+            var result = await _controller.UpdateProject(projectId, new UpdateProjectRequest { ProjectName = "Updated Project" });
 
             // Assert
             Assert.IsType<NoContentResult>(result);

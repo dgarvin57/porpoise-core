@@ -73,44 +73,22 @@ public class ProjectModelTests
         project.ClientName.Should().Be("Acme Corporation");
     }
 
+    // ResearcherLabel removed - branding moved to tenant level
+
+    // ResearcherSubLabel removed - branding moved to tenant level
+
     [Fact]
-    public void ResearcherLabel_CanBeSetAndRetrieved()
+    public void ClientLogo_CanBeSetAndRetrieved()
     {
         // Arrange
         var project = new Project();
+        var logoBytes = new byte[] { 0x89, 0x50, 0x4E, 0x47 }; // PNG header
 
         // Act
-        project.ResearcherLabel = "Market Research Inc.";
+        project.ClientLogo = logoBytes;
 
         // Assert
-        project.ResearcherLabel.Should().Be("Market Research Inc.");
-    }
-
-    [Fact]
-    public void ResearcherSubLabel_CanBeSetAndRetrieved()
-    {
-        // Arrange
-        var project = new Project();
-
-        // Act
-        project.ResearcherSubLabel = "Consumer Insights Division";
-
-        // Assert
-        project.ResearcherSubLabel.Should().Be("Consumer Insights Division");
-    }
-
-    [Fact]
-    public void ResearcherLogo_CanBeSetAndRetrieved()
-    {
-        // Arrange
-        var project = new Project();
-        var logoBase64 = "data:image/png;base64,iVBORw0KGgoAAAANS...";
-
-        // Act
-        project.ResearcherLogo = logoBase64;
-
-        // Assert
-        project.ResearcherLogo.Should().Be(logoBase64);
+        project.ClientLogo.Should().BeEquivalentTo(logoBytes);
     }
 
     [Fact]
@@ -230,7 +208,7 @@ public class ProjectModelTests
         // Act
         project.ProjectName = "Project 1";
         project.ClientName = "Client A";
-        project.ResearcherLabel = "Researcher B";
+        project.Description = "Test Description";
 
         // Assert
         project.IsDirty.Should().BeTrue();
@@ -263,15 +241,13 @@ public class ProjectModelTests
         {
             Id = Guid.NewGuid(),
             SurveyName = "Survey 1",
-            SurveyFileName = "survey1.porps",
-            SurveyFolder = "folder1"
+            SurveyFileName = "survey1.porps"
         };
         var survey2 = new Survey
         {
             Id = Guid.NewGuid(),
             SurveyName = "Survey 2",
-            SurveyFileName = "survey2.porps",
-            SurveyFolder = "folder2"
+            SurveyFileName = "survey2.porps"
         };
         project.SurveyList = new ObjectListBase<Survey> { survey1, survey2 };
 
@@ -447,8 +423,8 @@ public class ProjectModelTests
         var project = new Project();
         project.SurveyList = new ObjectListBase<Survey>
         {
-            new Survey { LockStatus = LockStatusType.Unlocked },
-            new Survey { LockStatus = LockStatusType.Unlocked }
+            new Survey { Status = SurveyStatus.Initial },
+            new Survey { Status = SurveyStatus.Initial }
         };
 
         // Act
@@ -459,21 +435,21 @@ public class ProjectModelTests
     }
 
     [Fact]
-    public void IsMoreThanOneUnlockedSurvey_ReturnsFalseWhenOnlyOneUnlocked()
+    public void IsMoreThanOneUnlockedSurvey_ReturnsTrueWhenMoreThanOneSurvey()
     {
-        // Arrange
+        // Arrange - Licensing removed, method now just checks count > 1
         var project = new Project();
         project.SurveyList = new ObjectListBase<Survey>
         {
-            new Survey { LockStatus = LockStatusType.Unlocked },
-            new Survey { LockStatus = LockStatusType.Locked }
+            new Survey { Status = SurveyStatus.Initial },
+            new Survey { Status = SurveyStatus.Verified }
         };
 
         // Act
         var result = project.IsMoreThanOneUnlockedSurvey();
 
         // Assert
-        result.Should().BeFalse();
+        result.Should().BeTrue();
     }
 
     [Fact]
@@ -483,7 +459,7 @@ public class ProjectModelTests
         var project = new Project();
         project.SurveyList = new ObjectListBase<Survey>
         {
-            new Survey { LockStatus = LockStatusType.Unlocked }
+            new Survey { Status = SurveyStatus.Initial }
         };
 
         // Act

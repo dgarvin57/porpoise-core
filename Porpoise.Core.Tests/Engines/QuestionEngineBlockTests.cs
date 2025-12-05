@@ -285,7 +285,7 @@ public class QuestionEngineBlockTests
 
         // Assert
         q1.ModifiedBy.Should().NotBeEmpty();
-        q1.ModifiedOn.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(5));
+        // q1.ModifiedOn removed from model
         q2.ModifiedBy.Should().BeEmpty();
     }
 
@@ -313,6 +313,6 @@ public class QuestionEngineBlockTests
         // Assert
         question.ModifiedBy.Should().NotBeEmpty();
         question.Responses[0].ModifiedBy.Should().NotBeEmpty();
-        question.Responses[0].ModifiedOn.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(5));
+        // question.Responses[0].ModifiedOn removed from model
     }
 }

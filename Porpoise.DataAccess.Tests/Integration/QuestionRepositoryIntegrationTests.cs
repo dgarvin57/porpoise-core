@@ -4,7 +4,6 @@ using Dapper;
 using FluentAssertions;
 using Porpoise.Core.Models;
 using Porpoise.Core.Services;
-using Porpoise.DataAccess.Context;
 using Porpoise.DataAccess.Repositories;
 
 namespace Porpoise.DataAccess.Tests.Integration;
@@ -12,31 +11,27 @@ namespace Porpoise.DataAccess.Tests.Integration;
 /// <summary>
 /// Integration tests for QuestionRepository using real MySQL database.
 /// Tests all CRUD operations and query methods with actual database persistence.
+/// Creates and cleans up its own test tenant automatically.
 /// </summary>
-[Collection("MySQL Integration")]
-public class QuestionRepositoryIntegrationTests : IAsyncLifetime
+[Collection("Database")]
+public class QuestionRepositoryIntegrationTests : IntegrationTestBase
 {
-    private readonly DapperContext _context;
     private readonly SurveyRepository _surveyRepository;
     private readonly QuestionRepository _questionRepository;
     private readonly TenantContext _tenantContext;
     private readonly List<Guid> _createdSurveyIds = new();
     private readonly List<Guid> _createdQuestionIds = new();
 
-    public QuestionRepositoryIntegrationTests()
+    public QuestionRepositoryIntegrationTests(DatabaseFixture fixture) : base(fixture)
     {
-        var connectionString = Environment.GetEnvironmentVariable("PORPOISE_TEST_CONNECTION") 
-            ?? "Server=localhost;Port=3306;Database=porpoise_dev;User=root;Password=Dg5901%1;CharSet=utf8mb4;";
-        
-        _context = new DapperContext(connectionString);
-        _tenantContext = new TenantContext { TenantId = 1, TenantKey = "demo-tenant" };
-        _surveyRepository = new SurveyRepository(_context, _tenantContext);
-        _questionRepository = new QuestionRepository(_context);
+        _tenantContext = new TenantContext { TenantId = TestTenantId, TenantKey = TestTenantKey };
+        _surveyRepository = new SurveyRepository(Context, _tenantContext);
+        _questionRepository = new QuestionRepository(Context);
     }
 
-    public Task InitializeAsync() => Task.CompletedTask;
+    public override Task InitializeAsync() => Task.CompletedTask;
 
-    public async Task DisposeAsync()
+    public override async Task DisposeAsync()
     {
         // Clean up questions first (due to foreign key)
         foreach (var questionId in _createdQuestionIds)
@@ -78,7 +73,7 @@ public class QuestionRepositoryIntegrationTests : IAsyncLifetime
         };
 
         // Act - Need to manually set SurveyId since AddAsync doesn't handle it
-        using (var connection = _context.CreateConnection())
+        using (var connection = Context.CreateConnection())
         {
             question.Id = Guid.NewGuid();
             await connection.ExecuteAsync(@"
@@ -211,7 +206,7 @@ public class QuestionRepositoryIntegrationTests : IAsyncLifetime
             VariableType = variableType
         };
 
-        using var connection = _context.CreateConnection();
+        using var connection = Context.CreateConnection();
         await connection.ExecuteAsync(@"
             INSERT INTO Questions (Id, SurveyId, QstNumber, QstLabel, DataFileColumn, VariableType, CreatedDate, ModifiedDate)
             VALUES (@Id, @SurveyId, @QstNumber, @QstLabel, @DataFileColumn, @VariableType, @CreatedDate, @ModifiedDate)",

@@ -1,29 +1,25 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Dapper;
 using Porpoise.Core.Application.Interfaces;
 using Porpoise.Core.Models;
 using Porpoise.Core.Services;
 using Porpoise.DataAccess.Context;
 using Porpoise.DataAccess.Repositories;
+using Porpoise.DataAccess.Tests.Integration;
 using Xunit;
 
 namespace Porpoise.DataAccess.Tests;
 
 /// <summary>
-/// Collection definition to ensure tenant isolation tests run sequentially, not in parallel.
-/// </summary>
-[CollectionDefinition("TenantIsolation", DisableParallelization = true)]
-public class TenantIsolationCollection { }
-
-/// <summary>
 /// Integration tests for multi-tenancy isolation.
 /// These tests write to the actual dev database to verify tenant isolation.
+/// Creates two test tenants to verify they cannot see each other's data.
 /// </summary>
-[Collection("TenantIsolation")]
-public class TenantIsolationTests : IDisposable
+[Collection("Database")]
+public class TenantIsolationTests : IntegrationTestBase
 {
-    private readonly DapperContext _context;
     private readonly ITenantRepository _tenantRepository;
     private readonly IProjectRepository _projectRepositoryTenant1;
     private readonly IProjectRepository _projectRepositoryTenant2;
@@ -32,67 +28,92 @@ public class TenantIsolationTests : IDisposable
     private readonly SurveyPersistenceService _persistenceServiceTenant1;
     private readonly SurveyPersistenceService _persistenceServiceTenant2;
     
-    private int _testTenant1Id;
-    private int _testTenant2Id;
+    private string _testTenant1Id = string.Empty;
+    private string _testTenant2Id = string.Empty;
     private readonly List<Guid> _createdProjectIds = new();
     private readonly List<Guid> _createdSurveyIds = new();
 
-    public TenantIsolationTests()
+    public TenantIsolationTests(DatabaseFixture fixture) : base(fixture)
     {
-        // Use hardcoded connection string for tests
-        var connectionString = "Server=localhost;Database=porpoise_dev;User=root;Password=Dg5901%1;";
+        // Use the first test tenant from fixture as tenant1
+        _testTenant1Id = TestTenantId;
+        
+        _tenantRepository = new TenantRepository(Context);
 
-        _context = new DapperContext(connectionString);
-        _tenantRepository = new TenantRepository(_context);
-
-        // Try to get existing test tenants, or create new ones
-        var tenant1 = _tenantRepository.GetByKeyAsync("test-tenant-1").Result;
-        var tenant2 = _tenantRepository.GetByKeyAsync("test-tenant-2").Result;
-
-        if (tenant1 == null)
-        {
-            tenant1 = new Tenant { TenantKey = "test-tenant-1", Name = "Test Tenant 1", IsActive = true };
-            _testTenant1Id = _tenantRepository.AddAsync(tenant1).Result;
-        }
-        else
-        {
-            _testTenant1Id = tenant1.TenantId;
-        }
-
-        if (tenant2 == null)
-        {
-            tenant2 = new Tenant { TenantKey = "test-tenant-2", Name = "Test Tenant 2", IsActive = true };
-            _testTenant2Id = _tenantRepository.AddAsync(tenant2).Result;
-        }
-        else
-        {
-            _testTenant2Id = tenant2.TenantId;
-        }
+        // Tenant2 will be created in InitializeAsync
+        _testTenant2Id = "00000000-0000-0000-0000-000000000002";
 
         // Create contexts for each tenant
-        var tenantContext1 = new TenantContext { TenantId = _testTenant1Id, TenantKey = "test-tenant-1" };
+        var tenantContext1 = new TenantContext { TenantId = _testTenant1Id, TenantKey = TestTenantKey };
         var tenantContext2 = new TenantContext { TenantId = _testTenant2Id, TenantKey = "test-tenant-2" };
 
         // Create repositories for each tenant
-        _projectRepositoryTenant1 = new ProjectRepository(_context, tenantContext1);
-        _projectRepositoryTenant2 = new ProjectRepository(_context, tenantContext2);
-        _surveyRepositoryTenant1 = new SurveyRepository(_context, tenantContext1);
-        _surveyRepositoryTenant2 = new SurveyRepository(_context, tenantContext2);
+        _projectRepositoryTenant1 = new ProjectRepository(Context, tenantContext1);
+        _projectRepositoryTenant2 = new ProjectRepository(Context, tenantContext2);
+        _surveyRepositoryTenant1 = new SurveyRepository(Context, tenantContext1);
+        _surveyRepositoryTenant2 = new SurveyRepository(Context, tenantContext2);
 
-        var questionRepo1 = new QuestionRepository(_context);
-        var questionRepo2 = new QuestionRepository(_context);
-        var responseRepo1 = new ResponseRepository(_context);
-        var responseRepo2 = new ResponseRepository(_context);
-        var surveyDataRepo1 = new SurveyDataRepository(_context);
-        var surveyDataRepo2 = new SurveyDataRepository(_context);
+        var questionRepo1 = new QuestionRepository(Context);
+        var questionRepo2 = new QuestionRepository(Context);
+        var responseRepo1 = new ResponseRepository(Context);
+        var responseRepo2 = new ResponseRepository(Context);
+        var surveyDataRepo1 = new SurveyDataRepository(Context);
+        var surveyDataRepo2 = new SurveyDataRepository(Context);
+        var questionBlockRepo1 = new QuestionBlockRepository(Context);
+        var questionBlockRepo2 = new QuestionBlockRepository(Context);
 
         _persistenceServiceTenant1 = new SurveyPersistenceService(
-            _surveyRepositoryTenant1, questionRepo1, responseRepo1, surveyDataRepo1, _projectRepositoryTenant1);
+            _surveyRepositoryTenant1, questionRepo1, responseRepo1, surveyDataRepo1, questionBlockRepo1, _projectRepositoryTenant1);
         _persistenceServiceTenant2 = new SurveyPersistenceService(
-            _surveyRepositoryTenant2, questionRepo2, responseRepo2, surveyDataRepo2, _projectRepositoryTenant2);
+            _surveyRepositoryTenant2, questionRepo2, responseRepo2, surveyDataRepo2, questionBlockRepo2, _projectRepositoryTenant2);
+        
+        // Create second tenant synchronously in constructor
+        EnsureSecondTenantExistsAsync().Wait();
+    }
 
+    private async Task EnsureSecondTenantExistsAsync()
+    {
+        const string sql = @"
+            INSERT INTO Tenants (TenantId, TenantKey, Name, IsActive, CreatedBy, CreatedDate, ModifiedDate)
+            VALUES (@TenantId, @TenantKey, @Name, @IsActive, @CreatedBy, @CreatedDate, @ModifiedDate)
+            ON DUPLICATE KEY UPDATE 
+                Name = VALUES(Name),
+                ModifiedDate = VALUES(ModifiedDate);";
+
+        using var connection = Context.CreateConnection();
+        await connection.ExecuteAsync(sql, new
+        {
+            TenantId = _testTenant2Id,
+            TenantKey = "test-tenant-2",
+            Name = "Test Tenant 2 (Isolation)",
+            IsActive = true,
+            CreatedBy = "TenantIsolationTests",
+            CreatedDate = DateTime.UtcNow,
+            ModifiedDate = DateTime.UtcNow
+        });
+    }
+
+    public override async Task InitializeAsync()
+    {
+        // Call base initialization first
+        await base.InitializeAsync();
+        
         // Clean up any leftover data from previous test runs
-        CleanupTestDataAsync().Wait();
+        await CleanupTestDataAsync();
+    }
+
+    public override async Task DisposeAsync()
+    {
+        // Cleanup test data
+        await CleanupTestDataAsync();
+        
+        // Delete second test tenant (first tenant is managed by DatabaseFixture)
+        const string sql = "DELETE FROM Tenants WHERE TenantId = @TenantId";
+        using var connection = Context.CreateConnection();
+        await connection.ExecuteAsync(sql, new { TenantId = _testTenant2Id });
+        
+        // Call base disposal
+        await base.DisposeAsync();
     }
 
     [Fact]
@@ -314,13 +335,5 @@ public class TenantIsolationTests : IDisposable
 
         _createdSurveyIds.Clear();
         _createdProjectIds.Clear();
-    }
-
-    public void Dispose()
-    {
-        // Cleanup: Delete all test data for these tenants
-        // Note: We intentionally do NOT delete the test tenants themselves,
-        // as they are reused across test runs for efficiency
-        CleanupTestDataAsync().Wait();
     }
 }

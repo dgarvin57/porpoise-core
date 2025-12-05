@@ -3,7 +3,6 @@
 using FluentAssertions;
 using Porpoise.Core.Models;
 using Porpoise.Core.Services;
-using Porpoise.DataAccess.Context;
 using Porpoise.DataAccess.Repositories;
 
 namespace Porpoise.DataAccess.Tests.Integration;
@@ -11,30 +10,24 @@ namespace Porpoise.DataAccess.Tests.Integration;
 /// <summary>
 /// Integration tests using real MySQL database.
 /// These tests require MySQL to be running with porpoise_dev database.
-/// Run 02_RecreateTables.sql script before running these tests.
+/// Creates and cleans up its own test tenant automatically.
 /// </summary>
-[Collection("MySQL Integration")]
-public class MySqlIntegrationTests : IAsyncLifetime
+[Collection("Database")]
+public class MySqlIntegrationTests : IntegrationTestBase
 {
-    private readonly DapperContext _context;
     private readonly SurveyRepository _repository;
     private readonly TenantContext _tenantContext;
     private readonly List<Guid> _createdSurveyIds = new();
 
-    public MySqlIntegrationTests()
+    public MySqlIntegrationTests(DatabaseFixture fixture) : base(fixture)
     {
-        // Use connection string from environment or default to localhost
-        var connectionString = Environment.GetEnvironmentVariable("PORPOISE_TEST_CONNECTION") 
-            ?? "Server=localhost;Port=3306;Database=porpoise_dev;User=root;Password=Dg5901%1;CharSet=utf8mb4;";
-        
-        _context = new DapperContext(connectionString);
-        _tenantContext = new TenantContext { TenantId = 1, TenantKey = "demo-tenant" };
-        _repository = new SurveyRepository(_context, _tenantContext);
+        _tenantContext = new TenantContext { TenantId = TestTenantId, TenantKey = TestTenantKey };
+        _repository = new SurveyRepository(Context, _tenantContext);
     }
 
-    public Task InitializeAsync() => Task.CompletedTask;
+    public override Task InitializeAsync() => Task.CompletedTask;
 
-    public async Task DisposeAsync()
+    public override async Task DisposeAsync()
     {
         // Clean up any surveys created during tests
         foreach (var surveyId in _createdSurveyIds)

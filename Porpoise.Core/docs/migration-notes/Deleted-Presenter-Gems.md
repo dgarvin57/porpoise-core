@@ -1,5 +1,7 @@
 ﻿# Deleted-Presenter-Gems.md — The only things worth remembering
 
+> **Historical Note:** This document describes work completed during the migration from WinForms to modern .NET architecture. The patterns described here are preserved in the current codebase. Keep for reference when maintaining related features.
+
 ## 1. Project rename workflow (was in ProjectInfoPresenter)
 When project name changes:
 - Rename the base project folder

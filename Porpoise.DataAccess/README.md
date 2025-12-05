@@ -1,6 +1,6 @@
 # Database Setup
 
-This project uses MySQL for data persistence. This document explains how to set up and use the database.
+This project uses MySQL for data persistence with multi-tenancy support.
 
 ## Prerequisites
 
@@ -9,30 +9,38 @@ This project uses MySQL for data persistence. This document explains how to set 
 
 ## Initial Setup
 
-### 1. Create Database
+### Option 1: Complete Rebuild (Recommended)
 
-Run the database creation script:
+Run the comprehensive rebuild script that creates everything from scratch:
+
+```bash
+mysql -u root -p < Porpoise.DataAccess/Scripts/00_RebuildDatabase.sql
+```
+
+This is the **single source of truth** and creates:
+- `porpoise_dev` database with UTF-8 encoding
+- All tables with proper relationships
+- Sample data for testing
+
+### Option 2: Manual Setup (Advanced)
+
+If you need to run scripts individually:
 
 ```bash
 mysql -u root -p < Porpoise.DataAccess/Scripts/01_CreateDatabase.sql
+mysql -u root -p porpoise_dev < Porpoise.DataAccess/Scripts/02_CreateTables.sql
 ```
 
-This creates the `porpoise_dev` database with UTF-8 encoding.
+### Database Tables
 
-### 2. Create Tables
-
-Run the table creation script:
-
-```bash
-mysql -u root -p porpoise_dev < Porpoise.DataAccess/Scripts/02_RecreateTables.sql
-```
-
-This creates the following tables:
-- **Surveys** - Core survey metadata
-- **Questions** - Survey questions with foreign key to Surveys
-- **Responses** - Question responses with foreign key to Questions
-- **SurveyResponses** - Response tracking for surveys
-- **SurveyData** - Raw survey data storage
+The system includes the following tables:
+- **Tenants** - Multi-tenancy isolation with GUID-based TenantId
+- **Projects** - Research projects with client branding
+- **Surveys** - Survey metadata with foreign key to Projects
+- **QuestionBlocks** - Grouped question blocks for organization
+- **Questions** - Survey questions with foreign key to Surveys and optional BlockId
+- **Responses** - Question response options with foreign key to Questions
+- **SurveyData** - Raw survey case data (JSON storage)
 
 ### 3. Configure Connection String
 

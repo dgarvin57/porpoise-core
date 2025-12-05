@@ -15,7 +15,7 @@ public class SurveySummaryTests
         summary.Id.Should().NotBe(Guid.Empty);
         summary.SurveyName.Should().BeEmpty();
         summary.SurveyFileName.Should().BeEmpty();
-        summary.SurveyFolder.Should().BeEmpty();
+        // SurveyFolder property removed from model
     }
 
     [Fact]
@@ -58,18 +58,19 @@ public class SurveySummaryTests
         summary.SurveyFileName.Should().Be("survey2025.porps");
     }
 
-    [Fact]
-    public void SurveyFolder_CanBeSetAndRetrieved()
-    {
-        // Arrange
-        var summary = new SurveySummary();
-
-        // Act
-        summary.SurveyFolder = "/projects/2025";
-
-        // Assert
-        summary.SurveyFolder.Should().Be("/projects/2025");
-    }
+    // Test disabled - SurveyFolder property removed from SurveySummary model
+    // [Fact]
+    // public void SurveyFolder_CanBeSetAndRetrieved()
+    // {
+    //     // Arrange
+    //     var summary = new SurveySummary();
+    //
+    //     // Act
+    //     summary.SurveyFolder = "/projects/2025";
+    //
+    //     // Assert
+    //     summary.SurveyFolder.Should().Be("/projects/2025");
+    // }
 
     [Fact]
     public void AllProperties_CanBeSetTogether()
@@ -82,12 +83,12 @@ public class SurveySummaryTests
         summary.Id = testId;
         summary.SurveyName = "Test Survey";
         summary.SurveyFileName = "test.porps";
-        summary.SurveyFolder = "/test";
+        // summary.SurveyFolder removed from model
 
         // Assert
         summary.Id.Should().Be(testId);
         summary.SurveyName.Should().Be("Test Survey");
         summary.SurveyFileName.Should().Be("test.porps");
-        summary.SurveyFolder.Should().Be("/test");
+        // summary.SurveyFolder check removed
     }
 }

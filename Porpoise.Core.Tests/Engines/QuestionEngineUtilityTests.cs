@@ -341,7 +341,7 @@ public class QuestionEngineUtilityTests
 
         // Assert
         question.ModifiedBy.Should().Be(Environment.UserName);
-        question.ModifiedOn.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(2));
+        // question.ModifiedOn removed from model
     }
 
     [Fact]
@@ -352,14 +352,14 @@ public class QuestionEngineUtilityTests
         question.MarkClean();
         var questions = new List<Question> { question };
         var originalModifiedBy = question.ModifiedBy;
-        var originalModifiedOn = question.ModifiedOn;
+        // var originalModifiedOn = question.ModifiedOn; // Property removed
 
         // Act
         QuestionEngine.SetQuestionModified(questions);
 
         // Assert
         question.ModifiedBy.Should().Be(originalModifiedBy);
-        question.ModifiedOn.Should().Be(originalModifiedOn);
+        // question.ModifiedOn.Should().Be(originalModifiedOn); // Property removed
     }
 
     [Fact]
@@ -378,7 +378,7 @@ public class QuestionEngineUtilityTests
 
         // Assert
         response.ModifiedBy.Should().Be(Environment.UserName);
-        response.ModifiedOn.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(2));
+        // response.ModifiedOn removed from model
     }
 
     [Fact]

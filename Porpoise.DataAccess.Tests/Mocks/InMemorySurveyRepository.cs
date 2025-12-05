@@ -113,6 +113,55 @@ public class InMemorySurveyRepository : ISurveyRepository
         return Task.FromResult(exists);
     }
 
+    public Task<bool> SoftDeleteSurveyAsync(Guid surveyId)
+    {
+        var survey = _surveys.FirstOrDefault(s => s.Id == surveyId);
+        if (survey != null)
+        {
+            survey.IsDeleted = true;
+            survey.DeletedDate = DateTime.UtcNow;
+            return Task.FromResult(true);
+        }
+        return Task.FromResult(false);
+    }
+
+    public Task<bool> RestoreSurveyAsync(Guid surveyId)
+    {
+        var survey = _surveys.FirstOrDefault(s => s.Id == surveyId);
+        if (survey != null)
+        {
+            survey.IsDeleted = false;
+            survey.DeletedDate = null;
+            return Task.FromResult(true);
+        }
+        return Task.FromResult(false);
+    }
+
+    public Task<bool> PermanentlyDeleteSurveyAsync(Guid surveyId)
+    {
+        var survey = _surveys.FirstOrDefault(s => s.Id == surveyId);
+        if (survey != null)
+        {
+            _surveys.Remove(survey);
+            return Task.FromResult(true);
+        }
+        return Task.FromResult(false);
+    }
+
+    public Task<IEnumerable<dynamic>> GetDeletedSurveysAsync()
+    {
+        var deletedSurveys = _surveys
+            .Where(s => s.IsDeleted)
+            .Select(s => new
+            {
+                s.Id,
+                s.SurveyName,
+                s.DeletedDate
+            } as dynamic)
+            .ToList();
+        return Task.FromResult<IEnumerable<dynamic>>(deletedSurveys);
+    }
+
     // Helper methods for testing
     public void Clear() => _surveys.Clear();
     public int Count => _surveys.Count;
