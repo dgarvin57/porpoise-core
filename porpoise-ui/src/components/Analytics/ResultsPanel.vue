@@ -111,11 +111,6 @@ const props = defineProps({
   }
 })
 
-console.log('ResultsPanel: Component created with props:', {
-  surveyId: props.surveyId,
-  selectedQuestion: props.selectedQuestion
-})
-
 const chartContainer = ref(null)
 const chartInstance = ref(null)
 const chartData = ref(null)
@@ -133,23 +128,15 @@ const getVariableTypeName = (type) => {
 }
 
 const loadQuestionData = async () => {
-  console.log('ResultsPanel: loadQuestionData called', {
-    surveyId: props.surveyId,
-    selectedQuestion: props.selectedQuestion,
-    hasId: !!props.selectedQuestion?.id
-  })
   
   if (!props.selectedQuestion?.id) {
-    console.log('ResultsPanel: No question ID, selectedQuestion:', props.selectedQuestion)
     questionData.value = null
     return
   }
 
   loading.value = true
   try {
-    console.log('ResultsPanel: Fetching data from API:', `/api/surveys/${props.surveyId}/questions/${props.selectedQuestion.id}/results`)
     const response = await axios.get(`/api/surveys/${props.surveyId}/questions/${props.selectedQuestion.id}/results`)
-    console.log('ResultsPanel: API response:', response.data)
     questionData.value = response.data
     
     // Wait for next tick to ensure DOM is updated
@@ -221,18 +208,12 @@ const createChart = () => {
 }
 
 watch(() => props.selectedQuestion, (newQuestion) => {
-  console.log('ResultsPanel: selectedQuestion watcher fired', newQuestion)
   if (newQuestion && newQuestion.id) {
-    console.log('ResultsPanel: Calling loadQuestionData from watcher')
     loadQuestionData()
   }
 }, { immediate: true, deep: true })
 
 onMounted(() => {
-  console.log('ResultsPanel: onMounted called', {
-    surveyId: props.surveyId,
-    selectedQuestion: props.selectedQuestion
-  })
   loadQuestionData()
   window.addEventListener('resize', () => {
     chartInstance.value?.resize()

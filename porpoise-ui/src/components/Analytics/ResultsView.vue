@@ -256,10 +256,10 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                     </svg>
-                    <span class="text-base font-medium glow-subtle">AI Analysis</span>
+                    <span class="text-base font-medium glow-intense">AI Analysis</span>
                     <span v-if="aiAnalysis === ''" class="absolute -top-1 -right-1 flex h-3 w-3">
                       <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                      <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-500 shadow-lg shadow-blue-500/50"></span>
+                      <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-500 shadow-lg shadow-blue-500/75"></span>
                     </span>
                   </Button>
                   <Button
@@ -582,13 +582,10 @@ const computedResponses = computed(() => {
 })
 
 function selectQuestion(question) {
-  console.log('selectQuestion - question from sidebar:', question)
   
   // Question from QuestionListSelector only has metadata, not responses
   // Find the full question data from questions.value which has responses loaded
   const fullQuestion = questions.value.find(q => q.id === question.id)
-  console.log('selectQuestion - found full question:', fullQuestion)
-  console.log('selectQuestion - has responses?', fullQuestion?.responses)
   
   if (fullQuestion) {
     selectedQuestion.value = fullQuestion
@@ -619,8 +616,6 @@ function handleExpandedBlocksChanged(expandedBlockIds) {
 async function loadQuestions() {
   try {
     const response = await axios.get(`http://localhost:5107/api/surveys/${props.surveyId}/questions`)
-    console.log('loadQuestions - API response:', response.data)
-    console.log('loadQuestions - first question:', response.data[0])
     questions.value = response.data
     
     // Restore column mode from prop
@@ -667,10 +662,8 @@ watch(() => props.initialQuestionId, (newQuestionId, oldQuestionId) => {
 
 // Watch for preselectedQuestionId changes (for split view)
 watch(() => props.preselectedQuestionId, (newQuestionId) => {
-  console.log('ResultsView: preselectedQuestionId changed to:', newQuestionId)
   if (newQuestionId && questions.value.length > 0) {
     const question = questions.value.find(q => q.id === newQuestionId)
-    console.log('ResultsView: Found question:', question)
     if (question) {
       selectedQuestion.value = question
       
@@ -678,7 +671,6 @@ watch(() => props.preselectedQuestionId, (newQuestionId) => {
       if (question.blockId && expandedBlocks.value) {
         if (!expandedBlocks.value.includes(question.blockId)) {
           expandedBlocks.value = [...expandedBlocks.value, question.blockId]
-          console.log('ResultsView: Expanded block:', question.blockId)
         }
       }
     }
@@ -689,7 +681,6 @@ watch(() => props.preselectedQuestionId, (newQuestionId) => {
 watch(questions, (newQuestions) => {
   if (newQuestions.length > 0 && props.preselectedQuestionId && !selectedQuestion.value) {
     const question = newQuestions.find(q => q.id === props.preselectedQuestionId)
-    console.log('ResultsView: Questions loaded, selecting preselected question:', question)
     if (question) {
       selectedQuestion.value = question
       
@@ -697,7 +688,6 @@ watch(questions, (newQuestions) => {
       if (question.blockId && expandedBlocks.value) {
         if (!expandedBlocks.value.includes(question.blockId)) {
           expandedBlocks.value = [...expandedBlocks.value, question.blockId]
-          console.log('ResultsView: Expanded block on load:', question.blockId)
         }
       }
     }
@@ -775,8 +765,6 @@ const generateAIAnalysis = async () => {
       })) || []
     }
     
-    console.log('Sending to AI:', context)  // Debug log
-    
     const response = await axios.post(
       `http://localhost:5107/api/survey-analysis/${props.surveyId}/analyze-question`,
       context
@@ -816,5 +804,9 @@ export default {
 <style scoped>
 .glow-subtle {
   filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.6)) drop-shadow(0 0 50px rgba(147, 197, 253, 0.4));
+}
+
+.glow-intense {
+  filter: drop-shadow(0 0 30px rgba(255, 255, 255, 0.8)) drop-shadow(0 0 60px rgba(147, 197, 253, 0.6));
 }
 </style>

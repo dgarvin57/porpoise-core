@@ -19,8 +19,37 @@
           <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
         </div>
 
-        <!-- Form -->
-        <form v-else @submit.prevent="saveChanges" class="px-6 py-5 space-y-5">
+        <!-- Tabs -->
+        <div v-else>
+          <div class="flex border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
+            <button
+              type="button"
+              @click="activeTab = 'settings'"
+              :class="[
+                'flex-1 px-6 py-3 text-sm font-medium transition-colors',
+                activeTab === 'settings'
+                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 bg-white dark:bg-gray-800'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/50'
+              ]"
+            >
+              Settings
+            </button>
+            <button
+              type="button"
+              @click="activeTab = 'info'"
+              :class="[
+                'flex-1 px-6 py-3 text-sm font-medium transition-colors',
+                activeTab === 'info'
+                  ? 'text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 bg-white dark:bg-gray-800'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/50'
+              ]"
+            >
+              Info
+            </button>
+          </div>
+
+          <!-- Settings Tab -->
+          <form v-show="activeTab === 'settings'" @submit.prevent="saveChanges" class="px-6 py-5 space-y-5">
           <!-- Project Name -->
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -135,25 +164,80 @@
               />
             </div>
           </div>
+
+          <!-- Action Buttons for Settings Tab -->
+          <div v-show="activeTab === 'settings'" class="flex justify-end space-x-3 px-6 py-4 bg-gray-50/50 dark:bg-gray-800/50">
+            <button
+              type="button"
+              @click="closeModal"
+              class="px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              @click="saveChanges"
+              :disabled="saving || !hasChanges"
+              class="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+            >
+              {{ saving ? 'Saving...' : 'Save Changes' }}
+            </button>
+          </div>
         </form>
 
-        <!-- Action Buttons -->
-        <div class="flex justify-end space-x-3 px-6 py-4 bg-gray-50/50 dark:bg-gray-800/50">
-          <button
-            type="button"
-            @click="closeModal"
-            class="px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            @click="saveChanges"
-            :disabled="saving || !hasChanges"
-            class="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
-          >
-            {{ saving ? 'Saving...' : 'Save Changes' }}
-          </button>
+        <!-- Info Tab -->
+        <div v-show="activeTab === 'info'" class="px-6 py-6">
+          <div class="space-y-6">
+            <div class="grid grid-cols-2 gap-6">
+              <div class="space-y-1">
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Project ID</label>
+                <p class="text-sm text-gray-900 dark:text-gray-100 font-mono bg-gray-100 dark:bg-gray-900 px-3 py-2 rounded border border-gray-200 dark:border-gray-700">
+                  {{ props.project?.id || 'N/A' }}
+                </p>
+              </div>
+              <div class="space-y-1">
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</label>
+                <p class="text-sm text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-900 px-3 py-2 rounded border border-gray-200 dark:border-gray-700">
+                  {{ metadata.status || 'Active' }}
+                </p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-6">
+              <div class="space-y-1">
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Created</label>
+                <div class="bg-gray-100 dark:bg-gray-900 px-3 py-2 rounded border border-gray-200 dark:border-gray-700">
+                  <p class="text-sm text-gray-900 dark:text-gray-100">{{ formatDateTime(metadata.createdDate) }}</p>
+                  <p v-if="metadata.createdBy" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    <span class="font-medium">by</span> {{ metadata.createdBy }}
+                  </p>
+                  <p v-else class="text-xs text-gray-400 dark:text-gray-500 mt-1 italic">Unknown user</p>
+                </div>
+              </div>
+              <div class="space-y-1">
+                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Last Modified</label>
+                <div class="bg-gray-100 dark:bg-gray-900 px-3 py-2 rounded border border-gray-200 dark:border-gray-700">
+                  <p class="text-sm text-gray-900 dark:text-gray-100">{{ formatDateTime(metadata.modifiedDate) }}</p>
+                  <p v-if="metadata.modifiedBy" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    <span class="font-medium">by</span> {{ metadata.modifiedBy }}
+                  </p>
+                  <p v-else class="text-xs text-gray-400 dark:text-gray-500 mt-1 italic">Unknown user</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Close Button for Info Tab -->
+          <div class="flex justify-end mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <button
+              type="button"
+              @click="closeModal"
+              class="px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+            >
+              Close
+            </button>
+          </div>
+        </div>
         </div>
       </div>
     </div>
@@ -172,6 +256,7 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'saved'])
 
+const activeTab = ref('settings')
 const formData = ref({
   projectName: '',
   clientName: '',
@@ -190,9 +275,18 @@ const logoPreviewUrl = ref('')
 const hasChanges = ref(false)
 const initialFormData = ref({})
 
+const metadata = ref({
+  status: '',
+  createdDate: '',
+  createdBy: '',
+  modifiedDate: '',
+  modifiedBy: ''
+})
+
 // Watch for modal open/close and fetch full project details
 watch(() => props.isOpen, async (isOpen) => {
   if (isOpen && props.project) {
+    activeTab.value = 'settings'
     loading.value = true
     try {
       // Fetch full project details including logo
@@ -207,6 +301,15 @@ watch(() => props.isOpen, async (isOpen) => {
         defaultWeightingScheme: projectData.defaultWeightingScheme || '',
         startDate: projectData.startDate ? projectData.startDate.split('T')[0] : '',
         endDate: projectData.endDate ? projectData.endDate.split('T')[0] : ''
+      }
+
+      // Load metadata
+      metadata.value = {
+        status: projectData.status || 'Active',
+        createdDate: projectData.createdAt || projectData.createdDate || '',
+        createdBy: projectData.createdBy || '',
+        modifiedDate: projectData.lastModified || projectData.modifiedDate || '',
+        modifiedBy: projectData.modifiedBy || ''
       }
       
       // Store initial values for comparison
@@ -348,5 +451,18 @@ async function saveChanges() {
   } finally {
     saving.value = false
   }
+}
+
+function formatDateTime(dateString) {
+  if (!dateString) return 'N/A'
+  const date = new Date(dateString)
+  return date.toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  })
 }
 </script>

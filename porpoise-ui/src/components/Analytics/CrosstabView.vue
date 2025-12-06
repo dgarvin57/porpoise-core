@@ -226,10 +226,10 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                 </svg>
-                <span class="text-base font-medium glow-subtle">AI Analysis</span>
+                <span class="text-base font-medium glow-intense">AI Analysis</span>
                 <span v-if="!aiAnalysis" class="absolute -top-1 -right-1 flex h-3 w-3">
                   <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                  <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-500 shadow-lg shadow-blue-500/50"></span>
+                  <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-500 shadow-lg shadow-blue-500/75"></span>
                 </span>
               </Button>
               <Button
@@ -394,7 +394,7 @@
             <div class="text-center mb-6">
               <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 mb-4">
                 <svg class="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
               <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Generate AI Analysis</h4>
@@ -451,11 +451,6 @@ const props = defineProps({
   }
 })
 
-console.log('CrosstabView: Component created with props', { 
-  initialFirstQuestion: props.initialFirstQuestion, 
-  initialSecondQuestion: props.initialSecondQuestion 
-})
-
 const emit = defineEmits(['selections-changed'])
 
 // State
@@ -471,19 +466,12 @@ const showStatistics = ref(false)
 const aiAnalysis = ref('')
 const loadingAnalysis = ref(false)
 
-console.log('CrosstabView: Internal refs initialized', { 
-  firstQuestion: firstQuestion.value, 
-  secondQuestion: secondQuestion.value 
-})
-
 // Watch for prop changes and update internal state
 watch(() => props.initialFirstQuestion, (newVal, oldVal) => {
-  console.log('CrosstabView: initialFirstQuestion prop changed', { old: oldVal, new: newVal })
   firstQuestion.value = newVal
 }, { deep: true, immediate: true })
 
 watch(() => props.initialSecondQuestion, (newVal, oldVal) => {
-  console.log('CrosstabView: initialSecondQuestion prop changed', { old: oldVal, new: newVal })
   secondQuestion.value = newVal
 }, { deep: true, immediate: true })
 
@@ -563,15 +551,8 @@ function handleCrosstabSelection({ first, second }) {
 
 async function generateCrosstab() {
   if (!firstQuestion.value || !secondQuestion.value) {
-    console.log('Cannot generate crosstab: missing questions', { firstQuestion: firstQuestion.value, secondQuestion: secondQuestion.value })
     return
   }
-
-  console.log('Generating crosstab with:', {
-    surveyId: props.surveyId,
-    firstQuestionId: firstQuestion.value.id,
-    secondQuestionId: secondQuestion.value.id
-  })
 
   loading.value = true
   error.value = null
@@ -585,8 +566,6 @@ async function generateCrosstab() {
         secondQuestionId: secondQuestion.value.id
       }
     )
-
-    console.log('Crosstab response:', response.data)
     crosstabData.value = response.data
     
     // Reset AI analysis when new crosstab is generated
@@ -704,5 +683,10 @@ function formatCellValue(value) {
 .glow-subtle {
   @apply drop-shadow-[0_0_20px_rgba(255,255,255,0.6)] 
          drop-shadow-[0_0_50px_rgba(147,197,253,0.4)];
+}
+
+.glow-intense {
+  @apply drop-shadow-[0_0_30px_rgba(255,255,255,0.8)] 
+         drop-shadow-[0_0_70px_rgba(147,197,253,0.6)];
 }
 </style>

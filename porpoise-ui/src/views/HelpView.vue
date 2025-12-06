@@ -375,7 +375,6 @@ const submitContact = async () => {
   await new Promise(resolve => setTimeout(resolve, 1500))
   
   // Would make actual API call here
-  console.log('Contact form submitted:', contactForm.value)
   
   isSubmitting.value = false
   

@@ -329,7 +329,6 @@ const secondSelection = ref(props.initialSecondSelection)
 
 // Watch for prop changes to update selections
 watch(() => props.initialFirstSelection, (newVal) => {
-  console.log('QuestionListSelector: initialFirstSelection prop changed', newVal)
   firstSelection.value = newVal
   
   // Expand the block containing this question
@@ -346,7 +345,6 @@ watch(() => props.initialFirstSelection, (newVal) => {
 }, { deep: true, immediate: true })
 
 watch(() => props.initialSecondSelection, (newVal) => {
-  console.log('QuestionListSelector: initialSecondSelection prop changed', newVal)
   secondSelection.value = newVal
   
   // Expand the block containing this question

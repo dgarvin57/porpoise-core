@@ -322,9 +322,6 @@ function saveSurveyState() {
     splitViewLeftWidth: splitViewLeftWidth.value,
     timestamp: Date.now()
   }
-  console.log('AnalyticsView: Saving survey state', state)
-  console.log('  - crosstabFirstQuestion:', crosstabFirstQuestion.value)
-  console.log('  - crosstabSecondQuestion:', crosstabSecondQuestion.value)
   localStorage.setItem(getSurveyStateKey(), JSON.stringify(state))
   
   // Also update query params for URL state
@@ -351,7 +348,6 @@ function loadSurveyState() {
   if (savedState) {
     try {
       const state = JSON.parse(savedState)
-      console.log('AnalyticsView: Loading saved state', state)
       // Only restore if less than 24 hours old
       if (Date.now() - state.timestamp < 24 * 60 * 60 * 1000) {
         if (!route.query.section) {
@@ -367,7 +363,6 @@ function loadSurveyState() {
         crosstabFirstQuestion.value = state.crosstabFirstQuestion || null
         crosstabSecondQuestion.value = state.crosstabSecondQuestion || null
         splitViewLeftWidth.value = state.splitViewLeftWidth || 38  // Default ~570px on typical screens
-        console.log('AnalyticsView: Restored crosstab questions', { first: crosstabFirstQuestion.value, second: crosstabSecondQuestion.value })
       }
     } catch (error) {
       console.error('Error loading saved state:', error)
@@ -401,12 +396,10 @@ watch(infoTab, () => {
 })
 
 watch(crosstabFirstQuestion, (newVal, oldVal) => {
-  console.log('Watch: crosstabFirstQuestion changed', { old: oldVal, new: newVal })
   saveSurveyState()
 }, { deep: true })
 
 watch(crosstabSecondQuestion, (newVal, oldVal) => {
-  console.log('Watch: crosstabSecondQuestion changed', { old: oldVal, new: newVal })
   saveSurveyState()
 }, { deep: true })
 
@@ -436,7 +429,6 @@ function handleInfoTabChanged(tab) {
 
 // Handle crosstab selection changes
 function handleCrosstabSelectionsChanged({ firstQuestion, secondQuestion }) {
-  console.log('AnalyticsView: Crosstab selections changed', { firstQuestion, secondQuestion })
   crosstabFirstQuestion.value = firstQuestion
   crosstabSecondQuestion.value = secondQuestion
   
@@ -450,47 +442,37 @@ function handleCrosstabSelectionsChanged({ firstQuestion, secondQuestion }) {
 
 // Watch split view toggle to sync the selected question
 watch(splitViewEnabled, (enabled) => {
-  console.log('AnalyticsView: splitViewEnabled changed to:', enabled)
-  console.log('AnalyticsView: crosstabFirstQuestion:', crosstabFirstQuestion.value)
   if (enabled && crosstabFirstQuestion.value) {
     selectedQuestionForSplit.value = crosstabFirstQuestion.value
-    console.log('AnalyticsView: Set selectedQuestionForSplit to:', selectedQuestionForSplit.value)
   }
 })
 
 // Watch crosstab first question to keep split panel in sync
 watch(crosstabFirstQuestion, (newQuestion, oldQuestion) => {
-  console.log('AnalyticsView: crosstabFirstQuestion changed to:', newQuestion)
-  console.log('AnalyticsView: activeSection is:', activeSection.value)
   
   // Sync to split view panel
   if (splitViewEnabled.value && newQuestion) {
     selectedQuestionForSplit.value = newQuestion
-    console.log('AnalyticsView: Set selectedQuestionForSplit to:', selectedQuestionForSplit.value)
   }
   
   // Sync to Results view selectedQuestionId (one-way: crosstab -> results)
   // This allows the Results view to show the same question when you switch back
   if (newQuestion && newQuestion !== oldQuestion) {
     selectedQuestionId.value = newQuestion.id
-    console.log('AnalyticsView: Synced crosstabFirstQuestion to selectedQuestionId:', newQuestion.id)
     
     // If the question has a blockId, ensure that block is expanded
     if (newQuestion.blockId && !expandedBlocks.value.includes(newQuestion.blockId)) {
       expandedBlocks.value = [...expandedBlocks.value, newQuestion.blockId]
-      console.log('AnalyticsView: Expanded block for synced question:', newQuestion.blockId)
     }
   }
 })
 
 // Watch selectedQuestionForSplit to see changes
 watch(selectedQuestionForSplit, (newValue) => {
-  console.log('AnalyticsView: selectedQuestionForSplit changed to:', newValue)
 })
 
 // Handle analyze in crosstab from Results view
 function handleAnalyzeCrosstab(question) {
-  console.log('AnalyticsView: handleAnalyzeCrosstab called with question:', question)
   // Set the question as first variable in crosstab
   crosstabFirstQuestion.value = question
   crosstabSecondQuestion.value = null // Reset second selection

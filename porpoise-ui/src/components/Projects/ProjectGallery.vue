@@ -290,10 +290,14 @@
                 {{ project.surveyCount }}
               </span>
               <span class="text-xs text-gray-500 dark:text-gray-400 text-right">—</span>
-              <span class="text-xs text-gray-500 dark:text-gray-400 text-right tabular-nums">
+              <span
+                class="text-xs text-gray-500 dark:text-gray-400 text-right tabular-nums"
+              >
                 {{ formatDateShort(project.createdAt) }}
               </span>
-              <span class="text-xs text-gray-500 dark:text-gray-400 text-right tabular-nums">
+              <span
+                class="text-xs text-gray-500 dark:text-gray-400 text-right tabular-nums"
+              >
                 {{ formatDateShort(project.lastModified) }}
               </span>
               <div class="flex justify-center">
@@ -357,10 +361,14 @@
                   <span class="text-xs text-gray-500 dark:text-gray-400 text-right tabular-nums">
                     {{ survey.questionCount || 0 }}
                   </span>
-                  <span class="text-xs text-gray-500 dark:text-gray-400 text-right tabular-nums">
+                  <span
+                    class="text-xs text-gray-500 dark:text-gray-400 text-right tabular-nums"
+                  >
                     {{ formatDateShort(survey.createdDate) }}
                   </span>
-                  <span class="text-xs text-gray-500 dark:text-gray-400 text-right tabular-nums">
+                  <span
+                    class="text-xs text-gray-500 dark:text-gray-400 text-right tabular-nums"
+                  >
                     {{ formatDateShort(survey.modifiedDate) }}
                   </span>
                   <span class="text-xs text-gray-500 dark:text-gray-400 text-center">—</span>
@@ -479,11 +487,6 @@ const uniqueClients = computed(() => {
   return [...new Set(clients)].sort()
 })
 
-// Calculate total survey count from filtered projects
-const totalSurveyCount = computed(() => {
-  return filteredProjects.value.reduce((sum, project) => sum + (project.surveyCount || 0), 0)
-})
-
 // Filter projects based on active filters and search query
 const filteredProjects = computed(() => {
   let result = [...projects.value]
@@ -589,6 +592,11 @@ const filteredProjects = computed(() => {
   return result
 })
 
+// Calculate total survey count from filtered projects
+const totalSurveyCount = computed(() => {
+  return filteredProjects.value.reduce((sum, project) => sum + (project.surveyCount || 0), 0)
+})
+
 function sortByColumn(column) {
   if (sortBy.value === column) {
     // Toggle direction if clicking the same column
@@ -612,49 +620,10 @@ watch(sortBy, (newVal) => {
 // Persist view mode preference and switch expansion state when changing views
 watch(viewMode, (newVal, oldVal) => {
   localStorage.setItem('projectViewMode', newVal)
-  
-  // Save current expansion state for the old view
   const oldStorageKey = oldVal === 'grid' ? 'expandedProjectsGrid' : 'expandedProjectsList'
   localStorage.setItem(oldStorageKey, JSON.stringify([...expandedProjects.value]))
-  
-  // Load expansion state for the new view
   const newStorageKey = newVal === 'grid' ? 'expandedProjectsGrid' : 'expandedProjectsList'
   expandedProjects.value = new Set(JSON.parse(localStorage.getItem(newStorageKey) || '[]'))
-})
-
-// Load surveys for search when user starts typing
-watch(searchQuery, async (newVal) => {
-  if (newVal.trim()) {
-    // Load surveys for all projects that don't have them cached yet
-    const projectsToLoad = projects.value.filter(p => 
-      !projectSurveys.value.has(p.id) && 
-      !allSurveysForSearch.value.has(p.id)
-    )
-    
-    if (projectsToLoad.length > 0) {
-      // Load surveys in parallel (but limit to avoid overwhelming the server)
-      const batchSize = 10
-      for (let i = 0; i < projectsToLoad.length; i += batchSize) {
-        const batch = projectsToLoad.slice(i, i + batchSize)
-        await Promise.all(batch.map(async (project) => {
-          try {
-            const response = await axios.get(`http://localhost:5107/api/projects/${project.id}/surveys`)
-            allSurveysForSearch.value.set(project.id, response.data.map(s => ({
-              id: s.id,
-              name: s.name,
-              status: s.status,
-              caseCount: s.caseCount,
-              questionCount: s.questionCount,
-              createdDate: s.createdDate,
-              modifiedDate: s.modifiedDate
-            })))
-          } catch (error) {
-            console.error('Error loading surveys for search:', error)
-          }
-        }))
-      }
-    }
-  }
 })
 
 // Load question data when "search in questions" is enabled
@@ -680,7 +649,9 @@ watch([searchInQuestions, searchQuery], async ([questionsEnabled, query]) => {
               caseCount: s.caseCount,
               questionCount: s.questionCount,
               createdDate: s.createdDate,
-              modifiedDate: s.modifiedDate
+              modifiedDate: s.modifiedDate,
+              createdBy: s.createdBy,
+              modifiedBy: s.modifiedBy
             })))
           } catch (error) {
             console.error('Error loading surveys for search:', error)
@@ -802,7 +773,9 @@ async function toggleProjectExpand(projectId) {
           caseCount: s.caseCount,
           questionCount: s.questionCount,
           createdDate: s.createdDate,
-          modifiedDate: s.modifiedDate
+          modifiedDate: s.modifiedDate,
+          createdBy: s.createdBy,
+          modifiedBy: s.modifiedBy
         })))
       } catch (error) {
         console.error('Error fetching surveys:', error)
@@ -909,7 +882,9 @@ async function deleteSurvey(surveyId, surveyName) {
           caseCount: s.caseCount,
           questionCount: s.questionCount,
           createdDate: s.createdDate,
-          modifiedDate: s.modifiedDate
+          modifiedDate: s.modifiedDate,
+          createdBy: s.createdBy,
+          modifiedBy: s.modifiedBy
         })))
       } catch (error) {
         console.error('Error reloading surveys:', error)
@@ -966,7 +941,9 @@ onMounted(async () => {
           caseCount: s.caseCount,
           questionCount: s.questionCount,
           createdDate: s.createdDate,
-          modifiedDate: s.modifiedDate
+          modifiedDate: s.modifiedDate,
+          createdBy: s.createdBy,
+          modifiedBy: s.modifiedBy
         })))
       } catch (err) {
         console.error('Error loading surveys:', err)
@@ -1011,7 +988,9 @@ onActivated(async () => {
           caseCount: s.caseCount,
           questionCount: s.questionCount,
           createdDate: s.createdDate,
-          modifiedDate: s.modifiedDate
+          modifiedDate: s.modifiedDate,
+          createdBy: s.createdBy,
+          modifiedBy: s.modifiedBy
         })))
       } catch (err) {
         console.error('Error loading surveys:', err)
