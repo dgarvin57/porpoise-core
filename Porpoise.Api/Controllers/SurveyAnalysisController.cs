@@ -402,6 +402,31 @@ Provide data-driven insights about patterns, notable findings, and implications:
             {
                 var headerRow = surveyData.DataList[0];
                 
+                // DEFENSIVE: Remove duplicate header rows if they exist (rows 1+ that match row 0)
+                // This prevents parsing errors when header row is accidentally duplicated in data
+                for (int i = surveyData.DataList.Count - 1; i >= 1; i--)
+                {
+                    var row = surveyData.DataList[i];
+                    // Check if this row matches the header (all cells are question numbers/column names)
+                    bool isDuplicateHeader = true;
+                    if (row.Count == headerRow.Count)
+                    {
+                        for (int j = 0; j < row.Count && j < headerRow.Count; j++)
+                        {
+                            if (!string.Equals(row[j], headerRow[j], StringComparison.OrdinalIgnoreCase))
+                            {
+                                isDuplicateHeader = false;
+                                break;
+                            }
+                        }
+                        if (isDuplicateHeader)
+                        {
+                            Console.WriteLine($"WARNING: Removing duplicate header row at index {i}");
+                            surveyData.DataList.RemoveAt(i);
+                        }
+                    }
+                }
+                
                 int firstQuestionIndex = headerRow.FindIndex(col => 
                     string.Equals(col, firstQuestion.QstNumber, StringComparison.OrdinalIgnoreCase));
                 int secondQuestionIndex = headerRow.FindIndex(col => 
@@ -459,6 +484,14 @@ Provide data-driven insights about patterns, notable findings, and implications:
                 return StatusCode(500, $"Error creating crosstab: {ex.Message}. This may occur if the selected questions contain non-numeric or incompatible data.");
             }
 
+            // Helper function to sanitize double values (replace infinity/NaN with null)
+            double? SanitizeDouble(double value)
+            {
+                if (double.IsInfinity(value) || double.IsNaN(value))
+                    return null;
+                return value;
+            }
+
             // Build response
             var response = new CrosstabResponse
             {
@@ -475,20 +508,20 @@ Provide data-driven insights about patterns, notable findings, and implications:
                     VariableType = (int)secondQuestion.VariableType
                 },
                 TotalN = crosstab.TotalN,
-                ChiSquare = crosstab.ChiSquare,
-                PValue = crosstab.PValue,
+                ChiSquare = SanitizeDouble(crosstab.ChiSquare),
+                PValue = SanitizeDouble(crosstab.PValue),
                 Significant = crosstab.Significant,
                 ChiSquareSignificant = crosstab.Significant.Contains("Significant", StringComparison.OrdinalIgnoreCase) && !crosstab.Significant.Contains("Not", StringComparison.OrdinalIgnoreCase),
-                Phi = crosstab.Phi,
-                ContingencyCoefficient = crosstab.ContingencyCoefficient,
-                CramersV = crosstab.CramersV,
+                Phi = SanitizeDouble(crosstab.Phi),
+                ContingencyCoefficient = SanitizeDouble(crosstab.ContingencyCoefficient),
+                CramersV = SanitizeDouble(crosstab.CramersV),
                 Table = ConvertDataTableToList(crosstab.CxTable),
                 IVIndexes = crosstab.CxIVIndexes.Select(idx => new IVIndexInfo
                 {
                     Label = idx.IVLabel,
-                    Index = idx.Index,
-                    PosIndex = idx.PosIndex,
-                    NegIndex = idx.NegIndex
+                    Index = SanitizeDouble(idx.Index),
+                    PosIndex = SanitizeDouble(idx.PosIndex),
+                    NegIndex = SanitizeDouble(idx.NegIndex)
                 }).ToList()
             };
 
@@ -562,18 +595,18 @@ Provide data-driven insights about patterns, notable findings, and implications:
         
         sb.AppendLine();
         sb.AppendLine("=== OUTPUT FORMAT (REQUIRED) ===");
-        sb.AppendLine("Write exactly 4 paragraphs, separated by blank lines:");
+        sb.AppendLine("Write exactly 4 sections with headings, each followed by content:");
         sb.AppendLine();
-        sb.AppendLine($"Paragraph 1 (Summary): Write ONE sentence that briefly summarizes the key finding or meaning of this crosstab analysis. This should be a clear, concise statement about the relationship between {request.IndependentVariable} and {request.DependentVariable}.");
+        sb.AppendLine($"## Summary\nWrite ONE sentence that briefly summarizes the key finding or meaning of this crosstab analysis. This should be a clear, concise statement about the relationship between {request.IndependentVariable} and {request.DependentVariable}.");
         sb.AppendLine();
-        sb.AppendLine($"Paragraph 2 (Statistical Result): Start with this EXACT phrase: 'The analysis {(request.ChiSquareSignificant ? "shows a statistically significant relationship" : "found no statistically significant relationship")} between {request.IndependentVariable} and {request.DependentVariable}.' Then explain what this means in 1-2 additional sentences.");
+        sb.AppendLine($"## Statistical Result\nStart with this EXACT phrase: 'The analysis {(request.ChiSquareSignificant ? "shows a statistically significant relationship" : "found no statistically significant relationship")} between {request.IndependentVariable} and {request.DependentVariable}.' Then explain what this means in 1-2 additional sentences.");
         sb.AppendLine();
-        sb.AppendLine("Paragraph 3 (Category Comparison): Compare the categories. State which has the highest index value and which has the lowest, citing the EXACT numbers from the data above. Use format: 'The [category name] category shows the highest sentiment (Index=[number], [X]% positive), while [category name] has the lowest (Index=[number], [X]% positive).'");
+        sb.AppendLine("## Category Comparison\nCompare the categories. State which has the highest index value and which has the lowest, citing the EXACT numbers from the data above. Use format: 'The [category name] category shows the highest sentiment (Index=[number], [X]% positive), while [category name] has the lowest (Index=[number], [X]% positive).'");
         sb.AppendLine();
-        sb.AppendLine("Paragraph 4 (Actionable Insight): Provide one actionable insight for decision-makers based on the actual data patterns.");
+        sb.AppendLine("## Actionable Insight\nProvide one actionable insight for decision-makers based on the actual data patterns.");
         sb.AppendLine();
         sb.AppendLine("VALIDATION RULES:");
-        sb.AppendLine($"- Paragraph 2 MUST state '{(request.ChiSquareSignificant ? "significant relationship" : "no significant relationship")}'");
+        sb.AppendLine($"- Statistical Result section MUST state '{(request.ChiSquareSignificant ? "significant relationship" : "no significant relationship")}'");
         sb.AppendLine("- All numbers MUST exactly match the data above");
         sb.AppendLine("- Do NOT invent or estimate any values");
         sb.AppendLine("- Separate paragraphs with blank lines (\\n\\n)");
@@ -616,13 +649,13 @@ public class CrosstabResponse
     public QuestionInfo FirstQuestion { get; set; } = null!;
     public QuestionInfo SecondQuestion { get; set; } = null!;
     public int TotalN { get; set; }
-    public double ChiSquare { get; set; }
-    public double PValue { get; set; }
+    public double? ChiSquare { get; set; }
+    public double? PValue { get; set; }
     public string Significant { get; set; } = string.Empty;
     public bool ChiSquareSignificant { get; set; } // Boolean version for AI analysis
-    public double Phi { get; set; }
-    public double ContingencyCoefficient { get; set; }
-    public double CramersV { get; set; }
+    public double? Phi { get; set; }
+    public double? ContingencyCoefficient { get; set; }
+    public double? CramersV { get; set; }
     public List<Dictionary<string, object>> Table { get; set; } = new();
     public List<IVIndexInfo> IVIndexes { get; set; } = new();
 }
@@ -637,9 +670,9 @@ public class QuestionInfo
 public class IVIndexInfo
 {
     public string Label { get; set; } = string.Empty;
-    public int Index { get; set; }
-    public double PosIndex { get; set; }
-    public double NegIndex { get; set; }
+    public double? Index { get; set; }
+    public double? PosIndex { get; set; }
+    public double? NegIndex { get; set; }
 }
 
 public class CrosstabAnalysisRequest

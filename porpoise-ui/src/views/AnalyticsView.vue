@@ -462,11 +462,27 @@ watch(splitViewEnabled, (enabled) => {
 })
 
 // Watch crosstab first question to keep split panel in sync
-watch(crosstabFirstQuestion, (newQuestion) => {
+watch(crosstabFirstQuestion, (newQuestion, oldQuestion) => {
   console.log('AnalyticsView: crosstabFirstQuestion changed to:', newQuestion)
+  console.log('AnalyticsView: activeSection is:', activeSection.value)
+  
+  // Sync to split view panel
   if (splitViewEnabled.value && newQuestion) {
     selectedQuestionForSplit.value = newQuestion
     console.log('AnalyticsView: Set selectedQuestionForSplit to:', selectedQuestionForSplit.value)
+  }
+  
+  // Sync to Results view selectedQuestionId (one-way: crosstab -> results)
+  // This allows the Results view to show the same question when you switch back
+  if (newQuestion && newQuestion !== oldQuestion) {
+    selectedQuestionId.value = newQuestion.id
+    console.log('AnalyticsView: Synced crosstabFirstQuestion to selectedQuestionId:', newQuestion.id)
+    
+    // If the question has a blockId, ensure that block is expanded
+    if (newQuestion.blockId && !expandedBlocks.value.includes(newQuestion.blockId)) {
+      expandedBlocks.value = [...expandedBlocks.value, newQuestion.blockId]
+      console.log('AnalyticsView: Expanded block for synced question:', newQuestion.blockId)
+    }
   }
 })
 
@@ -560,7 +576,22 @@ onMounted(() => {
 // Watch for route changes (when navigating to the same route with different params)
 watch(() => route.params.id, (newId) => {
   if (newId) {
+    const previousSurveyId = surveyId.value
     surveyId.value = newId
+    
+    // Clear state when switching to a different survey
+    if (previousSurveyId && previousSurveyId !== newId) {
+      // Clear localStorage for the old survey
+      localStorage.removeItem(getSurveyStateKey())
+      
+      // Clear in-memory state
+      crosstabFirstQuestion.value = null
+      crosstabSecondQuestion.value = null
+      selectedQuestionForSplit.value = null
+      selectedQuestionId.value = null
+      activeSection.value = 'results'
+    }
+    
     loadSurveyState()
     loadSurveyInfo()
   }

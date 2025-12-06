@@ -18,7 +18,7 @@
         @dragleave.prevent="isDragging = false"
         @drop.prevent="handleDrop"
         :class="[
-          'border-2 border-dashed rounded-lg p-12 text-center transition-colors',
+          'border-2 border-dashed rounded-lg p-8 text-center transition-colors',
           isDragging
             ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/10'
             : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
@@ -69,7 +69,7 @@
           <div
             v-for="(file, index) in selectedFiles"
             :key="index"
-            class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg"
+            class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-900 rounded-lg"
           >
             <div class="flex items-center space-x-3 flex-1 min-w-0">
               <!-- File Icon -->
@@ -113,15 +113,12 @@
             </div>
 
             <!-- Remove Button -->
-            <button
+            <CloseButton
               v-if="!file.uploading"
               @click="removeFile(index)"
-              class="ml-3 text-gray-400 hover:text-red-500 transition-colors"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+              size="sm"
+              class="ml-3"
+            />
           </div>
         </div>
 
@@ -138,29 +135,28 @@
 
         <!-- Action Buttons -->
         <div class="flex items-center justify-between mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-          <button
+          <Button
             @click="clearAll"
             :disabled="isUploading"
-            class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            variant="ghost"
           >
             Clear All
-          </button>
+          </Button>
           
           <div class="flex space-x-3">
-            <button
+            <Button
               v-if="hasSuccessfulUploads"
               @click="showInspectModal = true"
-              class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg font-medium transition-colors"
+              variant="secondary"
             >
               Inspect Data
-            </button>
-            <button
+            </Button>
+            <Button
               @click="uploadFiles"
               :disabled="isUploading || selectedFiles.length === 0"
-              class="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
             >
               {{ isUploading ? 'Uploading...' : 'Upload Files' }}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -220,12 +216,13 @@
                   </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
-                  <button
+                  <Button
                     @click="viewSurvey(survey.id)"
-                    class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
+                    variant="ghost"
+                    size="sm"
                   >
                     View Analytics
-                  </button>
+                  </Button>
                 </td>
               </tr>
             </tbody>
@@ -256,14 +253,7 @@
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
                 Raw Survey Data
               </h3>
-              <button
-                @click="showInspectModal = false"
-                class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-              >
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              <CloseButton @click="showInspectModal = false" />
             </div>
             
             <div class="mt-4">
@@ -271,12 +261,11 @@
             </div>
           </div>
           <div class="bg-gray-50 dark:bg-gray-900 px-6 py-3 flex justify-end">
-            <button
+            <Button
               @click="showInspectModal = false"
-              class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors"
             >
               Close
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -288,6 +277,8 @@
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import Button from '../components/common/Button.vue'
+import CloseButton from '../components/common/CloseButton.vue'
 
 const router = useRouter()
 const fileInput = ref(null)

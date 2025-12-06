@@ -1,7 +1,7 @@
 <template>
   <div class="h-full flex">
     <!-- Question List Sidebar -->
-    <aside class="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
+    <aside class="w-96 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
       <QuestionListSelector
         :surveyId="surveyId"
         selectionMode="crosstab"
@@ -206,25 +206,42 @@
                     ></div>
                   </div>
                   <div class="w-12 text-xs font-medium text-gray-700 dark:text-gray-300 text-right">
-                    {{ segment.value.toFixed(1) }}
+                    {{ segment.value.toFixed(1) }}%
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Legend and AI Explanation -->
+          <!-- Legend and Action Buttons -->
           <div class="mt-6 flex items-center justify-between">
-            <Button
-              @click="showExplanation = true"
-              variant="ghost"
-              size="sm"
-            >
-              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
-              </svg>
-              <span>Understanding This Analysis</span>
-            </Button>
+            <div class="flex items-center gap-3">
+              <Button
+                @click="showExplanation = true"
+                variant="ghost"
+                size="md"
+              >
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                </svg>
+                <span>Understanding This Analysis</span>
+              </Button>
+              <Button
+                @click="showAIModal = true"
+                variant="ghost"
+                size="md"
+                class="relative"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
+                <span>AI Analysis</span>
+                <span v-if="!aiAnalysis" class="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+                </span>
+              </Button>
+            </div>
             <div v-if="graphMode === 'posneg'" class="flex flex-wrap gap-4">
               <div class="flex items-center gap-2">
                 <div class="w-4 h-4 rounded bg-blue-500"></div>
@@ -242,17 +259,12 @@
       </div> <!-- Close crosstab results -->
     </div>
     
-    <!-- Explanation Modal -->
+    <!-- Explanation Modal (Understanding Crosstab) -->
     <div v-if="showExplanation" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" @click.self="showExplanation = false">
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full max-h-[85vh] overflow-y-auto">
         <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
           <div class="flex items-center justify-between">
-            <div>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Analysis & Insights</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                {{ crosstabData.firstQuestion.label }} <span class="text-gray-400 dark:text-gray-500">by</span> {{ crosstabData.secondQuestion.label }}
-              </p>
-            </div>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Understanding Crosstab Analysis</h3>
             <CloseButton @click="showExplanation = false" />
           </div>
         </div>
@@ -265,111 +277,140 @@
               </svg>
               <div>
                 <h4 class="font-semibold text-gray-900 dark:text-white mb-1 text-sm">Quick Tip</h4>
-                <p class="text-sm text-gray-700 dark:text-gray-300">Use the positive/negative graph to quickly compare sentiment across different demographic groups or response categories. Larger positive bars indicate more favorable opinions in that group.</p>
+                <p class="text-sm text-gray-700 dark:text-gray-300">The numbers show the percentage of positive (blue) vs. negative (red) responses for each group. For example, if age 35-44 shows 35.4% positive and 61.5% negative, that means 35% of people in that age group were satisfied/agreed, while 62% were dissatisfied/disagreed. Use this to quickly identify which groups are most positive or negative about the topic.</p>
               </div>
             </div>
           </div>
           
-          <!-- AI Analysis Section (Collapsible) -->
-          <div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-            <button
-              @click="showAIAnalysis = !showAIAnalysis"
-              class="w-full px-4 py-3 flex items-center justify-between bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 hover:from-blue-100 hover:to-indigo-100 dark:hover:from-blue-900/30 dark:hover:to-indigo-900/30 transition-colors border-b border-blue-200 dark:border-blue-800"
-            >
-              <div class="flex items-center gap-2">
-                <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                </svg>
-                <span class="font-medium text-gray-900 dark:text-white">AI Analysis of Your Data</span>
-              </div>
-              <svg
-                class="w-5 h-5 text-gray-500 transition-transform"
-                :class="{ 'rotate-180': showAIAnalysis }"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            <div v-show="showAIAnalysis" class="px-4 py-4 bg-white dark:bg-gray-800">
-              <div v-if="loadingAnalysis" class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span>Generating analysis...</span>
-              </div>
-              <div v-else-if="aiAnalysis" class="text-sm text-gray-700 dark:text-gray-300 space-y-3">
-                <p v-for="(paragraph, idx) in aiAnalysis.split('\n\n').filter(p => p.trim())" :key="idx">
-                  {{ paragraph.trim() }}
-                </p>
-              </div>
-              <Button
-                v-else
-                @click="generateAIAnalysis"
-                :loading="loadingAnalysis"
-                size="sm"
-              >
-                Generate AI Analysis
-              </Button>
-            </div>
+          <!-- What is Crosstab Analysis -->
+          <div>
+            <h4 class="font-semibold text-gray-900 dark:text-white mb-2">What is Crosstab Analysis?</h4>
+            <p class="text-sm text-gray-700 dark:text-gray-300">Crosstab (cross-tabulation) analysis examines the relationship between two categorical variables by displaying their frequencies in a table format. This helps identify patterns and correlations between different survey questions.</p>
           </div>
           
-          <!-- Collapsible General Explanation -->
-          <div class="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-            <button
-              @click="showGeneralInfo = !showGeneralInfo"
-              class="w-full px-4 py-3 flex items-center justify-between bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            >
-              <span class="font-medium text-gray-900 dark:text-white">Understanding Crosstab Analysis</span>
-              <svg
-                class="w-5 h-5 text-gray-500 transition-transform"
-                :class="{ 'rotate-180': showGeneralInfo }"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            <div v-show="showGeneralInfo" class="px-4 py-4 space-y-4 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800">
-              <div>
-                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">What is Crosstab Analysis?</h4>
-                <p>Crosstab (cross-tabulation) analysis examines the relationship between two categorical variables by displaying their frequencies in a table format. This helps identify patterns and correlations between different survey questions.</p>
-              </div>
-              
-              <div>
-                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Statistical Measures</h4>
-                <ul class="list-disc list-inside space-y-1 ml-2">
-                  <li><strong>Chi-Square (χ²):</strong> Tests whether the two variables are independent or related</li>
-                  <li><strong>Phi (φ):</strong> Measures association strength for 2×2 tables (range: 0-1)</li>
-                  <li><strong>Cramér's V:</strong> Measures association strength for larger tables (range: 0-1)</li>
-                  <li><strong>Total N:</strong> Total number of valid responses analyzed</li>
-                </ul>
-              </div>
-              
-              <div>
-                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Graph Modes</h4>
-                <ul class="list-disc list-inside space-y-1 ml-2">
-                  <li><strong>Graph Index:</strong> Shows the overall index value (0-200 scale) for each category, where 100 is neutral, above 100 is positive, and below 100 is negative</li>
-                  <li><strong>Graph Pos/Neg Percent:</strong> Shows separate bars for positive and negative response percentages within each category, making it easy to see sentiment distribution</li>
-                </ul>
-              </div>
-              
-              <div>
-                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Index Values Explained</h4>
-                <ul class="list-disc list-inside space-y-1 ml-2">
-                  <li><strong>Positive Indexes:</strong> Percentage of favorable/desirable responses (e.g., "Strongly Agree", "Very Satisfied")</li>
-                  <li><strong>Negative Indexes:</strong> Percentage of unfavorable/undesirable responses (e.g., "Strongly Disagree", "Very Dissatisfied")</li>
-                  <li><strong>Overall Index:</strong> Combined measure where higher values indicate more positive sentiment</li>
-                </ul>
-              </div>
-            </div>
+          <!-- Statistical Measures -->
+          <div>
+            <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Statistical Measures</h4>
+            <ul class="list-disc list-inside space-y-1 ml-2 text-sm text-gray-700 dark:text-gray-300">
+              <li><strong>Chi-Square (χ²):</strong> Tests whether the two variables are independent or related</li>
+              <li><strong>Phi (φ):</strong> Measures association strength for 2×2 tables (range: 0-1)</li>
+              <li><strong>Cramér's V:</strong> Measures association strength for larger tables (range: 0-1)</li>
+              <li><strong>Total N:</strong> Total number of valid responses analyzed</li>
+            </ul>
+          </div>
+          
+          <!-- Graph Modes -->
+          <div>
+            <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Graph Modes</h4>
+            <ul class="list-disc list-inside space-y-1 ml-2 text-sm text-gray-700 dark:text-gray-300">
+              <li><strong>Graph Index:</strong> Shows a single overall sentiment score (0-200 scale) for each group, where 100 is neutral, above 100 is positive, and below 100 is negative</li>
+              <li><strong>Graph Pos/Neg Percent:</strong> Shows the actual percentage of people who responded positively (blue) vs. negatively (red) in each group. This makes it easy to see exactly how many people in each category were satisfied/dissatisfied</li>
+            </ul>
+          </div>
+          
+          <!-- Index Values Explained -->
+          <div>
+            <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Index Values Explained</h4>
+            <ul class="list-disc list-inside space-y-1 ml-2 text-sm text-gray-700 dark:text-gray-300">
+              <li><strong>Positive Indexes:</strong> Percentage of favorable/desirable responses (e.g., "Strongly Agree", "Very Satisfied")</li>
+              <li><strong>Negative Indexes:</strong> Percentage of unfavorable/undesirable responses (e.g., "Strongly Disagree", "Very Dissatisfied")</li>
+              <li><strong>Overall Index:</strong> Combined measure where higher values indicate more positive sentiment</li>
+            </ul>
           </div>
         </div>
         <div class="sticky bottom-0 bg-gray-50 dark:bg-gray-900 px-6 py-4 flex justify-end border-t border-gray-200 dark:border-gray-700">
           <Button @click="showExplanation = false">
+            Close
+          </Button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- AI Analysis Modal -->
+    <div v-if="showAIModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" @click.self="showAIModal = false">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full max-h-[85vh] overflow-y-auto">
+        <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
+                AI Analysis
+              </h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                {{ crosstabData.firstQuestion.label }} <span class="text-gray-400 dark:text-gray-500">by</span> {{ crosstabData.secondQuestion.label }}
+              </p>
+            </div>
+            <CloseButton @click="showAIModal = false" />
+          </div>
+        </div>
+        <div class="px-6 py-4">
+          <!-- Loading State -->
+          <div v-if="loadingAnalysis" class="flex flex-col items-center justify-center py-8">
+            <svg class="animate-spin h-10 w-10 text-blue-600 dark:text-blue-400 mb-4" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="text-sm text-gray-600 dark:text-gray-400">Generating AI analysis...</p>
+          </div>
+          
+          <!-- Analysis Content -->
+          <div v-else-if="aiAnalysis" class="space-y-4">
+            <div v-for="(section, idx) in parseAIAnalysis(aiAnalysis)" :key="idx">
+              <h4 v-if="section.heading" class="font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
+                <span class="w-1 h-5 bg-blue-500 rounded"></span>
+                {{ section.heading }}
+              </h4>
+              <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed" :class="section.heading ? 'ml-3' : ''">
+                {{ section.content }}
+              </p>
+            </div>
+            
+            <!-- Regenerate Option -->
+            <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+              <Button
+                @click="generateAIAnalysis"
+                variant="ghost"
+                size="sm"
+                :loading="loadingAnalysis"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Regenerate Analysis
+              </Button>
+            </div>
+          </div>
+          
+          <!-- Generate Prompt -->
+          <div v-else class="py-8">
+            <div class="text-center mb-6">
+              <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 mb-4">
+                <svg class="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
+              </div>
+              <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Generate AI Analysis</h4>
+              <p class="text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+                Our AI will analyze your crosstab data and provide insights including a summary, statistical interpretation, category comparisons, and actionable recommendations.
+              </p>
+            </div>
+            <div class="flex justify-center">
+              <Button
+                @click="generateAIAnalysis"
+                :loading="loadingAnalysis"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Generate Analysis
+              </Button>
+            </div>
+          </div>
+        </div>
+        <div class="sticky bottom-0 bg-gray-50 dark:bg-gray-900 px-6 py-4 flex justify-end border-t border-gray-200 dark:border-gray-700">
+          <Button @click="showAIModal = false">
             Close
           </Button>
         </div>
@@ -419,11 +460,10 @@ const secondQuestion = ref(props.initialSecondQuestion)
 const crosstabData = ref(null)
 const graphMode = ref('index') // 'index' or 'posneg'
 const showExplanation = ref(false)
+const showAIModal = ref(false)
 const showStatistics = ref(false)
 const aiAnalysis = ref('')
 const loadingAnalysis = ref(false)
-const showGeneralInfo = ref(false)
-const showAIAnalysis = ref(false)
 
 console.log('CrosstabView: Internal refs initialized', { 
   firstQuestion: firstQuestion.value, 
@@ -574,6 +614,50 @@ async function generateAIAnalysis() {
 function formatNumber(value) {
   if (typeof value !== 'number') return value
   return value.toFixed(3)
+}
+
+function parseAIAnalysis(text) {
+  if (!text) return []
+  
+  const sections = []
+  const lines = text.split('\n')
+  let currentSection = null
+  
+  for (const line of lines) {
+    const trimmedLine = line.trim()
+    
+    // Check if line is a heading (starts with ##)
+    if (trimmedLine.startsWith('## ')) {
+      // Save previous section if it exists
+      if (currentSection) {
+        sections.push(currentSection)
+      }
+      // Start new section
+      currentSection = {
+        heading: trimmedLine.substring(3).trim(),
+        content: ''
+      }
+    } else if (trimmedLine && currentSection) {
+      // Add content to current section
+      if (currentSection.content) {
+        currentSection.content += ' '
+      }
+      currentSection.content += trimmedLine
+    } else if (trimmedLine && !currentSection) {
+      // Content without a heading (shouldn't happen with new format, but handle gracefully)
+      sections.push({
+        heading: null,
+        content: trimmedLine
+      })
+    }
+  }
+  
+  // Don't forget the last section
+  if (currentSection) {
+    sections.push(currentSection)
+  }
+  
+  return sections
 }
 
 function formatPValue(value) {

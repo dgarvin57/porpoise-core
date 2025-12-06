@@ -361,7 +361,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import axios from 'axios'
 import QuestionChart from './QuestionChart.vue'
 import QuestionListSelector from './QuestionListSelector.vue'
@@ -642,30 +642,39 @@ async function loadQuestions() {
     infoExpanded.value = props.initialInfoExpanded
     activeInfoTab.value = props.initialInfoTab
     
-    // Restore selected question if initialQuestionId provided
+    // Restore selected question only if initialQuestionId provided
     if (props.initialQuestionId && questions.value.length > 0) {
       const savedQuestion = questions.value.find(q => q.id === props.initialQuestionId)
       if (savedQuestion) {
         selectedQuestion.value = savedQuestion
-      } else {
-        // If saved question not found, select first
-        selectedQuestion.value = questions.value[0]
       }
-    } else if (questions.value.length > 0 && !selectedQuestion.value) {
-      // Default to first question if none selected
-      selectedQuestion.value = questions.value[0]
     }
   } catch (err) {
     console.error('Error loading questions:', err)
   }
 }
 
-// Watch for initialQuestionId changes (e.g., browser back/forward)
-watch(() => props.initialQuestionId, (newQuestionId) => {
-  if (newQuestionId && questions.value.length > 0) {
+// Watch for initialQuestionId changes (e.g., browser back/forward, or synced from crosstab)
+watch(() => props.initialQuestionId, (newQuestionId, oldQuestionId) => {
+  console.log('ResultsView: initialQuestionId changed from', oldQuestionId, 'to', newQuestionId)
+  console.log('ResultsView: questions.value.length =', questions.value.length)
+  
+  // If null/undefined, clear the selection (happens when switching surveys)
+  if (!newQuestionId) {
+    selectedQuestion.value = null
+    console.log('ResultsView: Cleared selectedQuestion')
+    return
+  }
+  
+  if (questions.value.length > 0) {
     const question = questions.value.find(q => q.id === newQuestionId)
+    console.log('ResultsView: Found question:', question)
     if (question) {
-      selectedQuestion.value = question
+      // Only update if it's actually different
+      if (selectedQuestion.value?.id !== question.id) {
+        selectedQuestion.value = question
+        console.log('ResultsView: Set selectedQuestion to:', question.label)
+      }
     }
   }
 })

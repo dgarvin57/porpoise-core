@@ -2,10 +2,27 @@
   <div class="h-full flex flex-col">
     <!-- Instructions -->
     <div v-if="selectionMode === 'crosstab'" class="p-4 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800" :class="{ 'animate-pulse-twice': pulseInstructions }">
-      <p class="text-sm text-blue-900 dark:text-blue-100 font-medium mb-1">
-        {{ instructionText }}
-      </p>
-      <div class="flex gap-2 text-xs overflow-hidden">
+      <div class="flex items-start justify-between mb-2">
+        <p class="text-sm text-blue-900 dark:text-blue-100 font-medium">
+          {{ instructionText }}
+        </p>
+        <button
+          @click="showVariableHelp = !showVariableHelp"
+          class="p-1 bg-transparent text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded transition-colors flex-shrink-0 ml-2"
+          title="Learn about variable selection"
+        >
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+          </svg>
+        </button>
+      </div>
+      <div v-if="showVariableHelp" class="mb-2 p-2 bg-white dark:bg-gray-800 rounded text-xs text-gray-700 dark:text-gray-300 border border-blue-200 dark:border-blue-700">
+        <p class="font-medium mb-2">Variable Selection Guide:</p>
+        <p class="mb-2"><strong>First Variable:</strong> Typically your outcome or dependent variable (e.g., satisfaction, opinion)</p>
+        <p class="mb-2"><strong>Second Variable:</strong> Typically your demographic or independent variable (e.g., age, location)</p>
+        <p class="text-gray-600 dark:text-gray-400 italic">Note: You can cross-tabulate any two variables regardless of type.</p>
+      </div>
+      <div class="flex gap-2 text-xs overflow-hidden mt-3">
         <div class="flex items-center gap-1 min-w-0 flex-1">
           <span class="inline-flex items-center justify-center w-5 h-5 rounded bg-blue-600 text-white font-semibold flex-shrink-0">1</span>
           <span class="text-blue-800 dark:text-blue-200 truncate" :title="firstSelection?.label || 'First Variable'">
@@ -142,16 +159,8 @@
                 :class="getQuestionClasses(question)"
                 class="w-full flex items-center space-x-2 px-2 py-0.5 rounded cursor-pointer transition-all border-l"
               >
-                <!-- Selection Badge or Variable Type Icon -->
-                <span 
-                  v-if="getSelectionNumber(question)"
-                  :class="getSelectionBadgeClasses(question)"
-                  class="inline-flex items-center justify-center w-5 h-5 rounded font-semibold text-white text-xs flex-shrink-0"
-                >
-                  {{ getSelectionNumber(question) }}
-                </span>
+                <!-- Variable Type Icon (always show) -->
                 <svg 
-                  v-else
                   class="w-3.5 h-3.5 flex-shrink-0" 
                   :class="question.variableType === 1 ? 'text-red-400' : question.variableType === 2 ? 'text-blue-400' : 'text-gray-400'"
                   fill="currentColor" 
@@ -167,6 +176,15 @@
                   </svg>
                   <span class="text-xs text-gray-400 dark:text-gray-500 ml-2">{{ question.qstNumber }}</span>
                 </div>
+                
+                <!-- Selection Badge (right side) -->
+                <span 
+                  v-if="getSelectionNumber(question)"
+                  :class="getSelectionBadgeClasses(question)"
+                  class="inline-flex items-center justify-center w-5 h-5 rounded font-semibold text-white text-xs flex-shrink-0"
+                >
+                  {{ getSelectionNumber(question) }}
+                </span>
               </div>
             </div>
           </div>
@@ -178,16 +196,8 @@
             :class="getQuestionClasses(item.question || item)"
             class="w-full flex items-center space-x-2 px-2 py-0.5 rounded cursor-pointer transition-all border-l-2"
           >
-            <!-- Selection Badge or Variable Type Icon -->
-            <span 
-              v-if="getSelectionNumber(item.question || item)"
-              :class="getSelectionBadgeClasses(item.question || item)"
-              class="inline-flex items-center justify-center w-5 h-5 rounded font-semibold text-white text-xs flex-shrink-0"
-            >
-              {{ getSelectionNumber(item.question || item) }}
-            </span>
+            <!-- Variable Type Icon (always show) -->
             <svg 
-              v-else
               class="w-3.5 h-3.5 flex-shrink-0" 
               :class="(item.question || item).variableType === 1 ? 'text-red-400' : (item.question || item).variableType === 2 ? 'text-blue-400' : 'text-gray-400'"
               fill="currentColor" 
@@ -203,6 +213,15 @@
               </svg>
               <span class="text-xs text-gray-400 dark:text-gray-500 ml-2">{{ (item.question || item).qstNumber }}</span>
             </div>
+            
+            <!-- Selection Badge (right side) -->
+            <span 
+              v-if="getSelectionNumber(item.question || item)"
+              :class="getSelectionBadgeClasses(item.question || item)"
+              class="inline-flex items-center justify-center w-5 h-5 rounded font-semibold text-white text-xs flex-shrink-0"
+            >
+              {{ getSelectionNumber(item.question || item) }}
+            </span>
           </div>
         </div>
       </div>
@@ -249,12 +268,11 @@
         </div>
         
         <div class="flex justify-end">
-          <button
+          <Button
             @click="closeThirdVariableModal"
-            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
           >
             Got it
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -264,6 +282,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue'
 import axios from 'axios'
+import Button from '../common/Button.vue'
 
 const props = defineProps({
   surveyId: {
@@ -308,6 +327,7 @@ const loading = ref(false)
 const error = ref(null)
 const questions = ref([])
 const searchQuery = ref('')
+const showVariableHelp = ref(false)
 
 // Crosstab selections
 const firstSelection = ref(props.initialFirstSelection)
@@ -387,7 +407,7 @@ const singleSelection = ref(null)
 // Computed
 const instructionText = computed(() => {
   if (!firstSelection.value) {
-    return 'Click on a question to select the first variable'
+    return 'Click on a question to select the first variable for your analysis'
   } else if (!secondSelection.value) {
     return 'Click on another question to select the second variable'
   } else {
@@ -622,7 +642,7 @@ function getQuestionClasses(question) {
                      (singleSelection.value?.id === questionId)
   
   return isSelected
-    ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-500 dark:border-blue-400'
+    ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-400/60 dark:border-blue-500/60 border'
     : 'hover:bg-gray-100 dark:hover:bg-gray-700 border-transparent'
 }
 
