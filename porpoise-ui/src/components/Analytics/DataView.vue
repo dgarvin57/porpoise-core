@@ -46,45 +46,41 @@
 
     <!-- Data Table -->
     <div v-else-if="data" class="flex-1 overflow-auto">
-      <div class="min-w-full inline-block align-middle">
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead class="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10">
-              <tr>
-                <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-100 dark:bg-gray-800 sticky left-0 z-20">
-                  Row #
-                </th>
-                <th 
-                  v-for="(header, index) in data.headerRow" 
-                  :key="index"
-                  scope="col" 
-                  class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap"
-                >
-                  {{ header }}
-                </th>
-              </tr>
-            </thead>
-            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              <tr 
-                v-for="(row, rowIndex) in paginatedData" 
-                :key="rowIndex"
-                class="hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                <td class="px-3 py-2 text-sm font-medium text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-900 sticky left-0">
-                  {{ rowIndex + 1 + (currentPage - 1) * rowsPerPage }}
-                </td>
-                <td 
-                  v-for="(cell, cellIndex) in row" 
-                  :key="cellIndex"
-                  class="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap"
-                >
-                  {{ cell }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+        <thead class="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10">
+          <tr>
+            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-100 dark:bg-gray-800 sticky left-0 z-20 border-r border-gray-300 dark:border-gray-600">
+              Row #
+            </th>
+            <th 
+              v-for="(header, index) in data.headerRow" 
+              :key="index"
+              scope="col" 
+              class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap"
+            >
+              {{ header }}
+            </th>
+          </tr>
+        </thead>
+        <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+          <tr 
+            v-for="(row, rowIndex) in paginatedData" 
+            :key="rowIndex"
+            class="hover:bg-gray-50 dark:hover:bg-gray-700"
+          >
+            <td class="px-3 py-2 text-sm font-medium text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-900 sticky left-0 z-10 border-r border-gray-300 dark:border-gray-600">
+              {{ rowIndex + 1 + (currentPage - 1) * rowsPerPage }}
+            </td>
+            <td 
+              v-for="(cell, cellIndex) in row" 
+              :key="cellIndex"
+              class="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap"
+            >
+              {{ cell }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
 
     <!-- Pagination Controls -->
