@@ -197,7 +197,6 @@
         <ResultsView 
           v-show="activeSection === 'results'" 
           :surveyId="surveyId"
-          :surveyNotes="surveyNotes"
           :initialQuestionId="selectedQuestionId"
           :initialExpandedBlocks="expandedBlocks"
           :initialColumnMode="columnMode"
@@ -208,7 +207,6 @@
           @column-mode-changed="handleColumnModeChanged"
           @info-expanded-changed="handleInfoExpandedChanged"
           @info-tab-changed="handleInfoTabChanged"
-          @survey-notes-updated="handleSurveyNotesUpdated"
           @analyze-crosstab="handleAnalyzeCrosstab"
         />
 
@@ -260,7 +258,6 @@ const editableSurveyName = ref('')
 const isHoveringName = ref(false)
 const isEditingName = ref(false)
 const projectName = ref('')
-const surveyNotes = ref('')
 const totalCases = ref(0)
 const questionCount = ref(0)
 const activeSection = ref('results')
@@ -502,16 +499,11 @@ function handleAnalyzeCrosstab(question) {
   saveSurveyState()
 }
 
-function handleSurveyNotesUpdated(notes) {
-  surveyNotes.value = notes
-}
-
 async function loadSurveyInfo() {
   try {
     const response = await axios.get(`http://localhost:5107/api/surveys/${surveyId.value}`)
     surveyName.value = response.data.surveyName || response.data.name
     editableSurveyName.value = surveyName.value
-    surveyNotes.value = response.data.surveyNotes || ''
     
     // Load project info
     if (response.data.projectId) {

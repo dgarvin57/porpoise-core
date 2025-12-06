@@ -85,6 +85,43 @@
       </div>
     </div>
 
+    <!-- Search Bar -->
+    <div class="flex items-center gap-4">
+      <div class="flex-1 max-w-2xl">
+        <div class="relative">
+          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Search projects and surveys..."
+            class="block w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <button
+            v-if="searchQuery"
+            @click="clearSearch"
+            class="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded bg-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 transition-colors"
+            title="Clear search"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap cursor-pointer">
+        <input
+          v-model="searchInQuestions"
+          type="checkbox"
+          class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+        />
+        <span>Search in questions</span>
+      </label>
+    </div>
+
     <!-- Filters (Collapsible) -->
     <transition
       enter-active-class="transition-all duration-200 ease-out"
@@ -384,6 +421,9 @@ const activeFilters = ref({
   dateRange: '',
   projectType: ''
 })
+const searchQuery = ref('')
+const searchInQuestions = ref(false)
+const allSurveysForSearch = ref(new Map()) // Cache all surveys for search
 
 // Fetch projects from API
 async function fetchProjects() {
@@ -444,9 +484,50 @@ const totalSurveyCount = computed(() => {
   return filteredProjects.value.reduce((sum, project) => sum + (project.surveyCount || 0), 0)
 })
 
-// Filter projects based on active filters
+// Filter projects based on active filters and search query
 const filteredProjects = computed(() => {
   let result = [...projects.value]
+  
+  // Search filter
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase().trim()
+    result = result.filter(p => {
+      // Search in project name
+      if (p.name?.toLowerCase().includes(query)) return true
+      
+      // Search in project description
+      if (p.description?.toLowerCase().includes(query)) return true
+      
+      // Search in survey names (check both loaded surveys and search cache)
+      const surveysToSearch = projectSurveys.value.get(p.id) || allSurveysForSearch.value.get(p.id) || []
+      if (surveysToSearch.some(s => s.name?.toLowerCase().includes(query))) return true
+      
+      // If "search in questions" is enabled, search in question labels/stems
+      if (searchInQuestions.value) {
+        // Search through surveys for question matches
+        for (const survey of surveysToSearch) {
+          if (survey.questions && survey.questions.length > 0) {
+            // Search in question numbers
+            if (survey.questions.some(q => q.number?.toLowerCase().includes(query))) return true
+            
+            // Search in question labels
+            if (survey.questions.some(q => q.label?.toLowerCase().includes(query))) return true
+            
+            // Search in question stems (full question text)
+            if (survey.questions.some(q => q.stem?.toLowerCase().includes(query))) return true
+            
+            // Search in block labels
+            if (survey.questions.some(q => q.blockLabel?.toLowerCase().includes(query))) return true
+            
+            // Search in block stems
+            if (survey.questions.some(q => q.blockStem?.toLowerCase().includes(query))) return true
+          }
+        }
+      }
+      
+      return false
+    })
+  }
   
   // Client filter
   if (activeFilters.value.client) {
@@ -539,6 +620,111 @@ watch(viewMode, (newVal, oldVal) => {
   // Load expansion state for the new view
   const newStorageKey = newVal === 'grid' ? 'expandedProjectsGrid' : 'expandedProjectsList'
   expandedProjects.value = new Set(JSON.parse(localStorage.getItem(newStorageKey) || '[]'))
+})
+
+// Load surveys for search when user starts typing
+watch(searchQuery, async (newVal) => {
+  if (newVal.trim()) {
+    // Load surveys for all projects that don't have them cached yet
+    const projectsToLoad = projects.value.filter(p => 
+      !projectSurveys.value.has(p.id) && 
+      !allSurveysForSearch.value.has(p.id)
+    )
+    
+    if (projectsToLoad.length > 0) {
+      // Load surveys in parallel (but limit to avoid overwhelming the server)
+      const batchSize = 10
+      for (let i = 0; i < projectsToLoad.length; i += batchSize) {
+        const batch = projectsToLoad.slice(i, i + batchSize)
+        await Promise.all(batch.map(async (project) => {
+          try {
+            const response = await axios.get(`http://localhost:5107/api/projects/${project.id}/surveys`)
+            allSurveysForSearch.value.set(project.id, response.data.map(s => ({
+              id: s.id,
+              name: s.name,
+              status: s.status,
+              caseCount: s.caseCount,
+              questionCount: s.questionCount,
+              createdDate: s.createdDate,
+              modifiedDate: s.modifiedDate
+            })))
+          } catch (error) {
+            console.error('Error loading surveys for search:', error)
+          }
+        }))
+      }
+    }
+  }
+})
+
+// Load question data when "search in questions" is enabled
+// Use a combined watcher to handle both checkbox and search query changes
+watch([searchInQuestions, searchQuery], async ([questionsEnabled, query]) => {
+  if (questionsEnabled && query.trim()) {
+    // First, ensure all surveys are loaded
+    const projectsNeedingSurveys = projects.value.filter(p => 
+      !projectSurveys.value.has(p.id) && !allSurveysForSearch.value.has(p.id)
+    )
+    
+    if (projectsNeedingSurveys.length > 0) {
+      const batchSize = 10
+      for (let i = 0; i < projectsNeedingSurveys.length; i += batchSize) {
+        const batch = projectsNeedingSurveys.slice(i, i + batchSize)
+        await Promise.all(batch.map(async (project) => {
+          try {
+            const response = await axios.get(`http://localhost:5107/api/projects/${project.id}/surveys`)
+            allSurveysForSearch.value.set(project.id, response.data.map(s => ({
+              id: s.id,
+              name: s.name,
+              status: s.status,
+              caseCount: s.caseCount,
+              questionCount: s.questionCount,
+              createdDate: s.createdDate,
+              modifiedDate: s.modifiedDate
+            })))
+          } catch (error) {
+            console.error('Error loading surveys for search:', error)
+          }
+        }))
+      }
+    }
+    
+    // Now load questions for all surveys that don't have them yet
+    const surveysToLoad = []
+    
+    for (const project of projects.value) {
+      const surveys = projectSurveys.value.get(project.id) || allSurveysForSearch.value.get(project.id) || []
+      for (const survey of surveys) {
+        if (!survey.questions) {
+          surveysToLoad.push({ projectId: project.id, surveyId: survey.id, survey })
+        }
+      }
+    }
+    
+    if (surveysToLoad.length > 0) {
+      // Load questions in parallel (but limit to avoid overwhelming the server)
+      const batchSize = 5
+      for (let i = 0; i < surveysToLoad.length; i += batchSize) {
+        const batch = surveysToLoad.slice(i, i + batchSize)
+        await Promise.all(batch.map(async ({ projectId, surveyId, survey }) => {
+          try {
+            const response = await axios.get(`http://localhost:5107/api/surveys/${surveyId}/questions-list`)
+            // Add questions to the survey object - map to correct field names from API
+            survey.questions = response.data.map(q => ({
+              id: q.id,
+              number: q.qstNumber,        // Question number
+              label: q.qstLabel,          // Question label
+              stem: q.qstStem || q.text,  // Question stem (try qstStem first, fallback to text)
+              blockLabel: q.blkLabel,     // Block label
+              blockStem: q.blkStem        // Block stem
+            }))
+          } catch (error) {
+            console.error('Error loading questions for search:', error)
+          }
+        }))
+      }
+    }
+  }
 })
 
 function handleToggleExpand(projectId) {
@@ -675,6 +861,11 @@ function getStatusClass(status) {
     'Draft': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
   }
   return statusMap[status] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+}
+
+function clearSearch() {
+  searchQuery.value = ''
+  searchInQuestions.value = false
 }
 
 async function deleteProject(projectId, projectName) {

@@ -140,27 +140,8 @@
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h8m-8 4h5" />
                     </svg>
-                    <svg v-else-if="tab.id === 'questionNotes'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    <svg v-else-if="tab.id === 'surveyNotes'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
                     
                     <span>{{ tab.label }}</span>
-                    
-                    <!-- Indicator dot for notes with content -->
-                    <svg
-                      v-if="(tab.id === 'questionNotes' && selectedQuestion?.questionNotes) || (tab.id === 'surveyNotes' && surveyNotes)"
-                      class="w-4 h-4 text-blue-500 dark:text-blue-400"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                      :title="tab.id === 'questionNotes' ? 'Has question notes' : 'Has survey notes'"
-                    >
-                      <circle cx="10" cy="10" r="4" />
-                    </svg>
                   </button>
                 </div>
                 
@@ -176,94 +157,6 @@
                   <div v-else-if="activeInfoTab === 'block'">
                     <p v-if="blockStemForQuestion" class="text-sm text-gray-500 dark:text-gray-500 italic whitespace-pre-wrap leading-relaxed">{{ blockStemForQuestion }}</p>
                     <p v-else class="text-sm text-gray-400 dark:text-gray-600 italic">No block stem available</p>
-                  </div>
-                  
-                  <!-- Question Notes (Editable) -->
-                  <div v-else-if="activeInfoTab === 'questionNotes'">
-                    <div v-if="editingQuestionNotes">
-                      <textarea
-                        v-model="editedQuestionNotes"
-                        class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y min-h-[100px]"
-                        placeholder="Enter question notes..."
-                      ></textarea>
-                      <div class="flex justify-end space-x-2 mt-2">
-                        <button
-                          @click="cancelQuestionNotesEdit"
-                          class="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          @click="saveQuestionNotes"
-                          class="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                        >
-                          Save
-                        </button>
-                      </div>
-                    </div>
-                    <div v-else>
-                      <p v-if="selectedQuestion?.questionNotes" class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">{{ selectedQuestion.questionNotes }}</p>
-                      <p v-else class="text-sm text-gray-400 dark:text-gray-600 italic">No question notes</p>
-                      <div class="mt-3 flex space-x-2">
-                        <button
-                          @click="startEditingQuestionNotes"
-                          class="px-2.5 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          {{ selectedQuestion?.questionNotes ? 'Edit Notes' : 'Add Notes' }}
-                        </button>
-                        <button
-                          v-if="selectedQuestion?.questionNotes"
-                          @click="deleteQuestionNotes"
-                          class="px-2.5 py-1 text-xs font-medium text-white bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-500 rounded focus:outline-none focus:ring-2 focus:ring-red-500"
-                        >
-                          Delete Notes
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <!-- Survey Notes (Editable) -->
-                  <div v-else-if="activeInfoTab === 'surveyNotes'">
-                    <div v-if="editingSurveyNotes">
-                      <textarea
-                        v-model="editedSurveyNotes"
-                        class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y min-h-[100px]"
-                        placeholder="Enter survey notes..."
-                      ></textarea>
-                      <div class="flex justify-end space-x-2 mt-2">
-                        <button
-                          @click="cancelSurveyNotesEdit"
-                          class="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          @click="saveSurveyNotes"
-                          class="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                        >
-                          Save
-                        </button>
-                      </div>
-                    </div>
-                    <div v-else>
-                      <p v-if="surveyNotes" class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">{{ surveyNotes }}</p>
-                      <p v-else class="text-sm text-gray-400 dark:text-gray-600 italic">No survey notes</p>
-                      <div class="mt-3 flex space-x-2">
-                        <button
-                          @click="startEditingSurveyNotes"
-                          class="px-2.5 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          {{ surveyNotes ? 'Edit Notes' : 'Add Notes' }}
-                        </button>
-                        <button
-                          v-if="surveyNotes"
-                          @click="deleteSurveyNotes"
-                          class="px-2.5 py-1 text-xs font-medium text-white bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-500 rounded focus:outline-none focus:ring-2 focus:ring-red-500"
-                        >
-                          Delete Notes
-                        </button>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -561,10 +454,6 @@ const props = defineProps({
     type: String,
     required: true
   },
-  surveyNotes: {
-    type: String,
-    default: ''
-  },
   hideSidebar: {
     type: Boolean,
     default: false
@@ -595,7 +484,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['question-selected', 'expanded-blocks-changed', 'column-mode-changed', 'info-expanded-changed', 'info-tab-changed', 'survey-notes-updated', 'analyze-crosstab'])
+const emit = defineEmits(['question-selected', 'expanded-blocks-changed', 'column-mode-changed', 'info-expanded-changed', 'info-tab-changed', 'analyze-crosstab'])
 
 const selectedQuestion = ref(null)
 const columnMode = ref('totalN')
@@ -609,16 +498,8 @@ const infoExpanded = ref(false)
 const activeInfoTab = ref('question')
 const infoTabs = [
   { id: 'question', label: 'Question Stem' },
-  { id: 'block', label: 'Block Stem' },
-  { id: 'questionNotes', label: 'Question Notes' },
-  { id: 'surveyNotes', label: 'Survey Notes' }
+  { id: 'block', label: 'Block Stem' }
 ]
-
-// Edit state for notes
-const editingQuestionNotes = ref(false)
-const editedQuestionNotes = ref('')
-const editingSurveyNotes = ref(false)
-const editedSurveyNotes = ref('')
 
 // AI Analysis and Understanding modals
 const showAIModal = ref(false)
@@ -732,112 +613,6 @@ function analyzeCrosstab() {
 function handleExpandedBlocksChanged(expandedBlockIds) {
   // Forward the event to parent
   emit('expanded-blocks-changed', expandedBlockIds)
-}
-
-// Question Notes editing
-function startEditingQuestionNotes() {
-  editedQuestionNotes.value = selectedQuestion.value?.questionNotes || ''
-  editingQuestionNotes.value = true
-}
-
-function cancelQuestionNotesEdit() {
-  editingQuestionNotes.value = false
-  editedQuestionNotes.value = ''
-}
-
-async function saveQuestionNotes() {
-  try {
-    await axios.patch(`http://localhost:5107/api/surveys/${props.surveyId}/questions/${selectedQuestion.value.id}`, {
-      questionNotes: editedQuestionNotes.value
-    })
-    
-    // Update the question in the questions array (to maintain order)
-    const questionIndex = questions.value.findIndex(q => q.id === selectedQuestion.value.id)
-    if (questionIndex !== -1) {
-      questions.value[questionIndex].questionNotes = editedQuestionNotes.value
-    }
-    
-    // Also update selected question reference
-    if (selectedQuestion.value) {
-      selectedQuestion.value.questionNotes = editedQuestionNotes.value
-    }
-    
-    editingQuestionNotes.value = false
-  } catch (err) {
-    console.error('Error saving question notes:', err)
-    alert('Failed to save question notes. Please try again.')
-  }
-}
-
-async function deleteQuestionNotes() {
-  if (!confirm('Are you sure you want to delete these question notes?')) {
-    return
-  }
-  
-  try {
-    await axios.patch(`http://localhost:5107/api/surveys/${props.surveyId}/questions/${selectedQuestion.value.id}`, {
-      questionNotes: ''
-    })
-    
-    // Update the question in the questions array
-    const questionIndex = questions.value.findIndex(q => q.id === selectedQuestion.value.id)
-    if (questionIndex !== -1) {
-      questions.value[questionIndex].questionNotes = ''
-    }
-    
-    // Also update selected question reference
-    if (selectedQuestion.value) {
-      selectedQuestion.value.questionNotes = ''
-    }
-  } catch (err) {
-    console.error('Error deleting question notes:', err)
-    alert('Failed to delete question notes. Please try again.')
-  }
-}
-
-// Survey Notes editing
-function startEditingSurveyNotes() {
-  editedSurveyNotes.value = props.surveyNotes || ''
-  editingSurveyNotes.value = true
-}
-
-function cancelSurveyNotesEdit() {
-  editingSurveyNotes.value = false
-  editedSurveyNotes.value = ''
-}
-
-async function saveSurveyNotes() {
-  try {
-    await axios.patch(`http://localhost:5107/api/surveys/${props.surveyId}`, {
-      surveyNotes: editedSurveyNotes.value
-    })
-    
-    // Emit event to parent to update survey notes
-    emit('survey-notes-updated', editedSurveyNotes.value)
-    
-    editingSurveyNotes.value = false
-  } catch (err) {
-    console.error('Error saving survey notes:', err)
-    alert('Failed to save survey notes. Please try again.')
-  }
-}
-
-async function deleteSurveyNotes() {
-  if (!confirm('Are you sure you want to delete these survey notes?')) {
-    return
-  }
-  
-  try {
-    await axios.patch(`http://localhost:5107/api/surveys/${props.surveyId}`, {
-      surveyNotes: ''
-    })
-    
-    // Emit event to parent to update survey notes
-    emit('survey-notes-updated', '')
-  } catch (err) {
-    console.error('Error deleting survey notes:', err)
-    alert('Failed to delete survey notes. Please try again.')
-  }
 }
 
 // Simplified - just load questions for block stem lookup and initializing selected question

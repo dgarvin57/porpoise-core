@@ -171,9 +171,6 @@
                 
                 <div class="flex-1 min-w-0 leading-none">
                   <span class="text-sm text-gray-700 dark:text-gray-300">{{ question.label }}</span>
-                  <svg v-if="showNotesIcons && question.questionNotes" class="inline-block w-3.5 h-3.5 text-blue-500 dark:text-blue-400 ml-1.5 -mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                  </svg>
                   <span class="text-xs text-gray-400 dark:text-gray-500 ml-2">{{ question.qstNumber }}</span>
                 </div>
                 
@@ -208,9 +205,6 @@
             
             <div class="flex-1 min-w-0 leading-none">
               <span class="text-sm text-gray-700 dark:text-gray-300">{{ (item.question || item).label }}</span>
-              <svg v-if="showNotesIcons && (item.question || item).questionNotes" class="inline-block w-3.5 h-3.5 text-blue-500 dark:text-blue-400 ml-1.5 -mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-              </svg>
               <span class="text-xs text-gray-400 dark:text-gray-500 ml-2">{{ (item.question || item).qstNumber }}</span>
             </div>
             
@@ -494,8 +488,7 @@ async function loadQuestions() {
             label: q.qstLabel,
             qstNumber: q.qstNumber,
             variableType: q.variableType,
-            blkLabel: q.blkLabel,
-            questionNotes: q.questionNotes
+            blkLabel: q.blkLabel
           })
         }
       } else if (q.blkQstStatus === 2 && q.blkLabel) {
@@ -507,8 +500,7 @@ async function loadQuestions() {
             label: q.qstLabel,
             qstNumber: q.qstNumber,
             variableType: q.variableType,
-            blkLabel: q.blkLabel,
-            questionNotes: q.questionNotes
+            blkLabel: q.blkLabel
           })
         }
       } else {
@@ -517,8 +509,7 @@ async function loadQuestions() {
           id: q.id,
           label: q.qstLabel,
           qstNumber: q.qstNumber,
-          variableType: q.variableType,
-          questionNotes: q.questionNotes
+          variableType: q.variableType
         }
         
         if (props.wrapStandaloneQuestions) {

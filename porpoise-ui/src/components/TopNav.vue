@@ -13,25 +13,6 @@
           </div>
         </router-link>
 
-      <!-- Center: Global Search -->
-      <div class="flex-1 max-w-2xl">
-        <div class="relative w-full">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
-          <input
-            v-model="searchQuery"
-            @input="handleSearch"
-            type="text"
-            placeholder="Search projects, surveys, clients..."
-            class="block w-full pl-10 pr-12 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-          <kbd class="absolute inset-y-0 right-3 flex items-center text-xs text-gray-400">⌘K</kbd>
-        </div>
-      </div>
-
       <!-- Right: Actions -->
       <div class="flex items-center space-x-4 flex-shrink-0">
         <!-- Import -->
@@ -109,7 +90,6 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const searchQuery = ref('')
 const showUserMenu = ref(false)
 
 // Read initial theme state (already set by index.html script)
@@ -140,11 +120,6 @@ const toggleTheme = () => {
     document.documentElement.classList.remove('dark')
     localStorage.setItem('theme', 'light')
   }
-}
-
-const handleSearch = () => {
-  // Will implement global search
-  console.log('Search:', searchQuery.value)
 }
 
 const toggleUserMenu = () => {
