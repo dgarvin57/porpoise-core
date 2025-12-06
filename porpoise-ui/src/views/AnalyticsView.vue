@@ -279,7 +279,7 @@ const splitViewEnabled = ref(false)
 
 // For split view - track which question to show in results panel
 const selectedQuestionForSplit = ref(null)
-const splitViewLeftWidth = ref(40)
+const splitViewLeftWidth = ref(38)  // ~570px on typical screens
 const isResizing = ref(false)
 
 const startResize = (e) => {
@@ -369,7 +369,7 @@ function loadSurveyState() {
         infoTab.value = state.infoTab || 'question'
         crosstabFirstQuestion.value = state.crosstabFirstQuestion || null
         crosstabSecondQuestion.value = state.crosstabSecondQuestion || null
-        splitViewLeftWidth.value = state.splitViewLeftWidth || 30
+        splitViewLeftWidth.value = state.splitViewLeftWidth || 38  // Default ~570px on typical screens
         console.log('AnalyticsView: Restored crosstab questions', { first: crosstabFirstQuestion.value, second: crosstabSecondQuestion.value })
       }
     } catch (error) {
