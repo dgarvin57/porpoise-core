@@ -152,6 +152,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import { API_BASE_URL } from '@/config/api'
 import SurveyList from './SurveyList.vue'
 import ProjectSettingsModal from './ProjectSettingsModal.vue'
 
@@ -187,7 +188,7 @@ const logoBase64 = ref(null)
 onMounted(async () => {
   if (!logoBase64.value && !props.project.clientLogoBase64) {
     try {
-      const response = await axios.get(`http://localhost:5107/api/projects/${props.project.id}`)
+      const response = await axios.get(`${API_BASE_URL}/api/projects/${props.project.id}`)
       if (response.data.clientLogoBase64) {
         logoBase64.value = response.data.clientLogoBase64
       }
@@ -246,7 +247,7 @@ function handleGearClick() {
 async function loadSurveys() {
   loadingSurveys.value = true
   try {
-    const response = await axios.get(`http://localhost:5107/api/projects/${props.project.id}/surveys`)
+    const response = await axios.get(`${API_BASE_URL}/api/projects/${props.project.id}/surveys`)
     surveys.value = response.data.map(s => ({
       id: s.id,
       name: s.name,

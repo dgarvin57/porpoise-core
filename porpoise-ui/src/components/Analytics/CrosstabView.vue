@@ -431,6 +431,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import axios from 'axios'
+import { API_BASE_URL } from '@/config/api'
 import QuestionListSelector from './QuestionListSelector.vue'
 import Button from '../common/Button.vue'
 import CloseButton from '../common/CloseButton.vue'
@@ -560,7 +561,7 @@ async function generateCrosstab() {
 
   try {
     const response = await axios.post(
-      `http://localhost:5107/api/survey-analysis/${props.surveyId}/crosstab`,
+      `${API_BASE_URL}/api/survey-analysis/${props.surveyId}/crosstab`,
       {
         firstQuestionId: firstQuestion.value.id,
         secondQuestionId: secondQuestion.value.id
@@ -600,7 +601,7 @@ async function generateAIAnalysis() {
     }
     
     const response = await axios.post(
-      `http://localhost:5107/api/survey-analysis/${props.surveyId}/analyze-crosstab`,
+      `${API_BASE_URL}/api/survey-analysis/${props.surveyId}/analyze-crosstab`,
       context
     )
     

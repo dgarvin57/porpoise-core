@@ -76,11 +76,12 @@
 </template>
 
 <script setup>
+import { API_BASE_URL } from '@/config/api'
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 
-const API_URL = 'http://localhost:5107/api'
+const API_URL = '${API_BASE_URL}/api'
 const TENANT_ID = 'demo-tenant'
 
 const router = useRouter()

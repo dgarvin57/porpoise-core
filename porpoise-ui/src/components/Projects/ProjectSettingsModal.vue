@@ -245,6 +245,7 @@
 </template>
 
 <script setup>
+import { API_BASE_URL } from '@/config/api'
 import { ref, watch } from 'vue'
 import axios from 'axios'
 import CloseButton from '../common/CloseButton.vue'
@@ -290,7 +291,7 @@ watch(() => props.isOpen, async (isOpen) => {
     loading.value = true
     try {
       // Fetch full project details including logo
-      const response = await axios.get(`http://localhost:5107/api/projects/${props.project.id}`)
+      const response = await axios.get(`${API_BASE_URL}/api/projects/${props.project.id}`)
       const projectData = response.data
       
       formData.value = {
@@ -432,7 +433,7 @@ async function saveChanges() {
       endDate: formData.value.endDate || null
     }
     
-    await axios.put(`http://localhost:5107/api/projects/${props.project.id}`, updateData)
+    await axios.put(`${API_BASE_URL}/api/projects/${props.project.id}`, updateData)
     
     // Emit with proper field mapping for parent component
     emit('saved', {

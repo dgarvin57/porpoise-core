@@ -161,6 +161,7 @@
 </template>
 
 <script setup>
+import { API_BASE_URL } from '@/config/api'
 import { ref, computed, onMounted, watch } from 'vue'
 import axios from 'axios'
 
@@ -266,7 +267,7 @@ const loadQuestions = async () => {
   loading.value = true
   error.value = null
   try {
-    const response = await axios.get(`http://localhost:5107/api/surveys/${props.surveyId}/questions-list`)
+    const response = await axios.get(`${API_BASE_URL}/api/surveys/${props.surveyId}/questions-list`)
     questions.value = response.data || []
   } catch (err) {
     error.value = 'Failed to load questions: ' + (err.response?.data?.message || err.message)

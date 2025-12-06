@@ -128,6 +128,7 @@
 </template>
 
 <script setup>
+import { API_BASE_URL } from '@/config/api'
 import { ref, computed, watch } from 'vue'
 import axios from 'axios'
 
@@ -163,7 +164,7 @@ const loadData = async () => {
   error.value = null
   
   try {
-    const response = await axios.get(`http://localhost:5107/api/surveys/${props.surveyId}/data`)
+    const response = await axios.get(`${API_BASE_URL}/api/surveys/${props.surveyId}/data`)
     data.value = response.data
   } catch (err) {
     console.error('Error loading survey data:', err)

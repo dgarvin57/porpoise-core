@@ -402,6 +402,7 @@
 import { ref, computed, onMounted, onActivated, watch } from 'vue'
 import axios from 'axios'
 import { useRouter, useRoute } from 'vue-router'
+import { API_BASE_URL } from '@/config/api'
 import ProjectCard from './ProjectCard.vue'
 import ProjectFilters from './ProjectFilters.vue'
 import SortableColumnHeader from '../UI/SortableColumnHeader.vue'
@@ -440,7 +441,7 @@ async function fetchProjects() {
   
   try {
     // Fetch projects with counts (logos loaded on-demand per card)
-    const response = await axios.get('http://localhost:5107/api/projects/with-counts')
+    const response = await axios.get(`${API_BASE_URL}/api/projects/with-counts`)
     
     // Map API response to component format
     projects.value = response.data.map(p => ({
@@ -641,7 +642,7 @@ watch([searchInQuestions, searchQuery], async ([questionsEnabled, query]) => {
         const batch = projectsNeedingSurveys.slice(i, i + batchSize)
         await Promise.all(batch.map(async (project) => {
           try {
-            const response = await axios.get(`http://localhost:5107/api/projects/${project.id}/surveys`)
+            const response = await axios.get(`${API_BASE_URL}/api/projects/${project.id}/surveys`)
             allSurveysForSearch.value.set(project.id, response.data.map(s => ({
               id: s.id,
               name: s.name,
@@ -679,7 +680,7 @@ watch([searchInQuestions, searchQuery], async ([questionsEnabled, query]) => {
         const batch = surveysToLoad.slice(i, i + batchSize)
         await Promise.all(batch.map(async ({ projectId, surveyId, survey }) => {
           try {
-            const response = await axios.get(`http://localhost:5107/api/surveys/${surveyId}/questions-list`)
+            const response = await axios.get(`${API_BASE_URL}/api/surveys/${surveyId}/questions-list`)
             // Add questions to the survey object - map to correct field names from API
             survey.questions = response.data.map(q => ({
               id: q.id,
@@ -765,7 +766,7 @@ async function toggleProjectExpand(projectId) {
     if (!projectSurveys.value.has(projectId)) {
       loadingSurveys.value.add(projectId)
       try {
-        const response = await axios.get(`http://localhost:5107/api/projects/${projectId}/surveys`)
+        const response = await axios.get(`${API_BASE_URL}/api/projects/${projectId}/surveys`)
         projectSurveys.value.set(projectId, response.data.map(s => ({
           id: s.id,
           name: s.name,
@@ -810,7 +811,7 @@ async function handleSingleProjectClick(project) {
   
   // For single survey projects, fetch the survey and navigate to it
   try {
-    const response = await axios.get(`http://localhost:5107/api/projects/${project.id}/surveys`)
+    const response = await axios.get(`${API_BASE_URL}/api/projects/${project.id}/surveys`)
     if (response.data && response.data.length > 0) {
       navigateToSurvey(response.data[0].id)
     } else {
@@ -845,7 +846,7 @@ async function deleteProject(projectId, projectName) {
   if (!confirm(`Delete project "${projectName}"? It will be moved to trash.`)) return
   
   try {
-    await axios.post(`http://localhost:5107/api/projects/${projectId}/soft-delete`)
+    await axios.post(`${API_BASE_URL}/api/projects/${projectId}/soft-delete`)
     await fetchProjects() // Reload the list
   } catch (error) {
     console.error('Error deleting project:', error)
@@ -857,7 +858,7 @@ async function deleteSurvey(surveyId, surveyName) {
   if (!confirm(`Delete survey "${surveyName}"? It will be moved to trash.`)) return
   
   try {
-    await axios.post(`http://localhost:5107/api/surveys/${surveyId}/soft-delete`)
+    await axios.post(`${API_BASE_URL}/api/surveys/${surveyId}/soft-delete`)
     
     // Reload projects to update counts
     await fetchProjects()
@@ -874,7 +875,7 @@ async function deleteSurvey(surveyId, surveyName) {
     if (affectedProjectId && expandedProjects.value.has(affectedProjectId)) {
       loadingSurveys.value.add(affectedProjectId)
       try {
-        const response = await axios.get(`http://localhost:5107/api/projects/${affectedProjectId}/surveys`)
+        const response = await axios.get(`${API_BASE_URL}/api/projects/${affectedProjectId}/surveys`)
         projectSurveys.value.set(affectedProjectId, response.data.map(s => ({
           id: s.id,
           name: s.name,
@@ -933,7 +934,7 @@ onMounted(async () => {
   if (surveysToLoad.length > 0) {
     await Promise.all(surveysToLoad.map(async (projectId) => {
       try {
-        const response = await axios.get(`http://localhost:5107/api/projects/${projectId}/surveys`)
+        const response = await axios.get(`${API_BASE_URL}/api/projects/${projectId}/surveys`)
         projectSurveys.value.set(projectId, response.data.map(s => ({
           id: s.id,
           name: s.name,
@@ -980,7 +981,7 @@ onActivated(async () => {
   if (surveysToLoad.length > 0) {
     await Promise.all(surveysToLoad.map(async (projectId) => {
       try {
-        const response = await axios.get(`http://localhost:5107/api/projects/${projectId}/surveys`)
+        const response = await axios.get(`${API_BASE_URL}/api/projects/${projectId}/surveys`)
         projectSurveys.value.set(projectId, response.data.map(s => ({
           id: s.id,
           name: s.name,

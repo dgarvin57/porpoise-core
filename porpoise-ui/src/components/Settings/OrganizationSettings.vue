@@ -144,6 +144,7 @@
 </template>
 
 <script setup>
+import { API_BASE_URL } from '@/config/api'
 import { ref, watch, onMounted } from 'vue'
 import axios from 'axios'
 
@@ -174,7 +175,7 @@ async function loadOrganizationSettings() {
   error.value = ''
   
   try {
-    const response = await axios.get('http://localhost:5107/api/tenants/current')
+    const response = await axios.get('${API_BASE_URL}/api/tenants/current')
     const data = response.data
     
     formData.value = {
@@ -244,7 +245,7 @@ async function saveChanges() {
       organizationTagline: formData.value.organizationTagline?.trim() || null
     }
     
-    await axios.put('http://localhost:5107/api/tenants/current/organization', updateData)
+    await axios.put('${API_BASE_URL}/api/tenants/current/organization', updateData)
     
     // Update initial form data to reflect saved state
     initialFormData.value = { ...formData.value }

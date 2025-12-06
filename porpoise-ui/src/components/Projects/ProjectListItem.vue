@@ -160,6 +160,7 @@
 </template>
 
 <script setup>
+import { API_BASE_URL } from '@/config/api'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
@@ -183,7 +184,7 @@ async function toggleExpand() {
   if (isExpanded.value && surveys.value.length === 0 && props.project.surveyCount > 1) {
     loadingSurveys.value = true
     try {
-      const response = await axios.get(`http://localhost:5107/api/projects/${props.project.id}/surveys`)
+      const response = await axios.get(`${API_BASE_URL}/api/projects/${props.project.id}/surveys`)
       // Map API response to component format
       surveys.value = response.data.map(s => ({
         id: s.Id,

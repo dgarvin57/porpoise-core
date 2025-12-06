@@ -71,6 +71,7 @@
 </template>
 
 <script setup>
+import { API_BASE_URL } from '@/config/api'
 import { ref, watch } from 'vue'
 import axios from 'axios'
 import CloseButton from '../common/CloseButton.vue'
@@ -118,7 +119,7 @@ async function saveSurvey() {
   errorMessage.value = ''
   
   try {
-    await axios.patch(`http://localhost:5107/api/surveys/${props.survey.id}`, {
+    await axios.patch(`${API_BASE_URL}/api/surveys/${props.survey.id}`, {
       surveyName: editedSurvey.value.name,
       status: editedSurvey.value.status
     })

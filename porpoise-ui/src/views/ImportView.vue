@@ -274,6 +274,7 @@
 </template>
 
 <script setup>
+import { API_BASE_URL } from '@/config/api'
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
@@ -361,7 +362,7 @@ const uploadFiles = async () => {
       if (ext === 'porpz') {
         // Upload porpz archive
         formData.append('porpzFile', fileItem.file)
-        const response = await axios.post('http://localhost:5107/api/survey-import/porpz', formData, {
+        const response = await axios.post('${API_BASE_URL}/api/survey-import/porpz', formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
           onUploadProgress: (progressEvent) => {
             fileItem.progress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
@@ -402,7 +403,7 @@ const uploadFiles = async () => {
           matchingPorp.progress = 0
         }
         
-        const response = await axios.post('http://localhost:5107/api/survey-import/porps', formData, {
+        const response = await axios.post('${API_BASE_URL}/api/survey-import/porps', formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
           onUploadProgress: (progressEvent) => {
             const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
@@ -502,7 +503,7 @@ const loadInspectData = async () => {
   if (!successfulFile || !successfulFile.surveyId) return
   
   try {
-    const response = await axios.get(`http://localhost:5107/api/surveys/${successfulFile.surveyId}/data`)
+    const response = await axios.get(`${API_BASE_URL}/api/surveys/${successfulFile.surveyId}/data`)
     const data = response.data
     
     // Format the data for display

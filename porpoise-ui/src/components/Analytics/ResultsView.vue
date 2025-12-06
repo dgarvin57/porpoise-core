@@ -444,6 +444,7 @@
 <script setup>
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import axios from 'axios'
+import { API_BASE_URL } from '@/config/api'
 import QuestionChart from './QuestionChart.vue'
 import QuestionListSelector from './QuestionListSelector.vue'
 import Button from '../common/Button.vue'
@@ -615,7 +616,7 @@ function handleExpandedBlocksChanged(expandedBlockIds) {
 // Simplified - just load questions for block stem lookup and initializing selected question
 async function loadQuestions() {
   try {
-    const response = await axios.get(`http://localhost:5107/api/surveys/${props.surveyId}/questions`)
+    const response = await axios.get(`${API_BASE_URL}/api/surveys/${props.surveyId}/questions`)
     questions.value = response.data
     
     // Restore column mode from prop
@@ -766,7 +767,7 @@ const generateAIAnalysis = async () => {
     }
     
     const response = await axios.post(
-      `http://localhost:5107/api/survey-analysis/${props.surveyId}/analyze-question`,
+      `${API_BASE_URL}/api/survey-analysis/${props.surveyId}/analyze-question`,
       context
     )
     

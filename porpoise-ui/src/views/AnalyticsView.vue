@@ -244,6 +244,7 @@
 import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
+import { API_BASE_URL } from '@/config/api'
 import ResultsView from '../components/Analytics/ResultsView.vue'
 import CrosstabView from '../components/Analytics/CrosstabView.vue'
 import QuestionsView from '../components/Analytics/QuestionsView.vue'
@@ -483,14 +484,14 @@ function handleAnalyzeCrosstab(question) {
 
 async function loadSurveyInfo() {
   try {
-    const response = await axios.get(`http://localhost:5107/api/surveys/${surveyId.value}`)
+    const response = await axios.get(`${API_BASE_URL}/api/surveys/${surveyId.value}`)
     surveyName.value = response.data.surveyName || response.data.name
     editableSurveyName.value = surveyName.value
     
     // Load project info
     if (response.data.projectId) {
       try {
-        const projectResponse = await axios.get(`http://localhost:5107/api/projects/${response.data.projectId}`)
+        const projectResponse = await axios.get(`${API_BASE_URL}/api/projects/${response.data.projectId}`)
         projectName.value = projectResponse.data.projectName || 'Project'
       } catch (error) {
         console.error('Error loading project info:', error)
@@ -499,7 +500,7 @@ async function loadSurveyInfo() {
 
     // Get question count and case count from stats
     try {
-      const statsResponse = await axios.get(`http://localhost:5107/api/surveys/${surveyId.value}/stats`)
+      const statsResponse = await axios.get(`${API_BASE_URL}/api/surveys/${surveyId.value}/stats`)
       questionCount.value = statsResponse.data.questionCount || 0
       totalCases.value = statsResponse.data.responseCount || 0
     } catch (error) {
@@ -518,7 +519,7 @@ async function saveSurveyName() {
   // Only save if the name has actually changed
   if (editableSurveyName.value && editableSurveyName.value.trim() !== surveyName.value) {
     try {
-      await axios.patch(`http://localhost:5107/api/surveys/${surveyId.value}`, {
+      await axios.patch(`${API_BASE_URL}/api/surveys/${surveyId.value}`, {
         surveyName: editableSurveyName.value.trim()
       })
       surveyName.value = editableSurveyName.value.trim()

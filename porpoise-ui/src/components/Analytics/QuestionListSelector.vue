@@ -274,6 +274,7 @@
 </template>
 
 <script setup>
+import { API_BASE_URL } from '@/config/api'
 import { ref, computed, watch } from 'vue'
 import axios from 'axios'
 import Button from '../common/Button.vue'
@@ -452,7 +453,7 @@ async function loadQuestions() {
   error.value = null
 
   try {
-    const response = await axios.get(`http://localhost:5107/api/surveys/${props.surveyId}/questions-list`)
+    const response = await axios.get(`${API_BASE_URL}/api/surveys/${props.surveyId}/questions-list`)
     
     // Process flat questions into blocks structure
     const flatQuestions = response.data

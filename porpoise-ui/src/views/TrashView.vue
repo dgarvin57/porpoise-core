@@ -119,8 +119,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
-
-const API_BASE_URL = 'http://localhost:5107'
+import { API_BASE_URL } from '@/config/api'
 
 const loading = ref(true)
 const error = ref(null)
