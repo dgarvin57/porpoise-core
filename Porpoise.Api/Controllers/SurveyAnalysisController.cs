@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Porpoise.Api.Configuration;
+using Porpoise.Api.Services;
 using Porpoise.Core.Application.Interfaces;
 using Porpoise.Core.Engines;
 using Porpoise.Core.Models;
@@ -17,19 +19,25 @@ public class SurveyAnalysisController : ControllerBase
     private readonly ISurveyDataRepository _surveyDataRepository;
     private readonly IResponseRepository _responseRepository;
     private readonly AIInsightsService _aiService;
+    private readonly AiPromptConfiguration _promptConfig;
+    private readonly PromptTemplateEngine _templateEngine;
 
     public SurveyAnalysisController(
         ISurveyRepository surveyRepository,
         IQuestionRepository questionRepository,
         ISurveyDataRepository surveyDataRepository,
         IResponseRepository responseRepository,
-        AIInsightsService aiService)
+        AIInsightsService aiService,
+        AiPromptConfiguration promptConfig,
+        PromptTemplateEngine templateEngine)
     {
         _surveyRepository = surveyRepository;
         _questionRepository = questionRepository;
         _surveyDataRepository = surveyDataRepository;
         _responseRepository = responseRepository;
         _aiService = aiService;
+        _promptConfig = promptConfig;
+        _templateEngine = templateEngine;
     }
 
     /// <summary>
@@ -534,6 +542,47 @@ Provide data-driven insights about patterns, notable findings, and implications:
     }
 
     /// <summary>
+    /// Generate AI analysis for a single question's results
+    /// </summary>
+    [HttpPost("{surveyId:guid}/analyze-question")]
+    public async Task<IActionResult> AnalyzeQuestion(Guid surveyId, [FromBody] QuestionAnalysisRequest request)
+    {
+        try
+        {
+            // Build context for AI analysis from provided data
+            var prompt = BuildQuestionAnalysisPrompt(request);
+            
+            var analysis = await _aiService.CallAIAPI(prompt);
+            
+            return Ok(new { analysis });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
+    private string BuildQuestionAnalysisPrompt(QuestionAnalysisRequest request)
+    {
+        // Build context dictionary for template
+        var context = new Dictionary<string, object>
+        {
+            { "QuestionLabel", request.QuestionLabel },
+            { "TotalN", request.TotalN },
+            { "Responses", request.Responses.OrderByDescending(r => r.Frequency).Select(r => new Dictionary<string, object>
+                {
+                    { "label", r.Label },
+                    { "frequency", r.Frequency },
+                    { "percent", $"{r.Percent:F1}" }
+                }).ToList()
+            }
+        };
+
+        // Use template from configuration
+        return _templateEngine.Render(_promptConfig.QuestionAnalysis.Template, context);
+    }
+
+    /// <summary>
     /// Generate AI analysis for crosstab results
     /// </summary>
     [HttpPost("{surveyId:guid}/analyze-crosstab")]
@@ -560,58 +609,38 @@ Provide data-driven insights about patterns, notable findings, and implications:
 
     private string BuildCrosstabAnalysisPrompt(CrosstabAnalysisRequest request)
     {
-        var sb = new StringBuilder();
-        sb.AppendLine("CRITICAL: You are analyzing real survey data. Accuracy is paramount. Any error will damage user trust.");
-        sb.AppendLine();
-        sb.AppendLine("=== DATA (DO NOT ALTER OR MISINTERPRET) ===");
-        sb.AppendLine($"Independent Variable: {request.IndependentVariable}");
-        sb.AppendLine($"Dependent Variable: {request.DependentVariable}");
-        sb.AppendLine($"Sample Size (N): {request.TotalN}");
-        sb.AppendLine();
-        
-        // Make significance status crystal clear with explicit boolean check
-        var significanceStatus = request.ChiSquareSignificant 
-            ? "STATISTICALLY SIGNIFICANT (p<0.05)" 
-            : "NOT STATISTICALLY SIGNIFICANT (p≥0.05)";
-        var relationshipStatement = request.ChiSquareSignificant
-            ? "There IS a statistically significant relationship between these variables."
-            : "There is NO statistically significant relationship between these variables.";
-            
-        sb.AppendLine($"Chi-Square Test: {request.ChiSquare:F3}");
-        sb.AppendLine($"Result: {significanceStatus}");
-        sb.AppendLine($"INTERPRETATION: {relationshipStatement}");
-        sb.AppendLine($"Cramér's V: {request.CramersV:F3} (0=no association, 0.1=weak, 0.3=moderate, 0.5=strong)");
-        sb.AppendLine();
-        
+        // Build context dictionary for template
+        var context = new Dictionary<string, object>
+        {
+            { "DependentVariable", request.DependentVariable },
+            { "IndependentVariable", request.IndependentVariable },
+            { "TotalN", request.TotalN },
+            { "ChiSquare", $"{request.ChiSquare:F3}" },
+            { "PValue", request.ChiSquareSignificant ? "<0.05" : "≥0.05" },
+            { "CramersV", $"{request.CramersV:F3}" }
+        };
+
+        // Add rows data if indexes are provided
         if (request.Indexes != null && request.Indexes.Count > 0)
         {
-            sb.AppendLine("Index Values by Category (Scale: 0-200, where 100=neutral):");
-            foreach (var idx in request.Indexes)
+            var rows = request.Indexes.Select(idx => new Dictionary<string, object>
             {
-                var sentiment = idx.Index > 100 ? "positive" : idx.Index < 100 ? "negative" : "neutral";
-                sb.AppendLine($"  • {idx.Label}: Index={idx.Index} ({sentiment}), Positive={idx.PosIndex:F1}%, Negative={idx.NegIndex:F1}%");
-            }
+                { "rowLabel", idx.Label },
+                { "index", $"{idx.Index:F0}" },
+                { "posIndex", $"{idx.PosIndex:F1}" },
+                { "negIndex", $"{idx.NegIndex:F1}" },
+                { "sentiment", idx.Index > 100 ? "positive" : idx.Index < 100 ? "negative" : "neutral" }
+            }).ToList();
+            
+            context["Rows"] = rows;
         }
-        
-        sb.AppendLine();
-        sb.AppendLine("=== OUTPUT FORMAT (REQUIRED) ===");
-        sb.AppendLine("Write exactly 4 sections with headings, each followed by content:");
-        sb.AppendLine();
-        sb.AppendLine($"## Summary\nWrite ONE sentence that briefly summarizes the key finding or meaning of this crosstab analysis. This should be a clear, concise statement about the relationship between {request.IndependentVariable} and {request.DependentVariable}.");
-        sb.AppendLine();
-        sb.AppendLine($"## Statistical Result\nStart with this EXACT phrase: 'The analysis {(request.ChiSquareSignificant ? "shows a statistically significant relationship" : "found no statistically significant relationship")} between {request.IndependentVariable} and {request.DependentVariable}.' Then explain what this means in 1-2 additional sentences.");
-        sb.AppendLine();
-        sb.AppendLine("## Category Comparison\nCompare the categories. State which has the highest index value and which has the lowest, citing the EXACT numbers from the data above. Use format: 'The [category name] category shows the highest sentiment (Index=[number], [X]% positive), while [category name] has the lowest (Index=[number], [X]% positive).'");
-        sb.AppendLine();
-        sb.AppendLine("## Actionable Insight\nProvide one actionable insight for decision-makers based on the actual data patterns.");
-        sb.AppendLine();
-        sb.AppendLine("VALIDATION RULES:");
-        sb.AppendLine($"- Statistical Result section MUST state '{(request.ChiSquareSignificant ? "significant relationship" : "no significant relationship")}'");
-        sb.AppendLine("- All numbers MUST exactly match the data above");
-        sb.AppendLine("- Do NOT invent or estimate any values");
-        sb.AppendLine("- Separate paragraphs with blank lines (\\n\\n)");
-        
-        return sb.ToString();
+        else
+        {
+            context["Rows"] = new List<Dictionary<string, object>>();
+        }
+
+        // Use template from configuration
+        return _templateEngine.Render(_promptConfig.CrosstabAnalysis.Template, context);
     }
 
     private List<Dictionary<string, object>> ConvertDataTableToList(DataTable? table)
@@ -673,6 +702,20 @@ public class IVIndexInfo
     public double? Index { get; set; }
     public double? PosIndex { get; set; }
     public double? NegIndex { get; set; }
+}
+
+public class QuestionAnalysisRequest
+{
+    public string QuestionLabel { get; set; } = string.Empty;
+    public int TotalN { get; set; }
+    public List<ResponseData> Responses { get; set; } = new();
+}
+
+public class ResponseData
+{
+    public string Label { get; set; } = string.Empty;
+    public int Frequency { get; set; }
+    public double Percent { get; set; }
 }
 
 public class CrosstabAnalysisRequest

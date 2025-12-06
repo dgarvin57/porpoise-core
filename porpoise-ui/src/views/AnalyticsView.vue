@@ -279,7 +279,7 @@ const splitViewEnabled = ref(false)
 
 // For split view - track which question to show in results panel
 const selectedQuestionForSplit = ref(null)
-const splitViewLeftWidth = ref(30)
+const splitViewLeftWidth = ref(40)
 const isResizing = ref(false)
 
 const startResize = (e) => {

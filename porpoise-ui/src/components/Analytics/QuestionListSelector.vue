@@ -704,6 +704,34 @@ function closeThirdVariableModal() {
   dontShowAgain.value = false
 }
 
+// Sync singleSelection with selectedQuestionId prop (for single selection mode)
+watch(() => props.selectedQuestionId, (newId) => {
+  if (props.selectionMode === 'single') {
+    if (!newId) {
+      singleSelection.value = null
+    } else if (questions.value.length > 0) {
+      // Find the question in our list and set it
+      const findQuestionById = (items, id) => {
+        for (const item of items) {
+          if (item.type === 'block') {
+            const found = item.questions.find(q => q.id === id)
+            if (found) return found
+          } else if (item.type === 'question') {
+            const q = item.question || item
+            if (q.id === id) return q
+          }
+        }
+        return null
+      }
+      
+      const question = findQuestionById(questions.value, newId)
+      if (question) {
+        singleSelection.value = question
+      }
+    }
+  }
+})
+
 // Load questions on mount
 watch(() => props.surveyId, () => {
   if (props.surveyId) {

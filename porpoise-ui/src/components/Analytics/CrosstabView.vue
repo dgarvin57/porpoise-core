@@ -68,7 +68,7 @@
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-3">
               <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-                {{ crosstabData.firstQuestion.label }}&nbsp;&nbsp;<span class="text-gray-400 dark:text-gray-500 font-normal">by</span>&nbsp;&nbsp;{{ crosstabData.secondQuestion.label }}
+                {{ crosstabData.firstQuestion.label }}&nbsp;&nbsp;<span class="text-gray-500 dark:text-gray-400 font-normal">by</span>&nbsp;&nbsp;{{ crosstabData.secondQuestion.label }}
               </h2>
             </div>
             <div class="flex items-center space-x-3">
@@ -94,8 +94,9 @@
 
         <!-- Scrollable Content -->
         <div class="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-6">
+        <div class="max-w-5xl mx-auto space-y-6">
         <!-- Table -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden mb-6">
+        <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
           <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead class="bg-gray-50 dark:bg-gray-700">
@@ -217,16 +218,6 @@
           <div class="mt-6 flex items-center justify-between">
             <div class="flex items-center gap-3">
               <Button
-                @click="showExplanation = true"
-                variant="ghost"
-                size="md"
-              >
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
-                </svg>
-                <span>Understanding This Analysis</span>
-              </Button>
-              <Button
                 @click="showAIModal = true"
                 variant="ghost"
                 size="md"
@@ -235,11 +226,21 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                 </svg>
-                <span>AI Analysis</span>
+                <span class="text-base font-medium glow-subtle">AI Analysis</span>
                 <span v-if="!aiAnalysis" class="absolute -top-1 -right-1 flex h-3 w-3">
                   <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                  <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+                  <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-500 shadow-lg shadow-blue-500/50"></span>
                 </span>
+              </Button>
+              <Button
+                @click="showExplanation = true"
+                variant="ghost"
+                size="md"
+              >
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                </svg>
+                <span class="text-base font-medium">Understanding Crosstabs</span>
               </Button>
             </div>
             <div v-if="graphMode === 'posneg'" class="flex flex-wrap gap-4">
@@ -255,6 +256,7 @@
           </div>
           </div> <!-- Close p-6 div -->
         </div> <!-- Close chart div -->
+        </div> <!-- Close max-w-6xl container -->
         </div> <!-- Close scrollable content -->
       </div> <!-- Close crosstab results -->
     </div>
@@ -264,7 +266,7 @@
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full max-h-[85vh] overflow-y-auto">
         <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
           <div class="flex items-center justify-between">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Understanding Crosstab Analysis</h3>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Understanding Crosstabs</h3>
             <CloseButton @click="showExplanation = false" />
           </div>
         </div>
@@ -277,7 +279,7 @@
               </svg>
               <div>
                 <h4 class="font-semibold text-gray-900 dark:text-white mb-1 text-sm">Quick Tip</h4>
-                <p class="text-sm text-gray-700 dark:text-gray-300">The numbers show the percentage of positive (blue) vs. negative (red) responses for each group. For example, if age 35-44 shows 35.4% positive and 61.5% negative, that means 35% of people in that age group were satisfied/agreed, while 62% were dissatisfied/disagreed. Use this to quickly identify which groups are most positive or negative about the topic.</p>
+                <p class="text-sm text-gray-700 dark:text-gray-300">{{ quickTipText }}</p>
               </div>
             </div>
           </div>
@@ -291,12 +293,16 @@
           <!-- Statistical Measures -->
           <div>
             <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Statistical Measures</h4>
-            <ul class="list-disc list-inside space-y-1 ml-2 text-sm text-gray-700 dark:text-gray-300">
-              <li><strong>Chi-Square (χ²):</strong> Tests whether the two variables are independent or related</li>
-              <li><strong>Phi (φ):</strong> Measures association strength for 2×2 tables (range: 0-1)</li>
-              <li><strong>Cramér's V:</strong> Measures association strength for larger tables (range: 0-1)</li>
+            <ul class="list-disc list-inside space-y-2 ml-2 text-sm text-gray-700 dark:text-gray-300">
+              <li><strong>Chi-Square (χ²):</strong> Tests whether a relationship exists (statistically significant vs random chance). If p&lt;0.05, the relationship is real, not due to chance.</li>
+              <li><strong>Cramér's V:</strong> Measures the <em>strength</em> of the relationship (0=no association, 0.1=weak, 0.3=moderate, 0.5+=strong). A relationship can be statistically significant but weak.</li>
+              <li><strong>Phi (φ):</strong> Similar to Cramér's V but specifically for 2×2 tables</li>
               <li><strong>Total N:</strong> Total number of valid responses analyzed</li>
             </ul>
+            <div class="mt-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded border border-gray-200 dark:border-gray-600">
+              <p class="text-sm text-gray-700 dark:text-gray-300"><strong>Understanding Both Together:</strong></p>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Think of Chi-Square as asking "Is there smoke?" (Is the relationship real?) and Cramér's V as asking "How big is the fire?" (How strong is it?). A relationship can be real (significant Chi-Square) but weak (low Cramér's V), meaning other factors likely have stronger effects.</p>
+            </div>
           </div>
           
           <!-- Graph Modes -->
@@ -330,17 +336,17 @@
     <div v-if="showAIModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" @click.self="showAIModal = false">
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full max-h-[85vh] overflow-y-auto">
         <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-          <div class="flex items-center justify-between">
-            <div>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                </svg>
-                AI Analysis
-              </h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                {{ crosstabData.firstQuestion.label }} <span class="text-gray-400 dark:text-gray-500">by</span> {{ crosstabData.secondQuestion.label }}
-              </p>
+          <div class="relative flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+              </svg>
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">AI Analysis</h3>
+            </div>
+            <div class="absolute left-1/2 transform -translate-x-1/2">
+              <span class="text-base font-semibold text-blue-600 dark:text-blue-400 whitespace-nowrap">
+                {{ crosstabData.firstQuestion.label }} <span class="font-normal">by</span> {{ crosstabData.secondQuestion.label }}
+              </span>
             </div>
             <CloseButton @click="showAIModal = false" />
           </div>
@@ -502,6 +508,19 @@ const tableColumns = computed(() => {
   return Object.keys(crosstabData.value.table[0])
 })
 
+const quickTipText = computed(() => {
+  if (!crosstabData.value) return ''
+  
+  const firstVar = firstQuestion.value?.label || 'first variable'
+  const secondVar = secondQuestion.value?.label || 'second variable'
+  
+  if (graphMode.value === 'index') {
+    return `The Graph Index shows a single overall sentiment score (0-200 scale) for each category of "${secondVar}". A score of 100 is neutral, above 100 is positive, and below 100 is negative. This helps you quickly compare how different groups feel about "${firstVar}".`
+  } else {
+    return `The Positive/Negative graph shows the percentage of positive (blue) vs. negative (red) responses for each category of "${secondVar}". Use this to quickly identify which groups are most positive or negative about "${firstVar}".`
+  }
+})
+
 const chartData = computed(() => {
   if (!crosstabData.value) return []
 
@@ -569,6 +588,9 @@ async function generateCrosstab() {
 
     console.log('Crosstab response:', response.data)
     crosstabData.value = response.data
+    
+    // Reset AI analysis when new crosstab is generated
+    aiAnalysis.value = ''
   } catch (err) {
     console.error('Failed to generate crosstab:', err)
     console.error('Error details:', err.response?.data)
@@ -585,9 +607,10 @@ async function generateAIAnalysis() {
   
   try {
     // Prepare context for AI
+    // In crosstab "X by Y": X is dependent (measured outcome), Y is independent (grouping variable)
     const context = {
-      independentVariable: firstQuestion.value.label,
-      dependentVariable: secondQuestion.value.label,
+      dependentVariable: firstQuestion.value.label,  // Column variable - what we're measuring
+      independentVariable: secondQuestion.value.label,  // Row variable - how we group/segment
       totalN: crosstabData.value.totalN,
       chiSquare: crosstabData.value.chiSquare,
       chiSquareSignificant: crosstabData.value.chiSquareSignificant,
@@ -676,3 +699,10 @@ function formatCellValue(value) {
   return value
 }
 </script>
+
+<style scoped>
+.glow-subtle {
+  @apply drop-shadow-[0_0_20px_rgba(255,255,255,0.6)] 
+         drop-shadow-[0_0_50px_rgba(147,197,253,0.4)];
+}
+</style>

@@ -1,6 +1,8 @@
 // Porpoise.Api/Program.cs — NO SWAGGER, JUST PURE API
+using Porpoise.Api.Configuration;
 using Porpoise.Api.Middleware;
 using Porpoise.Api.Mocks;
+using Porpoise.Api.Services;
 using Porpoise.Core.Application.Interfaces;
 using Porpoise.Core.Models;
 using Porpoise.Core.Services;
@@ -22,6 +24,27 @@ builder.Services.AddCors(options =>
 
 // Add controllers
 builder.Services.AddControllers();
+
+// Load AI prompt configuration from JSON file
+var promptConfigPath = Path.Combine(builder.Environment.ContentRootPath, "Configuration", "ai-prompts.json");
+var promptConfig = new AiPromptConfiguration();
+if (File.Exists(promptConfigPath))
+{
+    var promptJson = File.ReadAllText(promptConfigPath);
+    promptConfig = System.Text.Json.JsonSerializer.Deserialize<AiPromptConfiguration>(
+        promptJson,
+        new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+    ) ?? new AiPromptConfiguration();
+    Console.WriteLine("✅ Loaded AI prompt configuration from ai-prompts.json");
+}
+else
+{
+    Console.WriteLine("⚠️ AI prompts config file not found, using defaults");
+}
+builder.Services.AddSingleton(promptConfig);
+
+// Register template engine
+builder.Services.AddSingleton<PromptTemplateEngine>();
 
 // Register Data Access Layer (with option to use in-memory for testing)
 var useInMemory = builder.Configuration.GetValue<bool>("UseInMemoryDatabase");
