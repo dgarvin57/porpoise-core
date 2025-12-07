@@ -481,6 +481,19 @@ public class SurveysController : ControllerBase
                         
                         double percentage = totalValidCases > 0 ? (count / (double)totalValidCases * 100) : 0;
                         
+                        // Calculate index value for this response (100 = average, >100 = above average, <100 = below average)
+                        // Index is calculated as (percentage / expected percentage) * 100
+                        // For now, we'll use a simple approach based on IndexType
+                        int indexValue = 100; // Default neutral
+                        if (response.IndexType == ResponseIndexType.Positive && percentage > 0)
+                        {
+                            indexValue = (int)Math.Round(100 + (percentage * 0.5)); // Above average
+                        }
+                        else if (response.IndexType == ResponseIndexType.Negative && percentage > 0)
+                        {
+                            indexValue = (int)Math.Round(100 - (percentage * 0.5)); // Below average
+                        }
+                        
                         // Get index symbol from IndexType: 0=None, 1=Neutral(/), 2=Positive(+), 3=Negative(-)
                         string indexSymbol = response.IndexType switch
                         {
@@ -496,6 +509,7 @@ public class SurveysController : ControllerBase
                             Count = count,
                             CountUnweighted = countUnweighted,
                             Percentage = percentage,
+                            Index = indexValue,
                             IndexSymbol = indexSymbol,
                             Weight = weight
                         });
@@ -523,6 +537,7 @@ public class SurveysController : ControllerBase
                             Count = 0,
                             CountUnweighted = 0,
                             Percentage = 0.0,
+                            Index = 100, // Neutral index when no data
                             IndexSymbol = indexSymbol,
                             Weight = response.Weight
                         });
@@ -543,6 +558,7 @@ public class SurveysController : ControllerBase
                     BlkQstStatus = (int?)question.BlkQstStatus,
                     BlkLabel = question.BlkLabel,
                     BlkStem = question.BlkStem,
+                    BlockStem = question.Block?.Stem ?? question.BlkStem, // Use Block.Stem if available, fallback to deprecated BlkStem
                     QuestionNotes = question.QuestionNotes,
                     DataFileCol = question.DataFileCol,
                     Responses = responsesWithStats

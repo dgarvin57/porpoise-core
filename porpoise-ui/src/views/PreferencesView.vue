@@ -144,17 +144,27 @@
 
               <hr class="border-gray-200 dark:border-gray-700">
 
-              <div class="flex items-center justify-between">
-                <div>
-                  <div class="font-medium text-gray-900 dark:text-white">Decimal Places</div>
-                  <div class="text-sm text-gray-500 dark:text-gray-400">Default precision for statistics</div>
+              <div>
+                <div class="font-medium text-gray-900 dark:text-white mb-2">Default Analytics Table Height</div>
+                <div class="text-sm text-gray-500 dark:text-gray-400 mb-3">Number of rows to show in collapsed state</div>
+                <div class="flex items-center gap-4">
+                  <input
+                    v-model.number="tableRowsToShow"
+                    type="range"
+                    min="2"
+                    max="6"
+                    step="1"
+                    class="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+                    @change="saveTableHeightPreference"
+                  />
+                  <span class="text-sm font-medium text-gray-700 dark:text-gray-300 w-16 text-center">
+                    {{ tableRowsToShow }} rows
+                  </span>
                 </div>
-                <select class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <option>1</option>
-                  <option selected>2</option>
-                  <option>3</option>
-                  <option>4</option>
-                </select>
+                <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  <span>Compact (2)</span>
+                  <span>Spacious (6)</span>
+                </div>
               </div>
             </div>
           </div>
@@ -180,7 +190,7 @@
                 </div>
 
                 <p class="text-sm text-gray-600 dark:text-gray-400">
-                  Professional polling and survey analysis platform for political campaigns and market research.
+                  Professional polling and survey analysis platform for political campaigns and market research. Built on the legendary Porpoise survey statistical engine.
                 </p>
               </div>
 
@@ -223,10 +233,24 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import SidebarNav from '../components/SidebarNav.vue'
 
 const activeSection = ref('appearance')
+
+// Table height preference
+const tableRowsToShow = ref(3)
+const DEFAULT_HEIGHT_KEY = 'porpoise_table_rows_to_show'
+
+// Load saved preference
+onMounted(() => {
+  const savedRows = parseInt(localStorage.getItem(DEFAULT_HEIGHT_KEY) || '3')
+  tableRowsToShow.value = Math.max(2, Math.min(6, savedRows))
+})
+
+function saveTableHeightPreference() {
+  localStorage.setItem(DEFAULT_HEIGHT_KEY, tableRowsToShow.value.toString())
+}
 
 const navItems = [
   { 

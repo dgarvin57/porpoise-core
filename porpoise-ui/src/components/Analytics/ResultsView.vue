@@ -34,136 +34,11 @@
 
       <!-- Question Results -->
       <template v-else>
-        <!-- Question Header -->
-        <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-3">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-              <!-- Variable Type Icon: 1=IV (red), 2=DV (blue) -->
-              <svg 
-                class="w-5 h-5" 
-                :class="selectedQuestion.variableType === 1 ? 'text-red-400' : selectedQuestion.variableType === 2 ? 'text-blue-400' : 'text-gray-400'"
-                fill="currentColor" 
-                viewBox="0 0 20 20"
-              >
-                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
-              </svg>
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-                {{ selectedQuestion.label }}
-              </h2>
-              <span class="text-sm text-gray-400 dark:text-gray-500">
-                {{ selectedQuestion.qstNumber }}
-              </span>
-              <button
-                v-if="!hideSidebar"
-                @click="analyzeCrosstab"
-                class="ml-6 px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-2"
-                title="Analyze this question in crosstab with another variable"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                Analyze in Crosstab
-              </button>
-            </div>
-            <div class="flex items-center space-x-3">
-              <div class="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
-                <span><span class="font-medium">Index:</span> {{ selectedQuestion.index || '128' }}</span>
-                <span>•</span>
-                <span><span class="font-medium">CI:</span> +/- {{ selectedQuestion.samplingError?.toFixed(1) || '0.0' }}</span>
-                <span>•</span>
-                <span><span class="font-medium">Total N:</span> {{ selectedQuestion.totalCases }}</span>
-              </div>
-              <button
-                @click="showMetricDefinitions = true"
-                class="p-1 bg-transparent text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-gray-800 transition-colors border-0"
-                title="View metric definitions"
-              >
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" fill="currentColor" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-
         <!-- Combined Results and Chart Content -->
         <div class="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-6 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 dark:[&::-webkit-scrollbar-track]:bg-gray-800 [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-gray-600 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-gray-400 dark:[&::-webkit-scrollbar-thumb:hover]:bg-gray-500">
           <div class="max-w-4xl mx-auto space-y-6">
-            <!-- Question Info Panel -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-              <button
-                @click="infoExpanded = !infoExpanded"
-                class="w-full px-6 py-3 flex items-center justify-between bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus:outline-none"
-              >
-                <div class="flex items-center space-x-3">
-                  <svg 
-                    class="w-5 h-5 text-gray-500 dark:text-gray-400 transition-transform"
-                    :class="{ 'rotate-90': infoExpanded }"
-                    fill="currentColor" 
-                    viewBox="0 0 20 20"
-                  >
-                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                  </svg>
-                  <svg class="w-5 h-5 text-blue-500 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                  </svg>
-                  <span class="text-sm font-medium text-gray-900 dark:text-white">Question Information</span>
-                </div>
-                <div v-if="!infoExpanded && selectedQuestion?.text" class="flex-1 mx-4 text-left">
-                  <span class="text-sm text-gray-500 dark:text-gray-400 italic line-clamp-1">
-                    {{ selectedQuestion.text }}
-                  </span>
-                </div>
-              </button>
-              
-              <div v-show="infoExpanded" class="border-t border-gray-200 dark:border-gray-700">
-                <!-- Tabs -->
-                <div class="flex border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
-                  <button
-                    v-for="tab in infoTabs"
-                    :key="tab.id"
-                    @click="activeInfoTab = tab.id"
-                    :disabled="tab.id === 'block' && !blockStemForQuestion"
-                    class="px-4 py-2 text-sm font-medium border-b-2 transition-colors focus:outline-none flex items-center space-x-2"
-                    :class="[
-                      activeInfoTab === tab.id
-                        ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
-                        : 'border-transparent text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600',
-                      tab.id === 'block' && !blockStemForQuestion ? 'opacity-50 cursor-not-allowed' : ''
-                    ]"
-                  >
-                    <!-- Tab Icons -->
-                    <svg v-if="tab.id === 'question'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <svg v-else-if="tab.id === 'block'" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h8m-8 4h5" />
-                    </svg>
-                    
-                    <span>{{ tab.label }}</span>
-                  </button>
-                </div>
-                
-                <!-- Tab Content -->
-                <div class="p-6">
-                  <!-- Question Stem (Read-only) -->
-                  <div v-if="activeInfoTab === 'question'">
-                    <p v-if="selectedQuestion?.text" class="text-sm text-gray-500 dark:text-gray-500 italic whitespace-pre-wrap leading-relaxed">{{ selectedQuestion.text }}</p>
-                    <p v-else class="text-sm text-gray-400 dark:text-gray-600 italic">No question stem available</p>
-                  </div>
-                  
-                  <!-- Block Stem (Read-only, from first question in block) -->
-                  <div v-else-if="activeInfoTab === 'block'">
-                    <p v-if="blockStemForQuestion" class="text-sm text-gray-500 dark:text-gray-500 italic whitespace-pre-wrap leading-relaxed">{{ blockStemForQuestion }}</p>
-                    <p v-else class="text-sm text-gray-400 dark:text-gray-600 italic">No block stem available</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             <!-- Results Table -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+            <div v-if="!hideTable" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
               <div class="px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
                 <h3 class="text-base font-medium text-gray-900 dark:text-white">
                   Response Results
@@ -456,6 +331,10 @@ const props = defineProps({
     required: true
   },
   hideSidebar: {
+    type: Boolean,
+    default: false
+  },
+  hideTable: {
     type: Boolean,
     default: false
   },

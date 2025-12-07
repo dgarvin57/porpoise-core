@@ -1,7 +1,7 @@
 <template>
   <div class="h-full flex">
     <!-- Question List Sidebar -->
-    <aside class="w-96 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
+    <aside v-if="!hideSidebar" class="w-96 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
       <QuestionListSelector
         :surveyId="surveyId"
         selectionMode="crosstab"
@@ -12,7 +12,7 @@
     </aside>
 
     <!-- Crosstab Results -->
-    <div class="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900">
+    <div class="flex-1 flex flex-col bg-gray-50 dark:bg-gray-900">
       <!-- Loading State -->
       <div 
         v-if="loading"
@@ -64,30 +64,38 @@
       <!-- Crosstab Results -->
       <div v-else-if="crosstabData" class="flex flex-col h-full">
         <!-- Sticky Header -->
-        <div class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-3 sticky top-0 z-10">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-                {{ crosstabData.firstQuestion.label }}&nbsp;&nbsp;<span class="text-gray-500 dark:text-gray-400 font-normal">by</span>&nbsp;&nbsp;{{ crosstabData.secondQuestion.label }}
-              </h2>
-            </div>
-            <div class="flex items-center space-x-3">
-              <div class="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
-                <span v-if="crosstabData.significant" :class="crosstabData.pValue < 0.05 ? 'text-green-600 dark:text-green-400 font-medium' : ''">
-                  {{ crosstabData.significant }}
-                </span>
-                <span>•</span>
-                <span><span class="font-medium">Total N:</span> {{ crosstabData.totalN }}</span>
+        <div class="sticky top-0 z-10 border-b border-gray-200 dark:border-gray-700">
+          <div class="bg-white dark:bg-gray-800 py-3 px-6">
+            <div class="relative flex items-center justify-between">
+              <div class="flex items-center space-x-3 min-w-0">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                  {{ crosstabData.firstQuestion.label }}&nbsp;&nbsp;<span class="text-gray-500 dark:text-gray-400 font-normal">by</span>&nbsp;&nbsp;{{ crosstabData.secondQuestion.label }}
+                </h2>
               </div>
-              <button
-                @click="showStatistics = true"
-                class="p-1 bg-transparent text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-gray-800 transition-colors border-0"
-                title="View statistical measures (Chi-Square, Phi, Cramér's V)"
-              >
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" fill="currentColor" />
-                </svg>
-              </button>
+              <!-- Fixed position CROSSTAB title -->
+              <div class="absolute left-[45%]">
+                <h1 class="text-xl font-bold text-blue-600 dark:text-blue-400 text-left">
+                  CROSSTAB
+                </h1>
+              </div>
+              <div class="flex items-center space-x-3 flex-shrink-0">
+                <div class="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
+                  <span v-if="crosstabData.significant" :class="crosstabData.pValue < 0.05 ? 'text-green-600 dark:text-green-400 font-medium' : ''">
+                    {{ crosstabData.significant }}
+                  </span>
+                  <span>•</span>
+                  <span><span class="font-medium">Total N:</span> {{ crosstabData.totalN }}</span>
+                </div>
+                <button
+                  @click="showStatistics = true"
+                  class="p-1 bg-transparent text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-gray-800 transition-colors border-0"
+                  title="View statistical measures (Chi-Square, Phi, Cramér's V)"
+                >
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" fill="currentColor" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -449,6 +457,10 @@ const props = defineProps({
   initialSecondQuestion: {
     type: Object,
     default: null
+  },
+  hideSidebar: {
+    type: Boolean,
+    default: false
   }
 })
 

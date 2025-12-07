@@ -68,7 +68,7 @@
 
           <!-- Split View Toggle (only show when on crosstab) -->
           <button
-            v-if="activeSection === 'crosstab'"
+            v-if="false && activeSection === 'crosstab'"
             @click="splitViewEnabled = !splitViewEnabled"
             :class="[
               splitViewEnabled ? 'bg-blue-100 dark:bg-blue-800 text-blue-700 dark:text-blue-200' : 'bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-400',
@@ -148,6 +148,23 @@
       </nav>
     </aside>
 
+    <!-- Permanent Question List -->
+    <aside class="w-96 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
+      <QuestionListSelector
+        :surveyId="surveyId"
+        :selectionMode="questionListMode"
+        :showNotesIcons="true"
+        :wrapStandaloneQuestions="true"
+        :selectedQuestionId="questionListMode === 'single' ? selectedQuestionId : null"
+        :initialExpandedBlocks="expandedBlocks"
+        :initialFirstSelection="questionListMode === 'crosstab' ? crosstabFirstQuestion : null"
+        :initialSecondSelection="questionListMode === 'crosstab' ? crosstabSecondQuestion : null"
+        @question-selected="handleQuestionListSelection"
+        @crosstab-selection="handleQuestionListCrosstabSelection"
+        @expanded-blocks-changed="handleExpandedBlocksChanged"
+      />
+    </aside>
+
     <!-- Main Content Area -->
     <main class="flex-1 overflow-hidden">
       <!-- Split View: Results Panel + Crosstab side-by-side -->
@@ -192,47 +209,67 @@
       </div>
 
       <!-- Regular Single View -->
-      <div v-show="!splitViewEnabled || activeSection !== 'crosstab'" class="h-full">
-        <!-- Results View -->
-        <ResultsView 
-          v-show="activeSection === 'results'" 
+      <div v-if="!splitViewEnabled || activeSection !== 'crosstab'" class="h-full flex flex-col overflow-hidden">
+        <!-- Permanent Results Table (for Results and Crosstab views) -->
+        <ResultsTable 
+          v-if="selectedQuestionWithResponses && (activeSection === 'results' || activeSection === 'crosstab')"
+          :key="selectedQuestionWithResponses.id"
+          :question="selectedQuestionWithResponses"
+          :columnMode="columnMode"
           :surveyId="surveyId"
-          :initialQuestionId="selectedQuestionId"
-          :initialExpandedBlocks="expandedBlocks"
-          :initialColumnMode="columnMode"
-          :initialInfoExpanded="infoExpanded"
-          :initialInfoTab="infoTab"
-          @question-selected="handleQuestionSelected"
-          @expanded-blocks-changed="handleExpandedBlocksChanged"
+          :activeSection="activeSection"
+          class="flex-shrink-0"
           @column-mode-changed="handleColumnModeChanged"
-          @info-expanded-changed="handleInfoExpandedChanged"
-          @info-tab-changed="handleInfoTabChanged"
           @analyze-crosstab="handleAnalyzeCrosstab"
         />
 
-        <!-- Crosstab View -->
-        <CrosstabView 
-          v-show="activeSection === 'crosstab'" 
-          :surveyId="surveyId"
-          :initialFirstQuestion="crosstabFirstQuestion"
-          :initialSecondQuestion="crosstabSecondQuestion"
-          @selections-changed="handleCrosstabSelectionsChanged"
-        />
+        <!-- Content Area -->
+        <div class="flex-1 overflow-hidden">
+          <!-- Results View (Chart only, table is above) -->
+          <ResultsView 
+            v-show="activeSection === 'results'" 
+            :surveyId="surveyId"
+            :preselectedQuestionId="selectedQuestionId"
+            :hideSidebar="true"
+            :hideTable="true"
+            :initialQuestionId="selectedQuestionId"
+            :initialExpandedBlocks="expandedBlocks"
+            :initialColumnMode="columnMode"
+            :initialInfoExpanded="infoExpanded"
+            :initialInfoTab="infoTab"
+            @question-selected="handleQuestionSelected"
+            @expanded-blocks-changed="handleExpandedBlocksChanged"
+            @column-mode-changed="handleColumnModeChanged"
+            @info-expanded-changed="handleInfoExpandedChanged"
+            @info-tab-changed="handleInfoTabChanged"
+            @analyze-crosstab="handleAnalyzeCrosstab"
+          />
 
-        <!-- Questions View -->
-        <QuestionsView v-show="activeSection === 'questions'" :surveyId="surveyId" />
+          <!-- Crosstab View (Table is shown above) -->
+          <CrosstabView 
+            v-show="activeSection === 'crosstab'" 
+            :surveyId="surveyId"
+            :hideSidebar="true"
+            :initialFirstQuestion="crosstabFirstQuestion"
+            :initialSecondQuestion="crosstabSecondQuestion"
+            @selections-changed="handleCrosstabSelectionsChanged"
+          />
 
-        <!-- Data View -->
-        <DataView v-show="activeSection === 'data'" :surveyId="surveyId" />
+          <!-- Questions View -->
+          <QuestionsView v-show="activeSection === 'questions'" :surveyId="surveyId" />
 
-        <!-- Data Cleansing -->
-        <div v-show="activeSection === 'cleansing'" class="h-full flex items-center justify-center">
-          <div class="text-center">
-            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
-            </svg>
-            <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Data Cleansing</h3>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Coming soon...</p>
+          <!-- Data View -->
+          <DataView v-show="activeSection === 'data'" :surveyId="surveyId" />
+
+          <!-- Data Cleansing -->
+          <div v-show="activeSection === 'cleansing'" class="h-full flex items-center justify-center">
+            <div class="text-center">
+              <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+              </svg>
+              <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Data Cleansing</h3>
+              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Coming soon...</p>
+            </div>
           </div>
         </div>
       </div>
@@ -241,7 +278,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import { API_BASE_URL } from '@/config/api'
@@ -249,6 +286,9 @@ import ResultsView from '../components/Analytics/ResultsView.vue'
 import CrosstabView from '../components/Analytics/CrosstabView.vue'
 import QuestionsView from '../components/Analytics/QuestionsView.vue'
 import DataView from '../components/Analytics/DataView.vue'
+import QuestionListSelector from '../components/Analytics/QuestionListSelector.vue'
+import CondensedResultsTable from '../components/Analytics/CondensedResultsTable.vue'
+import ResultsTable from '../components/Analytics/ResultsTable.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -265,6 +305,8 @@ const activeSection = ref('results')
 
 // State management helpers
 const selectedQuestionId = ref(null)
+const selectedQuestion = ref(null)
+const selectedQuestionWithResponses = ref(null)
 const expandedBlocks = ref([])
 const columnMode = ref('totalN')
 const infoExpanded = ref(false)
@@ -279,6 +321,67 @@ const splitViewEnabled = ref(false)
 const selectedQuestionForSplit = ref(null)
 const splitViewLeftWidth = ref(38)  // ~570px on typical screens
 const isResizing = ref(false)
+
+// Computed property to determine question list mode based on active section
+const questionListMode = computed(() => {
+  if (activeSection.value === 'crosstab') {
+    return 'crosstab'
+  }
+  return 'single'
+})
+
+// Handle question selection from permanent question list
+function handleQuestionListSelection(question) {
+  selectedQuestion.value = question
+  selectedQuestionId.value = question.id
+  
+  // Load full question data with responses
+  loadQuestionData(question.id)
+  
+  // If we're in crosstab mode and clicked, treat as first selection
+  if (activeSection.value === 'crosstab') {
+    crosstabFirstQuestion.value = question
+  }
+}
+
+// Handle crosstab selection from permanent question list
+function handleQuestionListCrosstabSelection({ first, second }) {
+  crosstabFirstQuestion.value = first
+  crosstabSecondQuestion.value = second
+  
+  // Update split panel to show the first question's results
+  if (first) {
+    selectedQuestionForSplit.value = first
+    selectedQuestion.value = first
+    selectedQuestionId.value = first.id
+    
+    // Load full question data for first variable
+    loadQuestionData(first.id)
+  }
+  
+  saveSurveyState()
+}
+
+// Load full question data with responses
+async function loadQuestionData(questionId) {
+  if (!questionId) {
+    selectedQuestionWithResponses.value = null
+    return
+  }
+  
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/surveys/${surveyId.value}/questions`)
+    const questions = response.data
+    const fullQuestion = questions.find(q => q.id === questionId)
+    if (fullQuestion) {
+      // Use nextTick to avoid race condition with Vue's update cycle
+      await nextTick()
+      selectedQuestionWithResponses.value = fullQuestion
+    }
+  } catch (error) {
+    console.error('Error loading question data:', error)
+  }
+}
 
 const startResize = (e) => {
   isResizing.value = true
@@ -325,14 +428,21 @@ function saveSurveyState() {
   }
   localStorage.setItem(getSurveyStateKey(), JSON.stringify(state))
   
-  // Also update query params for URL state
-  router.replace({
-    query: {
-      ...route.query,
-      section: activeSection.value,
-      question: selectedQuestionId.value || undefined
-    }
-  })
+  // Also update query params for URL state (only if different to avoid loops)
+  const currentSection = route.query.section
+  const currentQuestion = route.query.question
+  
+  if (currentSection !== activeSection.value || currentQuestion !== selectedQuestionId.value) {
+    router.replace({
+      query: {
+        ...route.query,
+        section: activeSection.value,
+        question: selectedQuestionId.value || undefined
+      }
+    }).catch(() => {
+      // Ignore navigation errors (e.g., navigating to same location)
+    })
+  }
 }
 
 function loadSurveyState() {
@@ -380,6 +490,14 @@ watch(selectedQuestionId, () => {
   saveSurveyState()
 })
 
+// Watch for when ResultsView changes the selected question and sync back
+watch(() => selectedQuestionId.value, (newId) => {
+  if (newId && activeSection.value === 'results') {
+    // When switching back to results view, ensure question list reflects the selection
+    // This handles the case where crosstab changed the selection
+  }
+})
+
 watch(expandedBlocks, () => {
   saveSurveyState()
 }, { deep: true })
@@ -403,6 +521,15 @@ watch(crosstabFirstQuestion, (newVal, oldVal) => {
 watch(crosstabSecondQuestion, (newVal, oldVal) => {
   saveSurveyState()
 }, { deep: true })
+
+// Watch selectedQuestionId and load full question data
+watch(selectedQuestionId, (newId) => {
+  if (newId) {
+    loadQuestionData(newId)
+  } else {
+    selectedQuestionWithResponses.value = null
+  }
+})
 
 // Handle question selection from ResultsView
 function handleQuestionSelected(questionId) {
@@ -474,8 +601,13 @@ watch(selectedQuestionForSplit, (newValue) => {
 
 // Handle analyze in crosstab from Results view
 function handleAnalyzeCrosstab(question) {
+  // Use the passed question or fall back to selectedQuestionWithResponses
+  const questionToUse = question || selectedQuestionWithResponses.value
+  
+  if (!questionToUse) return
+  
   // Set the question as first variable in crosstab
-  crosstabFirstQuestion.value = question
+  crosstabFirstQuestion.value = questionToUse
   crosstabSecondQuestion.value = null // Reset second selection
   // Switch to crosstab view
   activeSection.value = 'crosstab'
@@ -541,6 +673,11 @@ function backToProjects() {
 onMounted(() => {
   loadSurveyState()
   loadSurveyInfo()
+  
+  // Load question data if there's already a selected question
+  if (selectedQuestionId.value) {
+    loadQuestionData(selectedQuestionId.value)
+  }
   
   // Initialize split panel with first question if in split view
   if (splitViewEnabled.value && crosstabFirstQuestion.value) {
