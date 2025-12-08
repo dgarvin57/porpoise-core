@@ -66,6 +66,22 @@
             <span>Crosstab</span>
           </button>
 
+          <!-- Stat Sig Section -->
+          <button
+            @click="activeSection = 'statsig'"
+            :class="[
+              'w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+              activeSection === 'statsig'
+                ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+            ]"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+            <span>Stat Sig</span>
+          </button>
+
           <!-- Split View Toggle (only show when on crosstab) -->
           <button
             v-if="false && activeSection === 'crosstab'"
@@ -210,9 +226,9 @@
 
       <!-- Regular Single View -->
       <div v-if="!splitViewEnabled || activeSection !== 'crosstab'" class="h-full flex flex-col overflow-hidden">
-        <!-- Permanent Results Table (for Results and Crosstab views) -->
+        <!-- Permanent Results Table (for Results, Crosstab, and Stat Sig views) -->
         <ResultsTable 
-          v-if="selectedQuestionWithResponses && (activeSection === 'results' || activeSection === 'crosstab')"
+          v-if="selectedQuestionWithResponses && (activeSection === 'results' || activeSection === 'crosstab' || activeSection === 'statsig')"
           :key="selectedQuestionWithResponses.id"
           :question="selectedQuestionWithResponses"
           :columnMode="columnMode"
@@ -255,6 +271,14 @@
             @selections-changed="handleCrosstabSelectionsChanged"
           />
 
+          <!-- Stat Sig View -->
+          <StatSigView 
+            v-show="activeSection === 'statsig'" 
+            :surveyId="surveyId"
+            :selectedQuestion="selectedQuestionWithResponses"
+            @question-selected="handleStatSigQuestionSelected"
+          />
+
           <!-- Questions View -->
           <QuestionsView v-show="activeSection === 'questions'" :surveyId="surveyId" />
 
@@ -284,6 +308,7 @@ import axios from 'axios'
 import { API_BASE_URL } from '@/config/api'
 import ResultsView from '../components/Analytics/ResultsView.vue'
 import CrosstabView from '../components/Analytics/CrosstabView.vue'
+import StatSigView from '../components/Analytics/StatSigView.vue'
 import QuestionsView from '../components/Analytics/QuestionsView.vue'
 import DataView from '../components/Analytics/DataView.vue'
 import QuestionListSelector from '../components/Analytics/QuestionListSelector.vue'
@@ -311,6 +336,7 @@ const expandedBlocks = ref([])
 const columnMode = ref('totalN')
 const infoExpanded = ref(false)
 const infoTab = ref('question')
+const isInitialRouteLoad = ref(true)  // Track initial load to prevent route query interference
 
 // Crosstab state
 const crosstabFirstQuestion = ref(null)
@@ -335,13 +361,20 @@ function handleQuestionListSelection(question) {
   selectedQuestion.value = question
   selectedQuestionId.value = question.id
   
-  // Load full question data with responses
-  loadQuestionData(question.id)
+  // Don't call loadQuestionData here - the watch on selectedQuestionId will handle it
   
   // If we're in crosstab mode and clicked, treat as first selection
   if (activeSection.value === 'crosstab') {
     crosstabFirstQuestion.value = question
   }
+}
+
+// Handle question selection from StatSigView (currently unused - kept for future use)
+// Question selection in StatSig happens via the sidebar question list
+function handleStatSigQuestionSelected(question) {
+  // This would handle if StatSigView had its own question selector
+  // Currently questions are selected via the permanent sidebar
+  console.log('StatSig question selected:', question)
 }
 
 // Handle crosstab selection from permanent question list
@@ -360,6 +393,28 @@ function handleQuestionListCrosstabSelection({ first, second }) {
   }
   
   saveSurveyState()
+}
+
+// Load questions by ID for crosstab (from Stat Sig navigation)
+async function loadQuestionsForCrosstab(firstQuestionId, secondQuestionId) {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/surveys/${surveyId.value}/questions`)
+    const questions = response.data
+    
+    const firstQ = questions.find(q => q.id === firstQuestionId)
+    const secondQ = questions.find(q => q.id === secondQuestionId)
+    
+    if (firstQ && secondQ) {
+      crosstabFirstQuestion.value = firstQ
+      crosstabSecondQuestion.value = secondQ
+      selectedQuestionId.value = firstQuestionId
+      
+      // Load full question data for display
+      await loadQuestionData(firstQuestionId)
+    }
+  } catch (error) {
+    console.error('Error loading questions for crosstab:', error)
+  }
 }
 
 // Load full question data with responses
@@ -450,8 +505,14 @@ function loadSurveyState() {
   if (route.query.section) {
     activeSection.value = route.query.section
   }
-  if (route.query.question) {
-    selectedQuestionId.value = route.query.question
+  if (route.query.questionId) {
+    selectedQuestionId.value = route.query.questionId
+  }
+  
+  // Handle crosstab navigation from Stat Sig
+  if (route.query.firstQuestion && route.query.secondQuestion) {
+    // Load questions by ID for crosstab
+    loadQuestionsForCrosstab(route.query.firstQuestion, route.query.secondQuestion)
   }
   
   // Then check localStorage for saved state if URL params not present
@@ -464,7 +525,7 @@ function loadSurveyState() {
         if (!route.query.section) {
           activeSection.value = state.activeSection || 'results'
         }
-        if (!route.query.question) {
+        if (!route.query.questionId) {
           selectedQuestionId.value = state.selectedQuestionId || null
         }
         expandedBlocks.value = state.expandedBlocks || []
@@ -708,4 +769,26 @@ watch(() => route.params.id, (newId) => {
     loadSurveyInfo()
   }
 })
+
+// Watch for query parameter changes (when navigating from Stat Sig to Crosstab)
+watch(() => route.query, (newQuery, oldQuery) => {
+  // Update section if it changed
+  if (newQuery.section && newQuery.section !== activeSection.value) {
+    activeSection.value = newQuery.section
+  }
+  
+  // Only apply questionId from URL on initial load or if it explicitly changed
+  // Don't override manual selections from sidebar
+  if (newQuery.questionId && isInitialRouteLoad.value) {
+    selectedQuestionId.value = newQuery.questionId
+    loadQuestionData(newQuery.questionId)
+    isInitialRouteLoad.value = false
+  }
+  
+  // Handle crosstab navigation parameters
+  if (newQuery.firstQuestion && newQuery.secondQuestion) {
+    loadQuestionsForCrosstab(newQuery.firstQuestion, newQuery.secondQuestion)
+  }
+}, { deep: true })
+
 </script>

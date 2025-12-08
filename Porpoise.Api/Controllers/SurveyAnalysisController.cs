@@ -542,6 +542,158 @@ Provide data-driven insights about patterns, notable findings, and implications:
     }
 
     /// <summary>
+    /// Get statistical significance data for a question compared to all other questions
+    /// </summary>
+    [HttpGet("{surveyId:guid}/statistical-significance/{questionId:guid}")]
+    public async Task<IActionResult> GetStatisticalSignificance(Guid surveyId, Guid questionId)
+    {
+        try
+        {
+            var survey = await _surveyRepository.GetByIdAsync(surveyId);
+            if (survey == null)
+                return NotFound($"Survey with ID {surveyId} not found");
+
+            var selectedQuestion = await _questionRepository.GetByIdAsync(questionId);
+            if (selectedQuestion == null)
+                return NotFound($"Question with ID {questionId} not found");
+
+            // Get survey data
+            var surveyData = await _surveyDataRepository.GetBySurveyIdAsync(surveyId);
+            if (surveyData == null)
+                return NotFound($"No data found for survey {surveyId}");
+
+            // Get all questions from the repository (not from survey.QuestionList which may be null)
+            var allQuestionsEnumerable = await _questionRepository.GetBySurveyIdAsync(surveyId);
+            var allQuestions = allQuestionsEnumerable.ToList();
+            
+            // Set DataFileCol for all questions by finding column indices in survey data
+            if (surveyData.DataList != null && surveyData.DataList.Count > 0)
+            {
+                var headerRow = surveyData.DataList[0];
+                
+                // Remove duplicate header rows if they exist
+                for (int i = surveyData.DataList.Count - 1; i >= 1; i--)
+                {
+                    var row = surveyData.DataList[i];
+                    bool isDuplicateHeader = true;
+                    if (row.Count == headerRow.Count)
+                    {
+                        for (int j = 0; j < row.Count && j < headerRow.Count; j++)
+                        {
+                            if (!string.Equals(row[j], headerRow[j], StringComparison.OrdinalIgnoreCase))
+                            {
+                                isDuplicateHeader = false;
+                                break;
+                            }
+                        }
+                        if (isDuplicateHeader)
+                        {
+                            surveyData.DataList.RemoveAt(i);
+                        }
+                    }
+                }
+
+                // Map DataFileCol for selected question
+                int selectedQuestionIndex = headerRow.FindIndex(col => 
+                    string.Equals(col, selectedQuestion.QstNumber, StringComparison.OrdinalIgnoreCase));
+                if (selectedQuestionIndex >= 0)
+                {
+                    selectedQuestion.DataFileCol = (short)selectedQuestionIndex;
+                }
+
+                // Map DataFileCol for all other questions
+                foreach (var q in allQuestions)
+                {
+                    int qIndex = headerRow.FindIndex(col => 
+                        string.Equals(col, q.QstNumber, StringComparison.OrdinalIgnoreCase));
+                    if (qIndex >= 0)
+                    {
+                        q.DataFileCol = (short)qIndex;
+                    }
+                }
+            }
+            
+            // Load responses for the selected question
+            var selectedQuestionResponses = await _responseRepository.GetByQuestionIdAsync(questionId);
+            selectedQuestion.Responses = new ObjectListBase<Response>(selectedQuestionResponses);
+            
+            Console.WriteLine($"StatSig: Analyzing question {selectedQuestion.QstLabel} (ID: {questionId})");
+            Console.WriteLine($"StatSig: Total questions in survey: {allQuestions.Count}");
+            Console.WriteLine($"StatSig: Selected question has {selectedQuestion.Responses.Count} response categories");
+            Console.WriteLine($"StatSig: Survey data has {surveyData.DataList?.Count ?? 0} rows");
+            
+            // Build list of statistical significance items
+            var statSigItems = new List<StatSigItemDto>();
+
+            foreach (var compareQuestion in allQuestions)
+            {
+                // Skip comparing question to itself
+                if (compareQuestion.Id == questionId)
+                    continue;
+
+                // Only compare against Independent variables (demographics/classifiers)
+                if (compareQuestion.VariableType != QuestionVariableType.Independent)
+                    continue;
+                
+                Console.WriteLine($"StatSig: Comparing against IV: {compareQuestion.QstLabel}");
+                
+                // Load responses for this compare question
+                var compareQuestionResponses = await _responseRepository.GetByQuestionIdAsync(compareQuestion.Id);
+                compareQuestion.Responses = new ObjectListBase<Response>(compareQuestionResponses);
+
+                // Skip if either question doesn't have responses
+                if (selectedQuestion.Responses == null || selectedQuestion.Responses.Count == 0 ||
+                    compareQuestion.Responses == null || compareQuestion.Responses.Count == 0)
+                {
+                    Console.WriteLine($"StatSig: Skipping {compareQuestion.QstLabel} - no responses");
+                    continue;
+                }
+
+                try
+                {
+                    // Create crosstab to calculate statistical significance
+                    // Note: compareQuestion is the DV, selectedQuestion is the IV
+                    var crosstab = new Crosstab(surveyData, compareQuestion, selectedQuestion, false, false);
+                    
+                    // Get stat sig item from crosstab
+                    var statSigItem = crosstab.GetStatSigItems();
+                    
+                    Console.WriteLine($"StatSig: {compareQuestion.QstLabel} - TotalN: {crosstab.TotalN}, Phi: {statSigItem.Phi:F3}, ChiSq: {crosstab.ChiSquare:F3}, Sig: {statSigItem.Significance}");
+                    
+                    // Include ALL IVs (not just significant ones), but only if we have valid data
+                    if (crosstab.TotalN > 0 && !double.IsNaN(statSigItem.Phi))
+                    {
+                        statSigItems.Add(new StatSigItemDto
+                        {
+                            Id = compareQuestion.Id,
+                            QuestionLabel = compareQuestion.QstLabel,
+                            Phi = statSigItem.Phi,
+                            Significance = statSigItem.Significance
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Log but continue processing other questions
+                    Console.WriteLine($"Error comparing question {questionId} with {compareQuestion.Id}: {ex.Message}");
+                    continue;
+                }
+            }
+
+            // Sort by Phi value descending (strongest relationships first)
+            statSigItems = statSigItems.OrderByDescending(x => x.Phi).ToList();
+            
+            Console.WriteLine($"StatSig: Found {statSigItems.Count} significant relationships");
+
+            return Ok(statSigItems);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, $"Error calculating statistical significance: {ex.Message}");
+        }
+    }
+
+    /// <summary>
     /// Generate AI analysis for a single question's results
     /// </summary>
     [HttpPost("{surveyId:guid}/analyze-question")]
@@ -605,6 +757,59 @@ Provide data-driven insights about patterns, notable findings, and implications:
         {
             return StatusCode(500, new { error = ex.Message });
         }
+    }
+
+    [HttpPost("{surveyId:guid}/analyze-statsig")]
+    public async Task<IActionResult> AnalyzeStatisticalSignificance(Guid surveyId, [FromBody] StatSigAnalysisRequest request)
+    {
+        try
+        {
+            var survey = await _surveyRepository.GetByIdAsync(surveyId);
+            if (survey == null)
+                return NotFound($"Survey with ID {surveyId} not found");
+
+            // Build context for AI analysis
+            var prompt = BuildStatSigAnalysisPrompt(request);
+            
+            var analysis = await _aiService.CallAIAPI(prompt);
+            
+            return Ok(new { analysis });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
+    private string BuildStatSigAnalysisPrompt(StatSigAnalysisRequest request)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("You are a data analyst reviewing statistical significance results for a survey question.");
+        sb.AppendLine();
+        sb.AppendLine($"The survey question being analyzed is: {request.QuestionLabel}");
+        sb.AppendLine();
+        sb.AppendLine("The following independent variables (demographics/classifiers) were tested for their relationship with this question:");
+        sb.AppendLine();
+        
+        foreach (var item in request.StatSigData.OrderByDescending(x => x.Phi))
+        {
+            sb.AppendLine($"- {item.Variable}: Phi = {item.Phi:F3}, {item.Significance}");
+        }
+        
+        sb.AppendLine();
+        sb.AppendLine("Please provide a concise analysis with these sections:");
+        sb.AppendLine("## Key Findings");
+        sb.AppendLine("Identify the top 2-3 variables with the strongest relationships and what this means.");
+        sb.AppendLine();
+        sb.AppendLine("## Statistical Interpretation");
+        sb.AppendLine("Explain the significance levels and what they tell us about the reliability of these relationships.");
+        sb.AppendLine();
+        sb.AppendLine("## Recommendations");
+        sb.AppendLine("Suggest which variables would be most valuable to explore further through crosstab analysis.");
+        sb.AppendLine();
+        sb.AppendLine("Keep the analysis practical and actionable for survey researchers.");
+        
+        return sb.ToString();
     }
 
     private string BuildCrosstabAnalysisPrompt(CrosstabAnalysisRequest request)
@@ -728,4 +933,25 @@ public class CrosstabAnalysisRequest
     public double Phi { get; set; }
     public double CramersV { get; set; }
     public List<IVIndexInfo>? Indexes { get; set; }
+}
+
+public class StatSigItemDto
+{
+    public Guid Id { get; set; }
+    public string QuestionLabel { get; set; } = string.Empty;
+    public double Phi { get; set; }
+    public string Significance { get; set; } = string.Empty;
+}
+
+public class StatSigAnalysisRequest
+{
+    public string QuestionLabel { get; set; } = string.Empty;
+    public List<StatSigDataItem> StatSigData { get; set; } = new();
+}
+
+public class StatSigDataItem
+{
+    public string Variable { get; set; } = string.Empty;
+    public double Phi { get; set; }
+    public string Significance { get; set; } = string.Empty;
 }

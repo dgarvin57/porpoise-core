@@ -68,6 +68,18 @@
           <div class="bg-white dark:bg-gray-800 py-3 px-6">
             <div class="relative flex items-center justify-between">
               <div class="flex items-center space-x-3 min-w-0">
+                <!-- Back to Stat Sig button (only show when coming from Stat Sig) -->
+                <button
+                  v-if="isFromStatSig"
+                  @click="backToStatSig"
+                  class="flex items-center space-x-1 px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
+                  title="Return to Statistical Significance view"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                  </svg>
+                  <span>Stat Sig</span>
+                </button>
                 <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
                   {{ crosstabData.firstQuestion.label }}&nbsp;&nbsp;<span class="text-gray-500 dark:text-gray-400 font-normal">by</span>&nbsp;&nbsp;{{ crosstabData.secondQuestion.label }}
                 </h2>
@@ -438,12 +450,16 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
 import { API_BASE_URL } from '@/config/api'
 import QuestionListSelector from './QuestionListSelector.vue'
 import Button from '../common/Button.vue'
 import CloseButton from '../common/CloseButton.vue'
 import CrosstabStatisticsModal from '../CrosstabStatisticsModal.vue'
+
+const router = useRouter()
+const route = useRoute()
 
 const props = defineProps({
   surveyId: {
@@ -465,6 +481,9 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['selections-changed'])
+
+// Check if navigated from Stat Sig view
+const isFromStatSig = computed(() => route.query.fromStatSig === 'true')
 
 // State
 const loading = ref(false)
@@ -629,6 +648,18 @@ async function generateAIAnalysis() {
 function formatNumber(value) {
   if (typeof value !== 'number') return value
   return value.toFixed(3)
+}
+
+function backToStatSig() {
+  // Navigate back to Stat Sig view with the DV question (firstQuestion) selected
+  router.push({
+    name: 'analytics',
+    params: { id: props.surveyId },
+    query: {
+      section: 'statsig',
+      questionId: firstQuestion.value.id
+    }
+  })
 }
 
 function parseAIAnalysis(text) {
