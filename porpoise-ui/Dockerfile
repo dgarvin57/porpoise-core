@@ -24,9 +24,12 @@ RUN rm -rf ./*
 # Copy built files from build stage
 COPY --from=build /app/dist .
 
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy nginx configuration template
+COPY nginx.conf /etc/nginx/templates/default.conf.template
 
 EXPOSE 80
+
+# Set default PORT if not provided
+ENV PORT=80
 
 CMD ["nginx", "-g", "daemon off;"]
