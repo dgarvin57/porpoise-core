@@ -18,6 +18,9 @@ RUN npm run build
 FROM nginx:alpine
 WORKDIR /usr/share/nginx/html
 
+# Install envsubst (part of gettext package)
+RUN apk add --no-cache gettext
+
 # Remove default nginx static files
 RUN rm -rf ./*
 
