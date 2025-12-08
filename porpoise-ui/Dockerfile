@@ -18,14 +18,16 @@ RUN npm run build
 FROM node:20-alpine
 WORKDIR /app
 
-# Copy built files
+# Copy built files and necessary config
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/package*.json ./
+COPY --from=build /app/vite.config.js ./
 
-# Install only vite for preview server
+# Install only production dependencies
 RUN npm install vite
 
-EXPOSE 3000
+# Railway will set PORT, default to 3000
+ENV PORT=3000
 
 # Serve the built app
-CMD ["npx", "vite", "preview", "--host", "0.0.0.0", "--port", "3000"]
+CMD ["sh", "-c", "npx vite preview --host 0.0.0.0 --port $PORT"]
