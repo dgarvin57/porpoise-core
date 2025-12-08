@@ -25,7 +25,11 @@ RUN rm -rf ./*
 COPY --from=build /app/dist .
 
 # Copy nginx configuration template
-COPY nginx.conf /etc/nginx/templates/default.conf.template
+COPY nginx.conf /etc/nginx/conf.d/default.conf.template
+
+# Copy custom entrypoint script
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 
 EXPOSE 80
 
@@ -33,4 +37,4 @@ EXPOSE 80
 ENV PORT=80
 
 # Use ENTRYPOINT to prevent Railway from overriding the command
-ENTRYPOINT ["nginx", "-g", "daemon off;"]
+ENTRYPOINT ["/docker-entrypoint.sh"]
