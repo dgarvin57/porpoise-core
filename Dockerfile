@@ -2,21 +2,22 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-# Copy solution and project files
-COPY ["Porpoise.Core.sln", "./"]
+# Copy project files for restore
 COPY ["Porpoise.Api/Porpoise.Api.csproj", "Porpoise.Api/"]
 COPY ["Porpoise.Core/Porpoise.Core.csproj", "Porpoise.Core/"]
 COPY ["Porpoise.DataAccess/Porpoise.DataAccess.csproj", "Porpoise.DataAccess/"]
 
-# Restore dependencies
-RUN dotnet restore "Porpoise.Core.sln"
+# Restore dependencies for API project only
+WORKDIR "/src/Porpoise.Api"
+RUN dotnet restore "Porpoise.Api.csproj"
 
 # Copy everything else
+WORKDIR /src
 COPY . .
 
 # Build and publish
 WORKDIR "/src/Porpoise.Api"
-RUN dotnet publish "Porpoise.Api.csproj" -c Release -o /app/publish
+RUN dotnet publish "Porpoise.Api.csproj" -c Release -o /app/publish --no-restore
 
 # Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
