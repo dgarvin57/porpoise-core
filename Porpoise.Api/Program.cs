@@ -112,6 +112,14 @@ var app = builder.Build();
 // CORS must come first to handle preflight requests
 app.UseCors();
 
+// Add health check endpoint (before tenant middleware)
+app.MapGet("/health", () => Results.Ok(new 
+{ 
+    status = "healthy", 
+    timestamp = DateTime.UtcNow,
+    environment = app.Environment.EnvironmentName
+}));
+
 // Add tenant middleware (after CORS, before MapControllers)
 app.UseMiddleware<TenantMiddleware>();
 
