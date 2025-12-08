@@ -1,0 +1,101 @@
+name: Deploy API to Production
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Dependencies
+        run: npm ci
+        working-directory: ./porpoise-ui
+
+      - name: Run Semantic Release
+        run: npx semantic-release
+        working-directory: ./porpoise-ui
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Run tests
+        run: dotnet test --no-build --configuration Release --verbosity normal
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Capture Commit Hash
+        run: echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Capture Version Tag
+        run: |
+          VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "production-${{ env.COMMIT_HASH }}")
+          VERSION=${VERSION#v}
+          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Log Commit Hash and Version
+        run: |
+          echo "env.COMMIT_HASH:${{ env.COMMIT_HASH }}"
+          echo "env.APP_VERSION:${{ env.APP_VERSION }}"
+
+      - name: Set Environment Variables on Railway
+        run: |
+          set -e
+          railway variables set COMMIT_HASH=${{ env.COMMIT_HASH }} --environment production --service porpoise-api || echo "Failed to set COMMIT_HASH, continuing..."
+          railway variables set APP_VERSION=${{ env.APP_VERSION }} --environment production --service porpoise-api || echo "Failed to set APP_VERSION, continuing..."
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_API_PRODUCTION_TOKEN }}
+
+      - name: Deploy to Railway Production
+        run: |
+          set -e
+          cd Porpoise.Api
+          railway up --environment production --service porpoise-api || echo "Log streaming failed, proceeding to check deployment status"
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_API_PRODUCTION_TOKEN }}
+
+      - name: Verify Deployment Status
+        run: |
+          set -e
+          railway status --environment production --service porpoise-api
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_API_PRODUCTION_TOKEN }}

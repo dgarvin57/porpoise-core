@@ -1,0 +1,73 @@
+name: Deploy UI to Staging
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: develop
+          fetch-depth: 0
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Dependencies
+        run: npm ci
+        working-directory: ./porpoise-ui
+
+      - name: Check Node.js and npm version
+        run: |
+          node -v
+          npm -v
+
+      - name: Capture Commit Hash
+        run: echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Capture Version Tag
+        run: |
+          VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "develop-${{ env.COMMIT_HASH }}")
+          VERSION=${VERSION#v}
+          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Log Commit Hash and Version
+        run: |
+          echo "env.COMMIT_HASH:${{ env.COMMIT_HASH }}"
+          echo "env.APP_VERSION:${{ env.APP_VERSION }}"
+
+      - name: Build Vue App
+        run: npm run build
+        working-directory: ./porpoise-ui
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL_STAGING }}
+          VITE_APP_VERSION: ${{ env.APP_VERSION }}
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli@latest
+
+      - name: Set Environment Variables
+        run: |
+          set -e
+          railway variables set COMMIT_HASH=${{ env.COMMIT_HASH }} --environment staging --service pulse-ui
+          railway variables set APP_VERSION=${{ env.APP_VERSION }} --environment staging --service pulse-ui
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_UI_STAGING_TOKEN }}
+
+      - name: Deploy to Railway Staging
+        run: |
+          set -e
+          cd porpoise-ui
+          railway up --environment staging --service pulse-ui
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_UI_STAGING_TOKEN }}
