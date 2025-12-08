@@ -16,7 +16,8 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(
             "http://localhost:5173", 
             "http://localhost:5174",
-            "https://pulse-ui-staging.up.railway.app"
+            "https://pulse-ui-staging.up.railway.app",
+            "https://pulse-ui-production.up.railway.app"
         )
         .AllowAnyHeader()
         .AllowAnyMethod()
