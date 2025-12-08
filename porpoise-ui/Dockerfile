@@ -32,4 +32,5 @@ EXPOSE 80
 # Set default PORT if not provided
 ENV PORT=80
 
-CMD ["nginx", "-g", "daemon off;"]
+# Use ENTRYPOINT to prevent Railway from overriding the command
+ENTRYPOINT ["nginx", "-g", "daemon off;"]
