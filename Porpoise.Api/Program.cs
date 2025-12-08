@@ -12,13 +12,15 @@ using Porpoise.DataAccess.Repositories;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddCors(options =>
-    options.AddDefaultPolicy(p => p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
-
-builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
-        policy.WithOrigins("http://localhost:5173", "http://localhost:5174")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
+        policy.WithOrigins(
+            "http://localhost:5173", 
+            "http://localhost:5174",
+            "https://pulse-ui-staging.up.railway.app"
+        )
+        .AllowAnyHeader()
+        .AllowAnyMethod()
+        .AllowCredentials()
     )
 );
 
