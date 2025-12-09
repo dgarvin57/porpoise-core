@@ -60,19 +60,6 @@ jobs:
         working-directory: ./porpoise-ui
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  deploy:
-    needs: release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli@latest
-
-      - name: Deploy to Railway
-        run: railway up --service pulse-ui
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          RAILWAY_ENVIRONMENT: production
+      
+      - name: Notify
+        run: echo "✅ Tests passed and release created. Railway will auto-deploy from this commit."
