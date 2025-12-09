@@ -56,17 +56,8 @@ jobs:
       - name: Install Railway CLI
         run: npm install -g @railway/cli@latest
 
-      - name: Set Environment Variables
-        run: |
-          set -e
-          railway variables set COMMIT_HASH=${{ env.COMMIT_HASH }} --environment staging --service pulse-ui
-          railway variables set APP_VERSION=${{ env.APP_VERSION }} --environment staging --service pulse-ui
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_UI_STAGING_TOKEN }}
-
       - name: Deploy to Railway Staging
         run: |
-          set -e
           cd porpoise-ui
           railway up --environment staging --service pulse-ui
         env:

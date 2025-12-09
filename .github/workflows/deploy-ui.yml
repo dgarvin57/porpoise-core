@@ -79,17 +79,8 @@ jobs:
       - name: Install Railway CLI
         run: npm install -g @railway/cli@latest
 
-      - name: Set Environment Variables
-        run: |
-          set -e
-          railway variables set COMMIT_HASH=${{ env.COMMIT_HASH }} --environment production --service pulse-ui
-          railway variables set APP_VERSION=${{ env.APP_VERSION }} --environment production --service pulse-ui
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_UI_PRODUCTION_TOKEN }}
-
       - name: Deploy to Railway Production
         run: |
-          set -e
           cd porpoise-ui
           railway up --environment production --service pulse-ui || echo "Log streaming failed, proceeding to check deployment status"
         env:
@@ -97,7 +88,6 @@ jobs:
 
       - name: Verify Deployment Status
         run: |
-          set -e
           railway status --environment production --service pulse-ui
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_UI_PRODUCTION_TOKEN }}
