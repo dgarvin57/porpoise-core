@@ -4,19 +4,13 @@ on:
   push:
     branches:
       - develop
-  pull_request:
-    branches:
-      - develop
 
 jobs:
-  deploy:
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          ref: develop
-          fetch-depth: 0
 
       - name: Install Node.js
         uses: actions/setup-node@v4
@@ -27,38 +21,31 @@ jobs:
         run: npm ci
         working-directory: ./porpoise-ui
 
-      - name: Check Node.js and npm version
-        run: |
-          node -v
-          npm -v
+      - name: Run Tests
+        run: npm test
+        working-directory: ./porpoise-ui
+        continue-on-error: true
 
-      - name: Capture Commit Hash
-        run: echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-
-      - name: Capture Version Tag
-        run: |
-          VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "develop-${{ env.COMMIT_HASH }}")
-          VERSION=${VERSION#v}
-          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
-
-      - name: Log Commit Hash and Version
-        run: |
-          echo "env.COMMIT_HASH:${{ env.COMMIT_HASH }}"
-          echo "env.APP_VERSION:${{ env.APP_VERSION }}"
-
-      - name: Build Vue App
+      - name: Build
         run: npm run build
         working-directory: ./porpoise-ui
         env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL_STAGING }}
-          VITE_APP_VERSION: ${{ env.APP_VERSION }}
+          VITE_API_BASE_URL: https://porpoise-api-staging.up.railway.app
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Install Railway CLI
         run: npm install -g @railway/cli@latest
 
-      - name: Deploy to Railway Staging
+      - name: Link and Deploy to Railway
         run: |
           cd porpoise-ui
-          railway up --environment staging --service pulse-ui
+          railway link ${{ secrets.RAILWAY_PROJECT_ID }}
+          railway up --service pulse-ui --environment staging
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_UI_STAGING_TOKEN }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}

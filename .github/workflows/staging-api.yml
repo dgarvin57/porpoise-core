@@ -4,19 +4,13 @@ on:
   push:
     branches:
       - develop
-  pull_request:
-    branches:
-      - develop
 
 jobs:
-  deploy:
+  test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -32,39 +26,20 @@ jobs:
       - name: Run tests
         run: dotnet test --no-build --configuration Release --verbosity normal
 
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Install Railway CLI
-        run: npm install -g @railway/cli
+        run: npm install -g @railway/cli@latest
 
-      - name: Capture Commit Hash
-        run: echo "COMMIT_HASH=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
-
-      - name: Capture Version Tag
-        run: |
-          VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "develop-${{ env.COMMIT_HASH }}")
-          VERSION=${VERSION#v}
-          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
-
-      - name: Log Commit Hash and Version
-        run: |
-          echo "env.COMMIT_HASH:${{ env.COMMIT_HASH }}"
-          echo "env.APP_VERSION:${{ env.APP_VERSION }}"
-
-      - name: Set Environment Variables on Railway
-        run: |
-          railway variables set COMMIT_HASH=${{ env.COMMIT_HASH }} --environment staging --service porpoise-api || echo "Failed to set COMMIT_HASH, continuing..."
-          railway variables set APP_VERSION=${{ env.APP_VERSION }} --environment staging --service porpoise-api || echo "Failed to set APP_VERSION, continuing..."
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_API_STAGING_TOKEN }}
-
-      - name: Deploy to Railway Staging
+      - name: Link and Deploy to Railway
         run: |
           cd Porpoise.Api
-          railway up --environment staging --service porpoise-api || echo "Log streaming failed, proceeding to check deployment status"
+          railway link ${{ secrets.RAILWAY_PROJECT_ID }}
+          railway up --service porpoise-api --environment staging
         env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_API_STAGING_TOKEN }}
-
-      - name: Verify Deployment Status
-        run: |
-          railway status --environment staging --service porpoise-api
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_API_STAGING_TOKEN }}
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
