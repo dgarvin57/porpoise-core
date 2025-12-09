@@ -72,9 +72,7 @@ jobs:
         run: npm install -g @railway/cli@latest
 
       - name: Deploy to Railway
-        run: |
-          cd porpoise-ui
-          railway up --service pulse-ui
+        run: railway up --service pulse-ui
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_ENVIRONMENT: production
