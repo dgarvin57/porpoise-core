@@ -71,10 +71,10 @@ jobs:
       - name: Install Railway CLI
         run: npm install -g @railway/cli@latest
 
-      - name: Link and Deploy to Railway
+      - name: Deploy to Railway
         run: |
           cd porpoise-ui
-          railway link ${{ secrets.RAILWAY_PROJECT_ID }}
-          railway up --service pulse-ui --environment production
+          railway up --service pulse-ui
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_ENVIRONMENT: production

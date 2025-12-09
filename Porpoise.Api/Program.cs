@@ -13,15 +13,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
-        policy.WithOrigins(
-            "http://localhost:5173", 
-            "http://localhost:5174",
-            "https://pulse-ui-staging.up.railway.app",
-            "https://pulse-ui-production.up.railway.app"
-        )
+        policy.AllowAnyOrigin()  // Allow all origins for now - we'll tighten this later
         .AllowAnyHeader()
         .AllowAnyMethod()
-        .AllowCredentials()
     )
 );
 
