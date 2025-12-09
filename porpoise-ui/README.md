@@ -60,3 +60,4 @@ Requires:
 - [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) extension for Vue 3 support
 
 For more about Vue 3, see the [Vue Docs](https://vuejs.org/).
+# Force rebuild
