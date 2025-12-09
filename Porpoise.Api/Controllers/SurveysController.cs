@@ -1,3 +1,4 @@
+#pragma warning disable CS0618 // Type or member is obsolete - BlkLabel and BlkStem still in use during migration
 using Microsoft.AspNetCore.Mvc;
 using Porpoise.Core.Application.Interfaces;
 using Porpoise.Core.Models;

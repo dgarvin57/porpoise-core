@@ -192,7 +192,7 @@ public static class QuestionEngine
         }
 #pragma warning restore CS0618 // Type or member is obsolete
 
-        // Block Stem
+        // Block Stem\n#pragma warning disable CS0618 // Type or member is obsolete
         if (whatToChange.BlkStem && target.BlkStem != source.BlkStem)
         {
             if (string.IsNullOrEmpty(target.BlkStem) && !string.IsNullOrEmpty(source.BlkStem))
@@ -212,7 +212,7 @@ public static class QuestionEngine
             }
         }
 
-        // IsPreferenceBlock
+#pragma warning restore CS0618 // Type or member is obsolete\n        // IsPreferenceBlock
         if (whatToChange.IsPreferenceBlock && target.IsPreferenceBlock != source.IsPreferenceBlock)
         {
             changeLog.AddItem(new WhatChangedItem(WhatChangedEnum.IsPreferenceBlock, target.IsPreferenceBlock.ToString(), source.IsPreferenceBlock.ToString()));

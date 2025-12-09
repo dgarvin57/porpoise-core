@@ -123,7 +123,7 @@ public static class ProjectEngine
 
     public static void GetProjectFileProperties(Project project, string path)
     {
-        project.FileName = Path.GetFileName(path);
+        project.ProjectFile = Path.GetFileName(path);
         project.FullPath = Path.GetFullPath(path);
         project.FullFolder = Path.GetDirectoryName(path)!;
         project.ProjectFolder = IOUtils.GetProjectFolderDirectoryPart(path, project.BaseProjectFolder ?? string.Empty) ?? string.Empty;
@@ -197,7 +197,7 @@ public static class ProjectEngine
             GetProjectFileProperties(project, tempProjectPath);
 
             var targetFolder = Path.Combine(destinationDir, project.ProjectName ?? "ImportedProject");
-            var targetProjectPath = Path.Combine(targetFolder, project.FileName ?? "project.porp");
+            var targetProjectPath = Path.Combine(targetFolder, project.ProjectFile ?? "project.porp");
 
             if (File.Exists(targetProjectPath))
             {

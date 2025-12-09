@@ -37,9 +37,7 @@ jobs:
         run: npm install -g @railway/cli@latest
 
       - name: Deploy to Railway
-        run: |
-          cd Porpoise.Api
-          railway up --service porpoise-api
+        run: railway up --service porpoise-api
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_ENVIRONMENT: staging

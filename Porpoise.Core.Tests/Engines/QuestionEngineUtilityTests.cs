@@ -114,14 +114,12 @@ public class QuestionEngineUtilityTests
     public void IsQuestionFilled_ShouldReturnFalse_WhenQstNumberAndQstLabelAreNull()
     {
         // Arrange
-        var question = new Question
-        {
-            DataFileCol = 5,
-            QstNumber = null,
-            QstLabel = null
-        };
-
-        // Act
+    var question = new Question
+    {
+        DataFileCol = 5,
+        QstNumber = string.Empty,
+        QstLabel = string.Empty
+    };        // Act
         var result = QuestionEngine.IsQuestionFilled(question);
 
         // Assert

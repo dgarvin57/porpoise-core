@@ -142,7 +142,7 @@ public class SurveyImportController : ControllerBase
 
             // Load first survey to get its name for the project
             var firstSurveyPath = surveyFiles[0];
-            var (firstSurvey, _, _) = ProjectLoader.LoadProject(firstSurveyPath, null, firstSurveyPath);
+            var (firstSurvey, _, _) = ProjectLoader.LoadProject(firstSurveyPath, string.Empty, firstSurveyPath);
             
             var surveySummaries = new ObjectListBase<SurveySummary>();
             foreach (var file in surveyFiles)
@@ -265,7 +265,7 @@ public class SurveyImportController : ControllerBase
                 Console.WriteLine($"[IMPORT] Loading data from: {actualDataPath}");
                 var (survey, _, data) = ProjectLoader.LoadProject(
                     surveyPath,
-                    projectFilePath,
+                    projectFilePath ?? string.Empty,
                     actualDataPath
                 );
 

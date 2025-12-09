@@ -149,7 +149,7 @@ namespace Porpoise.Api.Controllers
                 .Select(p => new
                 {
                     id = p.Id.ToString(),
-                    clientLogoBase64 = Convert.ToBase64String(p.ClientLogo)
+                    clientLogoBase64 = Convert.ToBase64String(p.ClientLogo!)
                 });
             return Ok(logos);
         }

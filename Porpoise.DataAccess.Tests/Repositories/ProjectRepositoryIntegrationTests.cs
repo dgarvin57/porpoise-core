@@ -336,7 +336,7 @@ public class ProjectRepositoryIntegrationTests : IntegrationTestBase
             ProjectFolder = "/projects/2025",
             FullFolder = "/projects/2025/complete",
             FullPath = "/projects/2025/complete/project.porp",
-            FileName = "project.porp",
+            ProjectFile = "project.porp",
             IsExported = true,
             CreatedBy = "admin",
         };
@@ -351,7 +351,7 @@ public class ProjectRepositoryIntegrationTests : IntegrationTestBase
         retrieved!.ProjectName.Should().Be("Complete Project");
         retrieved.ClientName.Should().Be("Complete Client");
         retrieved.IsExported.Should().BeTrue();
-        retrieved.FileName.Should().Be("project.porp");
+        retrieved.ProjectFile.Should().Be("project.porp");
     }
 
     [Fact]

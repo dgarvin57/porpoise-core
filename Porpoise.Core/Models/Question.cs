@@ -352,8 +352,10 @@ public class Question : ObjectBase
         VariableType = VariableType,
         DataType = DataType,
         BlkQstStatus = BlkQstStatus,
+#pragma warning disable CS0618 // Type or member is obsolete
         BlkLabel = BlkLabel,
         BlkStem = BlkStem,
+#pragma warning restore CS0618 // Type or member is obsolete
         IsPreferenceBlock = IsPreferenceBlock,
         IsPreferenceBlockType = IsPreferenceBlockType,
         NumberOfPreferenceItems = NumberOfPreferenceItems,

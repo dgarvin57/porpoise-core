@@ -192,10 +192,10 @@ public class ProjectModelTests
         var project = new Project();
 
         // Act
-        project.FileName = "customer-survey.porp";
+        project.ProjectFile = "customer-survey.porp";
 
         // Assert
-        project.FileName.Should().Be("customer-survey.porp");
+        project.ProjectFile.Should().Be("customer-survey.porp");
     }
 
     [Fact]

@@ -129,7 +129,6 @@ public class PorpzImportTests : IDisposable
         // Arrange
         var zipName = "exported.porpz";
         var zipPath = Path.Combine(_testDataDir, zipName);
-        var expectedName = "exported";
         
         using (var archive = ZipFile.Open(zipPath, ZipArchiveMode.Create))
         {
