@@ -707,7 +707,14 @@ function loadSurveyState() {
 }
 
 // Watch for changes and save state
-watch(activeSection, () => {
+watch(activeSection, (newSection) => {
+  // When switching TO crosstab, ensure crosstab first question matches current selection
+  if (newSection === 'crosstab' && selectedQuestionWithResponses.value) {
+    // Only update if they differ
+    if (!crosstabFirstQuestion.value || crosstabFirstQuestion.value.id !== selectedQuestionWithResponses.value.id) {
+      crosstabFirstQuestion.value = selectedQuestionWithResponses.value
+    }
+  }
   saveSurveyState()
 })
 
@@ -753,6 +760,16 @@ watch(selectedQuestionId, (newId) => {
     loadQuestionData(newId)
   } else {
     selectedQuestionWithResponses.value = null
+  }
+})
+
+// Watch selectedQuestionWithResponses to sync with crosstab first question (results -> crosstab)
+// This ensures when you change the dependent variable on Results, it's reflected in Crosstab
+watch(selectedQuestionWithResponses, (newQuestion) => {
+  // Only sync if we have a question and it's different from current crosstab selection
+  if (newQuestion && (!crosstabFirstQuestion.value || crosstabFirstQuestion.value.id !== newQuestion.id)) {
+    // Update crosstab first question to match the Results selection
+    crosstabFirstQuestion.value = newQuestion
   }
 })
 
@@ -808,9 +825,9 @@ watch(crosstabFirstQuestion, (newQuestion, oldQuestion) => {
     selectedQuestionForSplit.value = newQuestion
   }
   
-  // Sync to Results view selectedQuestionId (one-way: crosstab -> results)
-  // This allows the Results view to show the same question when you switch back
-  if (newQuestion && newQuestion !== oldQuestion) {
+  // Sync to Results view selectedQuestionId (crosstab -> results)
+  // Only update if the IDs don't match to prevent circular updates
+  if (newQuestion && newQuestion !== oldQuestion && newQuestion.id !== selectedQuestionId.value) {
     selectedQuestionId.value = newQuestion.id
     
     // If the question has a blockId, ensure that block is expanded
@@ -831,12 +848,16 @@ function handleAnalyzeCrosstab(question) {
   
   if (!questionToUse) return
   
-  // Set the question as first variable in crosstab
+  // Set the question as first variable in crosstab (force update even if same)
   crosstabFirstQuestion.value = questionToUse
   crosstabSecondQuestion.value = null // Reset second selection
-  // Switch to crosstab view
-  activeSection.value = 'crosstab'
-  saveSurveyState()
+  
+  // Switch to crosstab view - must happen AFTER setting crosstabFirstQuestion
+  // Use nextTick to ensure the watch has time to process
+  nextTick(() => {
+    activeSection.value = 'crosstab'
+    saveSurveyState()
+  })
 }
 
 async function loadSurveyInfo() {
