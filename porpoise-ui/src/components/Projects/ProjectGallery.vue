@@ -1,11 +1,12 @@
 <template>
-  <div class="space-y-6">
-    <!-- Window Width Indicator (Debug Tool) -->
-    <div class="fixed bottom-4 right-4 bg-black/80 text-white px-4 py-2 rounded-lg font-mono text-sm z-50 shadow-lg">
-      Window: {{ windowWidth }}px
-    </div>
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 flex justify-center">
+    <div class="w-full max-w-[1600px] px-6 py-6 space-y-6">
+      <!-- Window Width Indicator (Debug Tool) -->
+      <div class="fixed bottom-4 right-4 bg-black/80 text-white px-4 py-2 rounded-lg font-mono text-sm z-50 shadow-lg">
+        Window: {{ windowWidth }}px
+      </div>
 
-    <!-- Header -->
+      <!-- Header -->
     <div class="flex items-center justify-between">
       <div class="flex items-baseline space-x-3">
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
@@ -394,6 +395,7 @@
           </div>
         </div>
       </div>
+    </div>
     </div>
   </div>
 </template>
