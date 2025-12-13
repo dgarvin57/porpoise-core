@@ -504,16 +504,27 @@ const loadingAnalysis = ref(false)
 // Watch for prop changes and update internal state
 watch(() => props.initialFirstQuestion, (newVal, oldVal) => {
   firstQuestion.value = newVal
+  // Clear crosstab data if question is cleared
+  if (!newVal) {
+    crosstabData.value = null
+  }
 }, { deep: true, immediate: true })
 
 watch(() => props.initialSecondQuestion, (newVal, oldVal) => {
   secondQuestion.value = newVal
+  // Clear crosstab data if question is cleared
+  if (!newVal) {
+    crosstabData.value = null
+  }
 }, { deep: true, immediate: true })
 
 // Auto-generate crosstab when both questions are selected
 watch([firstQuestion, secondQuestion], ([first, second]) => {
   if (first && second) {
     generateCrosstab()
+  } else {
+    // Clear crosstab data if either question is not selected
+    crosstabData.value = null
   }
   // Emit changes for parent component to persist
   emit('selections-changed', { 
@@ -724,6 +735,19 @@ function formatCellValue(value) {
   }
   return value
 }
+
+// Watch for surveyId changes to clear state
+watch(() => props.surveyId, (newId, oldId) => {
+  if (newId && oldId && newId !== oldId) {
+    // Clear all state when survey changes
+    crosstabData.value = null
+    firstQuestion.value = null
+    secondQuestion.value = null
+    aiAnalysis.value = ''
+    error.value = null
+    loading.value = false
+  }
+}, { immediate: false })
 </script>
 
 <style scoped>

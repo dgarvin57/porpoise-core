@@ -697,7 +697,10 @@ Provide data-driven insights about patterns, notable findings, and implications:
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { error = ex.Message });
+            // Return a user-friendly fallback message instead of exposing the error
+            var fallbackMessage = "Unable to generate AI analysis at this time. The statistical results show the key findings from your data. " +
+                                  "Please ensure the OPENAI_API_KEY environment variable is configured on the server.";
+            return Ok(new { analysis = fallbackMessage });
         }
     }
 
@@ -742,7 +745,10 @@ Provide data-driven insights about patterns, notable findings, and implications:
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { error = ex.Message });
+            // Return a user-friendly fallback message instead of exposing the error
+            var fallbackMessage = "Unable to generate AI analysis at this time. The statistical results above show the key findings from your crosstab. " +
+                                  "Please ensure the OPENAI_API_KEY environment variable is configured on the server.";
+            return Ok(new { analysis = fallbackMessage });
         }
     }
 
@@ -764,7 +770,10 @@ Provide data-driven insights about patterns, notable findings, and implications:
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { error = ex.Message });
+            // Return a user-friendly fallback message instead of exposing the error
+            var fallbackMessage = "Unable to generate AI analysis at this time. The statistical significance results show the key relationships in your data. " +
+                                  "Please ensure the OPENAI_API_KEY environment variable is configured on the server.";
+            return Ok(new { analysis = fallbackMessage });
         }
     }
 

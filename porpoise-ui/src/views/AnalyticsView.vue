@@ -117,6 +117,7 @@
           <div class="flex-1 flex flex-col min-h-0">
             <!-- Top: Context Area (Response Results + Question/Block Stem) -->
             <div class="flex-shrink-0 overflow-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 dark:[&::-webkit-scrollbar-track]:bg-gray-800 [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-gray-600 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-gray-400 dark:[&::-webkit-scrollbar-thumb:hover]:bg-gray-500" style="max-height: 30%;">
+              <!-- Show ResultsTable with data when question is selected -->
               <div v-if="selectedQuestionWithResponses && (activeSection === 'results' || activeSection === 'crosstab' || activeSection === 'statsig')" 
                    class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                 <ResultsTable 
@@ -128,6 +129,57 @@
                   @column-mode-changed="handleColumnModeChanged"
                   @analyze-crosstab="handleAnalyzeCrosstab"
                 />
+              </div>
+              
+              <!-- Show skeleton/placeholder when no question is selected -->
+              <div v-else-if="activeSection === 'results' || activeSection === 'crosstab' || activeSection === 'statsig'" 
+                   class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                <div class="sticky top-0 z-30 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 py-1">
+                  <div class="relative flex items-center justify-between px-4">
+                    <div class="flex items-center space-x-3 min-w-0">
+                      <div class="w-5 h-5 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                      <div class="w-5 h-5 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                      <div class="h-4 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                    </div>
+                    <div class="absolute left-[45%]">
+                      <span class="text-base font-semibold text-blue-600 dark:text-blue-400 text-left uppercase tracking-wider">
+                        RESULTS
+                      </span>
+                    </div>
+                    <div class="flex items-center space-x-3 flex-shrink-0">
+                      <div class="flex items-center space-x-4">
+                        <div class="h-3 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                        <div class="h-3 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                        <div class="h-3 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div style="height: 250px;">
+                  <Splitter layout="horizontal" class="h-full">
+                    <SplitterPanel :size="45" :minSize="30" :maxSize="60">
+                      <div class="h-full p-4">
+                        <div class="space-y-3">
+                          <div class="h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                          <div class="h-8 bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
+                          <div class="h-8 bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
+                          <div class="h-8 bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
+                        </div>
+                      </div>
+                    </SplitterPanel>
+                    
+                    <SplitterPanel :size="55" :minSize="40" :maxSize="70">
+                      <div class="h-full p-4">
+                        <div class="space-y-2">
+                          <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-3/4"></div>
+                          <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                          <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-5/6"></div>
+                        </div>
+                      </div>
+                    </SplitterPanel>
+                  </Splitter>
+                </div>
               </div>
             </div>
 
@@ -599,7 +651,7 @@ function loadSurveyState() {
 }
 
 // Watch for changes and save state
-watch(activeSection, (newSection) => {
+watch(activeSection, (newSection, oldSection) => {
   // When switching TO crosstab, ensure crosstab first question matches current selection
   if (newSection === 'crosstab' && selectedQuestionWithResponses.value) {
     // Only update if they differ
@@ -607,6 +659,16 @@ watch(activeSection, (newSection) => {
       crosstabFirstQuestion.value = selectedQuestionWithResponses.value
     }
   }
+  
+  // When switching FROM crosstab to results or statsig, sync the selected question
+  if ((newSection === 'results' || newSection === 'statsig') && oldSection === 'crosstab' && crosstabFirstQuestion.value) {
+    if (!selectedQuestionId.value || selectedQuestionId.value !== crosstabFirstQuestion.value.id) {
+      selectedQuestionId.value = crosstabFirstQuestion.value.id
+      selectedQuestion.value = crosstabFirstQuestion.value
+      loadQuestionData(crosstabFirstQuestion.value.id)
+    }
+  }
+  
   saveSurveyState()
 })
 
@@ -639,6 +701,14 @@ watch(infoTab, () => {
 })
 
 watch(crosstabFirstQuestion, (newVal, oldVal) => {
+  // When crosstab first question changes and we're in results/statsig, sync the selection
+  if (newVal && (activeSection.value === 'results' || activeSection.value === 'statsig')) {
+    if (!selectedQuestionId.value || selectedQuestionId.value !== newVal.id) {
+      selectedQuestionId.value = newVal.id
+      selectedQuestion.value = newVal
+      loadQuestionData(newVal.id)
+    }
+  }
   saveSurveyState()
 }, { deep: true })
 
@@ -836,19 +906,27 @@ watch(() => route.params.id, (newId) => {
     
     // Clear state when switching to a different survey
     if (previousSurveyId && previousSurveyId !== newId) {
-      // Clear localStorage for the old survey
-      localStorage.removeItem(getSurveyStateKey())
+      // Clear localStorage for the old survey (using old ID)
+      localStorage.removeItem(`survey-state-${previousSurveyId}`)
       
       // Clear in-memory state
       crosstabFirstQuestion.value = null
       crosstabSecondQuestion.value = null
       selectedQuestionForSplit.value = null
       selectedQuestionId.value = null
+      selectedQuestion.value = null
+      selectedQuestionWithResponses.value = null
       activeSection.value = 'results'
+      expandedBlocks.value = []
+      columnMode.value = 'totalN'
+      
+      // Don't load state for new survey - start fresh
+      loadSurveyInfo()
+    } else {
+      // Only load saved state if we're staying on the same survey
+      loadSurveyState()
+      loadSurveyInfo()
     }
-    
-    loadSurveyState()
-    loadSurveyInfo()
   }
 })
 
