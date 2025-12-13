@@ -337,26 +337,21 @@
       </template>
 
     <!-- Standalone Main Content (when question list is hidden) -->
-    <main v-if="activeSection === 'dataview' || activeSection === 'datacleansing' || activeSection === 'questions'" class="flex-1 flex flex-col overflow-hidden">
-      <!-- Full-height content for Data View, Data Cleansing, and Questions (no splitter, no question list) -->
-      <div class="h-full flex flex-col">
-        <div class="flex-1 overflow-hidden bg-gray-50 dark:bg-gray-900">
-          <!-- Questions View -->
-          <QuestionsView v-show="activeSection === 'questions'" :surveyId="surveyId" />
+    <main v-if="activeSection === 'dataview' || activeSection === 'datacleansing' || activeSection === 'questions'" class="h-full w-full overflow-hidden">
+      <!-- Questions View -->
+      <QuestionsView v-if="activeSection === 'questions'" :surveyId="surveyId" class="h-full w-full" />
 
-          <!-- Data View -->
-          <DataView v-show="activeSection === 'dataview'" :surveyId="surveyId" />
+      <!-- Data View -->
+      <DataView v-if="activeSection === 'dataview'" :surveyId="surveyId" class="h-full w-full" />
 
-          <!-- Data Cleansing -->
-          <div v-show="activeSection === 'datacleansing'" class="h-full flex items-center justify-center">
-            <div class="text-center">
-              <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
-              </svg>
-              <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Data Cleansing</h3>
-              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Coming soon...</p>
-            </div>
-          </div>
+      <!-- Data Cleansing -->
+      <div v-if="activeSection === 'datacleansing'" class="h-full w-full flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div class="text-center">
+          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+          </svg>
+          <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Data Cleansing</h3>
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Coming soon...</p>
         </div>
       </div>
     </main>
