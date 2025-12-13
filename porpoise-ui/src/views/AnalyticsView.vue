@@ -1,264 +1,98 @@
 <template>
-  <div class="fixed inset-0 top-16 flex overflow-hidden bg-gray-50 dark:bg-gray-900">
+  <div class="fixed inset-0 top-12 flex overflow-hidden bg-gray-50 dark:bg-gray-900">
     <!-- Sidebar Navigation -->
-    <aside class="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
-      <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-        <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ projectName }}</p>
-        <div 
-          class="group relative"
-          @mouseenter="isHoveringName = true"
-          @mouseleave="isHoveringName = false"
+    <aside 
+      :class="[
+        'bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto transition-all duration-300',
+        sidebarCollapsed ? 'w-16' : 'w-64'
+      ]"
+    >
+      <!-- Collapse/Expand Button -->
+      <div :class="['flex items-center', sidebarCollapsed ? 'justify-center p-3' : 'justify-start p-4']">
+        <button
+          @click="toggleSidebar"
+          class="p-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-all duration-200 focus:outline-none"
+          :title="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
         >
-          <input
-            v-model="editableSurveyName"
-            @focus="isEditingName = true"
-            @blur="saveSurveyName"
-            @keyup.enter="$event.target.blur()"
-            :class="[
-              'w-full text-lg font-semibold bg-transparent outline-none transition-all',
-              'text-gray-900 dark:text-white',
-              isHoveringName || isEditingName 
-                ? 'border-b-2 border-blue-500 dark:border-blue-400 cursor-text' 
-                : 'border-b-2 border-transparent cursor-default'
-            ]"
-            :title="editableSurveyName"
-          />
-        </div>
-        <div class="flex items-center space-x-4 mt-2 text-sm text-gray-600 dark:text-gray-400">
-          <span>{{ questionCount }} questions</span>
-          <span>•</span>
-          <span>{{ totalCases }} cases</span>
-        </div>
+          <svg 
+            class="w-5 h-5 transition-transform duration-200" 
+            fill="none" 
+            stroke="currentColor" 
+            viewBox="0 0 24 24" 
+            stroke-width="2"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
       </div>
 
       <!-- Navigation Menu -->
-      <nav class="p-2">
+      <nav class="px-2 pb-2">
         <div class="space-y-1">
-          <!-- Results Section -->
-          <button
+          <!-- Analytics Section -->
+          <SidebarButton
+            label="Analytics"
+            icon-path="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+            :is-active="activeSection === 'results' || activeSection === 'crosstab' || activeSection === 'statsig' || activeSection === 'fullblock' || activeSection === 'matchingblocks' || activeSection === 'index' || activeSection === 'indexplus' || activeSection === 'profile' || activeSection === 'oneresponse'"
+            :collapsed="sidebarCollapsed"
             @click="activeSection = 'results'"
-            :class="[
-              'w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-              activeSection === 'results'
-                ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            ]"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            <span>Results</span>
-          </button>
-
-          <!-- Crosstab Section -->
-          <button
-            @click="activeSection = 'crosstab'"
-            :class="[
-              'w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-              activeSection === 'crosstab'
-                ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            ]"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-            </svg>
-            <span>Crosstab</span>
-          </button>
-
-          <!-- Stat Sig Section -->
-          <button
-            @click="activeSection = 'statsig'"
-            :class="[
-              'w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-              activeSection === 'statsig'
-                ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            ]"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-            </svg>
-            <span>Stat Sig</span>
-          </button>
-
-          <!-- Full Block Section -->
-          <button
-            @click="activeSection = 'fullblock'"
-            :class="[
-              'w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-              activeSection === 'fullblock'
-                ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            ]"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-            </svg>
-            <span>Full Block</span>
-            <span class="text-xs italic text-yellow-400 dark:text-yellow-500 opacity-60 self-end mb-0.5">to do</span>
-          </button>
-
-          <!-- Matching Blocks Section -->
-          <button
-            @click="activeSection = 'matchingblocks'"
-            :class="[
-              'w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-              activeSection === 'matchingblocks'
-                ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            ]"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
-            </svg>
-            <span>Matching Blocks</span>
-            <span class="text-xs italic text-yellow-400 dark:text-yellow-500 opacity-60 self-end mb-0.5">to do</span>
-          </button>
-
-          <!-- Index Section -->
-          <button
-            @click="activeSection = 'index'"
-            :class="[
-              'w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-              activeSection === 'index'
-                ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            ]"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
-            </svg>
-            <span>Index</span>
-            <span class="text-xs italic text-yellow-400 dark:text-yellow-500 opacity-60 self-end mb-0.5">to do</span>
-          </button>
-
-          <!-- Index + Section -->
-          <button
-            @click="activeSection = 'indexplus'"
-            :class="[
-              'w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-              activeSection === 'indexplus'
-                ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            ]"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            <span>Index +</span>
-            <span class="text-xs italic text-yellow-400 dark:text-yellow-500 opacity-60 self-end mb-0.5">to do</span>
-          </button>
-
-          <!-- Profile Section -->
-          <button
-            @click="activeSection = 'profile'"
-            :class="[
-              'w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-              activeSection === 'profile'
-                ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            ]"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-            <span>Profile</span>
-            <span class="text-xs italic text-yellow-400 dark:text-yellow-500 opacity-60 self-end mb-0.5">to do</span>
-          </button>
-
-          <!-- One Response Section -->
-          <button
-            @click="activeSection = 'oneresponse'"
-            :class="[
-              'w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-              activeSection === 'oneresponse'
-                ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            ]"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-            <span>One Response</span>
-            <span class="text-xs italic text-yellow-400 dark:text-yellow-500 opacity-60 self-end mb-0.5">to do</span>
-          </button>
+          />
         </div>
 
-        <!-- Divider between analysis and utility sections -->
+        <!-- Divider -->
         <div class="my-4 border-t border-gray-200 dark:border-gray-700"></div>
 
         <div class="space-y-1">
           <!-- Questions Section -->
-          <button
+          <SidebarButton
+            label="Questions"
+            icon-path="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            :is-active="activeSection === 'questions'"
+            :collapsed="sidebarCollapsed"
+            badge="in progress"
             @click="activeSection = 'questions'"
-            :class="[
-              'w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-              activeSection === 'questions'
-                ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            ]"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>Questions</span>
-            <span class="text-xs italic text-yellow-400 dark:text-yellow-500 opacity-60 self-end mb-0.5">in progress</span>
-          </button>
+          />
 
           <!-- Data View Section -->
-          <button
+          <SidebarButton
+            label="Data View"
+            icon-path="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+            :is-active="activeSection === 'dataview'"
+            :collapsed="sidebarCollapsed"
+            badge="in progress"
             @click="activeSection = 'dataview'"
-            :class="[
-              'w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-              activeSection === 'dataview'
-                ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            ]"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-            </svg>
-            <span>Data View</span>
-            <span class="text-xs italic text-yellow-400 dark:text-yellow-500 opacity-60 self-end mb-0.5">in progress</span>
-          </button>
+          />
 
           <!-- Data Cleansing Section -->
-          <button
+          <SidebarButton
+            label="Data Cleansing"
+            icon-path="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            :is-active="activeSection === 'datacleansing'"
+            :collapsed="sidebarCollapsed"
+            badge="to do"
             @click="activeSection = 'datacleansing'"
-            :class="[
-              'w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-              activeSection === 'datacleansing'
-                ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-            ]"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <span>Data Cleansing</span>
-            <span class="text-xs italic text-yellow-400 dark:text-yellow-500 opacity-60 self-end mb-0.5">to do</span>
-          </button>
+          />
         </div>
 
         <!-- Divider -->
         <div class="my-4 border-t border-gray-200 dark:border-gray-700"></div>
 
         <!-- Back to Projects -->
-        <button
+        <SidebarButton
+          label="Back to Projects"
+          icon-path="M10 19l-7-7m0 0l7-7m-7 7h18"
+          :is-active="false"
+          :collapsed="sidebarCollapsed"
           @click="backToProjects"
-          class="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-          <span>Back to Projects</span>
-        </button>
+        />
       </nav>
     </aside>
 
-    <!-- Permanent Question List -->
-    <aside class="w-96 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
+    <!-- Permanent Question List with Resizer -->
+    <aside 
+      :style="{ width: questionListWidth + 'px' }"
+      class="bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col relative"
+    >
       <QuestionListSelector
         :surveyId="surveyId"
         :selectionMode="questionListMode"
@@ -272,196 +106,232 @@
         @crosstab-selection="handleQuestionListCrosstabSelection"
         @expanded-blocks-changed="handleExpandedBlocksChanged"
       />
+      
+      <!-- Resize Handle -->
+      <div
+        @mousedown="startResizingQuestionList"
+        class="absolute top-0 right-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-500 dark:hover:bg-blue-400 transition-colors group"
+        title="Drag to resize"
+      >
+        <div class="absolute inset-y-0 -right-1 w-3"></div>
+      </div>
     </aside>
 
     <!-- Main Content Area -->
-    <main class="flex-1 overflow-hidden">
-      <!-- Split View: Results Panel + Crosstab side-by-side -->
-      <div v-show="splitViewEnabled && activeSection === 'crosstab'" class="h-full flex p-4">
-        <!-- Results View (Left) - Shows selected question results only -->
-        <div :style="{ width: splitViewLeftWidth + '%' }" class="h-full bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden flex flex-col">
-          <div class="bg-gray-100 dark:bg-gray-900 px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-            <h3 class="text-base font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Results</h3>
-          </div>
-          <div class="flex-1 overflow-hidden">
-            <ResultsView 
+    <main class="flex-1 flex flex-col overflow-hidden">
+      <Splitter layout="vertical" class="flex-1">
+        <!-- Top Panel: Context Area (Response Results + Question/Block Stem) -->
+        <SplitterPanel :size="30" :minSize="15">
+          <div v-if="selectedQuestionWithResponses && (activeSection === 'results' || activeSection === 'crosstab' || activeSection === 'statsig')" 
+               class="h-full bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 overflow-auto">
+            <ResultsTable 
+              :key="selectedQuestionWithResponses.id"
+              :question="selectedQuestionWithResponses"
+              :columnMode="columnMode"
               :surveyId="surveyId"
-              :preselectedQuestionId="selectedQuestionForSplit?.id"
-              :hideSidebar="true"
+              :activeSection="activeSection"
+              @column-mode-changed="handleColumnModeChanged"
+              @analyze-crosstab="handleAnalyzeCrosstab"
             />
           </div>
-        </div>
-        
-        <!-- Resizable Splitter with padding -->
-        <div class="px-2 flex items-stretch">
-          <div 
-            class="w-0.5 bg-gray-300 dark:bg-gray-600 hover:bg-blue-500 dark:hover:bg-blue-400 hover:w-1 cursor-col-resize transition-all"
-            @mousedown="startResize"
-          ></div>
-        </div>
-        
-        <!-- Crosstab (Right) -->
-        <div :style="{ width: (100 - splitViewLeftWidth) + '%' }" class="h-full bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden flex flex-col">
-          <div class="bg-gray-100 dark:bg-gray-900 px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-            <h3 class="text-base font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Crosstab Analysis</h3>
-          </div>
-          <div class="flex-1 overflow-hidden">
-            <CrosstabView 
-              v-show="true"
-              :surveyId="surveyId"
-              :initialFirstQuestion="crosstabFirstQuestion"
-              :initialSecondQuestion="crosstabSecondQuestion"
-              @selections-changed="handleCrosstabSelectionsChanged"
-            />
-          </div>
-        </div>
-      </div>
+        </SplitterPanel>
 
-      <!-- Regular Single View -->
-      <div v-if="!splitViewEnabled || activeSection !== 'crosstab'" class="h-full flex flex-col overflow-hidden">
-        <!-- Permanent Results Table (for Results, Crosstab, and Stat Sig views) -->
-        <ResultsTable 
-          v-if="selectedQuestionWithResponses && (activeSection === 'results' || activeSection === 'crosstab' || activeSection === 'statsig')"
-          :key="selectedQuestionWithResponses.id"
-          :question="selectedQuestionWithResponses"
-          :columnMode="columnMode"
-          :surveyId="surveyId"
-          :activeSection="activeSection"
-          class="flex-shrink-0"
-          @column-mode-changed="handleColumnModeChanged"
-          @analyze-crosstab="handleAnalyzeCrosstab"
-        />
+        <!-- Bottom Panel: Tab Navigation + Analysis Area -->
+        <SplitterPanel :size="70" :minSize="40">
+          <div class="h-full flex flex-col">
+            <!-- Tab Navigation -->
+            <div class="flex-shrink-0 primevue-tabs-wrapper">
+              <Tabs 
+                :value="activeSection" 
+                @update:value="changeTab"
+              >
+                <TabList>
+                  <Tab v-for="tab in analysisTabs" :key="tab.id" :value="tab.id">
+                    {{ tab.label }}
+                    <span v-if="tab.badge" class="ml-1.5 text-[10px] opacity-60">
+                      ({{ tab.badge }})
+                    </span>
+                  </Tab>
+                </TabList>
+              </Tabs>
+            </div>
 
-        <!-- Content Area -->
-        <div class="flex-1 overflow-hidden">
-          <!-- Results View (Chart only, table is above) -->
-          <ResultsView 
-            v-show="activeSection === 'results'" 
-            :surveyId="surveyId"
-            :preselectedQuestionId="selectedQuestionId"
-            :hideSidebar="true"
-            :hideTable="true"
-            :initialQuestionId="selectedQuestionId"
-            :initialExpandedBlocks="expandedBlocks"
-            :initialColumnMode="columnMode"
-            :initialInfoExpanded="infoExpanded"
-            :initialInfoTab="infoTab"
-            @question-selected="handleQuestionSelected"
-            @expanded-blocks-changed="handleExpandedBlocksChanged"
-            @column-mode-changed="handleColumnModeChanged"
-            @info-expanded-changed="handleInfoExpandedChanged"
-            @info-tab-changed="handleInfoTabChanged"
-            @analyze-crosstab="handleAnalyzeCrosstab"
-          />
+            <!-- Analysis Area -->
+            <div class="flex-1 overflow-hidden bg-gray-50 dark:bg-gray-900">
+              <!-- Split View: Results Panel + Crosstab side-by-side -->
+              <div v-show="splitViewEnabled && activeSection === 'crosstab'" class="h-full flex p-4">
+                <!-- Results View (Left) - Shows selected question results only -->
+                <div :style="{ width: splitViewLeftWidth + '%' }" class="h-full bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden flex flex-col">
+                  <div class="bg-gray-100 dark:bg-gray-900 px-3 py-1.5 border-b border-gray-200 dark:border-gray-700">
+                    <h3 class="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Results</h3>
+                  </div>
+                  <div class="flex-1 overflow-hidden">
+                    <ResultsView 
+                      :surveyId="surveyId"
+                      :preselectedQuestionId="selectedQuestionForSplit?.id"
+                      :hideSidebar="true"
+                    />
+                  </div>
+                </div>
+                
+                <!-- Resizable Splitter with padding -->
+                <div class="px-2 flex items-stretch">
+                  <div 
+                    class="w-0.5 bg-gray-300 dark:bg-gray-600 hover:bg-blue-500 dark:hover:bg-blue-400 hover:w-1 cursor-col-resize transition-all"
+                    @mousedown="startResize"
+                  ></div>
+                </div>
+                
+                <!-- Crosstab (Right) -->
+                <div :style="{ width: (100 - splitViewLeftWidth) + '%' }" class="h-full bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden flex flex-col">
+                  <div class="bg-gray-100 dark:bg-gray-900 px-3 py-1.5 border-b border-gray-200 dark:border-gray-700">
+                    <h3 class="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Crosstab Analysis</h3>
+                  </div>
+                  <div class="flex-1 overflow-hidden">
+                    <CrosstabView 
+                      v-show="true"
+                      :surveyId="surveyId"
+                      :initialFirstQuestion="crosstabFirstQuestion"
+                      :initialSecondQuestion="crosstabSecondQuestion"
+                      @selections-changed="handleCrosstabSelectionsChanged"
+                    />
+                  </div>
+                </div>
+              </div>
 
-          <!-- Crosstab View (Table is shown above) -->
-          <CrosstabView 
-            v-show="activeSection === 'crosstab'" 
-            :surveyId="surveyId"
-            :hideSidebar="true"
-            :initialFirstQuestion="crosstabFirstQuestion"
-            :initialSecondQuestion="crosstabSecondQuestion"
-            @selections-changed="handleCrosstabSelectionsChanged"
-          />
+              <!-- Regular Single View -->
+              <div v-if="!splitViewEnabled || activeSection !== 'crosstab'" class="h-full overflow-hidden p-4">
+                <!-- Results View (Chart only, table is in context area) -->
+                <ResultsView 
+                  v-show="activeSection === 'results'" 
+                  :surveyId="surveyId"
+                  :preselectedQuestionId="selectedQuestionId"
+                  :hideSidebar="true"
+                  :hideTable="true"
+                  :initialQuestionId="selectedQuestionId"
+                  :initialExpandedBlocks="expandedBlocks"
+                  :initialColumnMode="columnMode"
+                  :initialInfoExpanded="infoExpanded"
+                  :initialInfoTab="infoTab"
+                  @question-selected="handleQuestionSelected"
+                  @expanded-blocks-changed="handleExpandedBlocksChanged"
+                  @column-mode-changed="handleColumnModeChanged"
+                  @info-expanded-changed="handleInfoExpandedChanged"
+                  @info-tab-changed="handleInfoTabChanged"
+                  @analyze-crosstab="handleAnalyzeCrosstab"
+                />
 
-          <!-- Stat Sig View -->
-          <StatSigView 
-            v-show="activeSection === 'statsig'" 
-            :surveyId="surveyId"
-            :selectedQuestion="selectedQuestionWithResponses"
-            @question-selected="handleStatSigQuestionSelected"
-          />
+                <!-- Crosstab View (Table is shown above) -->
+                <CrosstabView 
+                  v-show="activeSection === 'crosstab'" 
+                  :surveyId="surveyId"
+                  :hideSidebar="true"
+                  :initialFirstQuestion="crosstabFirstQuestion"
+                  :initialSecondQuestion="crosstabSecondQuestion"
+                  @selections-changed="handleCrosstabSelectionsChanged"
+                />
 
-          <!-- Index View -->
-          <div v-show="activeSection === 'index'" class="h-full flex items-center justify-center">
-            <div class="text-center">
-              <svg class="mx-auto h-12 w-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
-              </svg>
-              <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Index</h3>
-              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Quickest way to select target groups</p>
-              <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">★★★★ Priority - Coming soon...</p>
+                <!-- Stat Sig View -->
+                <StatSigView 
+                  v-show="activeSection === 'statsig'" 
+                  :surveyId="surveyId"
+                  :selectedQuestion="selectedQuestionWithResponses"
+                  @question-selected="handleStatSigQuestionSelected"
+                />
+
+                <!-- Index View -->
+                <div v-show="activeSection === 'index'" class="h-full flex items-center justify-center">
+                  <div class="text-center">
+                    <svg class="mx-auto h-12 w-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Index</h3>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Quickest way to select target groups</p>
+                    <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">★★★★ Priority - Coming soon...</p>
+                  </div>
+                </div>
+
+                <!-- Index + View -->
+                <div v-show="activeSection === 'indexplus'" class="h-full flex items-center justify-center">
+                  <div class="text-center">
+                    <svg class="mx-auto h-12 w-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Index +</h3>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Compare two questions within a block</p>
+                    <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">★★★ Priority - Coming soon...</p>
+                  </div>
+                </div>
+
+                <!-- Profile View -->
+                <div v-show="activeSection === 'profile'" class="h-full flex items-center justify-center">
+                  <div class="text-center">
+                    <svg class="mx-auto h-12 w-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Profile</h3>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Quick targeting and media strategy advice</p>
+                    <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">★★★★ Priority - Coming soon...</p>
+                  </div>
+                </div>
+
+                <!-- One Response View -->
+                <div v-show="activeSection === 'oneresponse'" class="h-full flex items-center justify-center">
+                  <div class="text-center">
+                    <svg class="mx-auto h-12 w-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">One Response</h3>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Compare specific responses across a block</p>
+                    <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">★★★ Priority - Coming soon...</p>
+                  </div>
+                </div>
+
+                <!-- Full Block View -->
+                <div v-show="activeSection === 'fullblock'" class="h-full flex items-center justify-center">
+                  <div class="text-center">
+                    <svg class="mx-auto h-12 w-12 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Full Block</h3>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">See patterns when graphically displayed</p>
+                    <p class="mt-1 text-xs text-yellow-600 dark:text-yellow-400">★★★★★ Critical Priority - Coming soon...</p>
+                  </div>
+                </div>
+
+                <!-- Matching Blocks View -->
+                <div v-show="activeSection === 'matchingblocks'" class="h-full flex items-center justify-center">
+                  <div class="text-center">
+                    <svg class="mx-auto h-12 w-12 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Matching Blocks</h3>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">The researcher's technological storyteller</p>
+                    <p class="mt-1 text-xs text-yellow-600 dark:text-yellow-400">★★★★★ Critical Priority - Coming soon...</p>
+                  </div>
+                </div>
+
+                <!-- Questions View -->
+                <QuestionsView v-show="activeSection === 'questions'" :surveyId="surveyId" />
+
+                <!-- Data View -->
+                <DataView v-show="activeSection === 'dataview'" :surveyId="surveyId" />
+
+                <!-- Data Cleansing -->
+                <div v-show="activeSection === 'cleansing'" class="h-full flex items-center justify-center">
+                  <div class="text-center">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Data Cleansing</h3>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Coming soon...</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-
-          <!-- Index + View -->
-          <div v-show="activeSection === 'indexplus'" class="h-full flex items-center justify-center">
-            <div class="text-center">
-              <svg class="mx-auto h-12 w-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Index +</h3>
-              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Compare two questions within a block</p>
-              <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">★★★ Priority - Coming soon...</p>
-            </div>
-          </div>
-
-          <!-- Profile View -->
-          <div v-show="activeSection === 'profile'" class="h-full flex items-center justify-center">
-            <div class="text-center">
-              <svg class="mx-auto h-12 w-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Profile</h3>
-              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Quick targeting and media strategy advice</p>
-              <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">★★★★ Priority - Coming soon...</p>
-            </div>
-          </div>
-
-          <!-- One Response View -->
-          <div v-show="activeSection === 'oneresponse'" class="h-full flex items-center justify-center">
-            <div class="text-center">
-              <svg class="mx-auto h-12 w-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-              <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">One Response</h3>
-              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Compare specific responses across a block</p>
-              <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">★★★ Priority - Coming soon...</p>
-            </div>
-          </div>
-
-          <!-- Full Block View -->
-          <div v-show="activeSection === 'fullblock'" class="h-full flex items-center justify-center">
-            <div class="text-center">
-              <svg class="mx-auto h-12 w-12 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-              </svg>
-              <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Full Block</h3>
-              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">See patterns when graphically displayed</p>
-              <p class="mt-1 text-xs text-yellow-600 dark:text-yellow-400">★★★★★ Critical Priority - Coming soon...</p>
-            </div>
-          </div>
-
-          <!-- Matching Blocks View -->
-          <div v-show="activeSection === 'matchingblocks'" class="h-full flex items-center justify-center">
-            <div class="text-center">
-              <svg class="mx-auto h-12 w-12 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
-              </svg>
-              <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Matching Blocks</h3>
-              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">The researcher's technological storyteller</p>
-              <p class="mt-1 text-xs text-yellow-600 dark:text-yellow-400">★★★★★ Critical Priority - Coming soon...</p>
-            </div>
-          </div>
-
-          <!-- Questions View -->
-          <QuestionsView v-show="activeSection === 'questions'" :surveyId="surveyId" />
-
-          <!-- Data View -->
-          <DataView v-show="activeSection === 'dataview'" :surveyId="surveyId" />
-
-          <!-- Data Cleansing -->
-          <div v-show="activeSection === 'cleansing'" class="h-full flex items-center justify-center">
-            <div class="text-center">
-              <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
-              </svg>
-              <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Data Cleansing</h3>
-              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Coming soon...</p>
-            </div>
-          </div>
-        </div>
-      </div>
+        </SplitterPanel>
+      </Splitter>
     </main>
   </div>
 </template>
@@ -469,8 +339,14 @@
 <script setup>
 import { ref, onMounted, watch, computed, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import Tabs from 'primevue/tabs'
+import TabList from 'primevue/tablist'
+import Tab from 'primevue/tab'
+import Splitter from 'primevue/splitter'
+import SplitterPanel from 'primevue/splitterpanel'
 import axios from 'axios'
 import { API_BASE_URL } from '@/config/api'
+import SidebarButton from '../components/SidebarButton.vue'
 import ResultsView from '../components/Analytics/ResultsView.vue'
 import CrosstabView from '../components/Analytics/CrosstabView.vue'
 import StatSigView from '../components/Analytics/StatSigView.vue'
@@ -492,6 +368,31 @@ const projectName = ref('')
 const totalCases = ref(0)
 const questionCount = ref(0)
 const activeSection = ref('results')
+
+// Sidebar collapse state
+const sidebarCollapsed = ref(localStorage.getItem('sidebarCollapsed') === 'true')
+
+// Question list panel width
+const questionListWidth = ref(parseInt(localStorage.getItem('questionListWidth') || '320'))
+const isResizingQuestionList = ref(false)
+
+// Analysis tabs configuration
+const analysisTabs = [
+  { id: 'results', label: 'Results', badge: null },
+  { id: 'crosstab', label: 'Crosstab', badge: null },
+  { id: 'statsig', label: 'Stat Sig', badge: null },
+  { id: 'fullblock', label: 'Full Block', badge: null },
+  { id: 'matchingblocks', label: 'Matching Blocks', badge: null },
+  { id: 'index', label: 'Index', badge: null },
+  { id: 'indexplus', label: 'Index +', badge: null },
+  { id: 'profile', label: 'Profile', badge: null },
+  { id: 'oneresponse', label: 'One Response', badge: null },
+]
+
+// Function to change tab
+const changeTab = (tabId) => {
+  activeSection.value = tabId
+}
 
 // State management helpers
 const selectedQuestionId = ref(null)
@@ -912,6 +813,34 @@ async function saveSurveyName() {
   }
 }
 
+function toggleSidebar() {
+  sidebarCollapsed.value = !sidebarCollapsed.value
+  localStorage.setItem('sidebarCollapsed', sidebarCollapsed.value)
+}
+
+function startResizingQuestionList(e) {
+  isResizingQuestionList.value = true
+  const startX = e.clientX
+  const startWidth = questionListWidth.value
+
+  const onMouseMove = (e) => {
+    if (!isResizingQuestionList.value) return
+    const delta = e.clientX - startX
+    const newWidth = Math.max(200, Math.min(600, startWidth + delta))
+    questionListWidth.value = newWidth
+  }
+
+  const onMouseUp = () => {
+    isResizingQuestionList.value = false
+    localStorage.setItem('questionListWidth', questionListWidth.value.toString())
+    document.removeEventListener('mousemove', onMouseMove)
+    document.removeEventListener('mouseup', onMouseUp)
+  }
+
+  document.addEventListener('mousemove', onMouseMove)
+  document.addEventListener('mouseup', onMouseUp)
+}
+
 function backToProjects() {
   router.push('/')
 }
@@ -977,3 +906,17 @@ watch(() => route.query, (newQuery, oldQuery) => {
 }, { deep: true })
 
 </script>
+
+<style scoped>
+.primevue-tabs-wrapper :deep(button[role="tab"]) {
+  font-weight: 300 !important;
+  font-size: 0.75rem !important;
+  padding-top: 0.75rem !important;
+  padding-bottom: 0.5rem !important;
+}
+
+.primevue-tabs-wrapper :deep(button[role="tab"][data-p-active="true"]) {
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+}
+</style>
