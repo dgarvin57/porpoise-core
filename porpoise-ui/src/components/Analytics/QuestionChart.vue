@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-6">
+  <div class="space-y-4">
     <!-- Horizontal Bar Chart -->
     <div class="space-y-3">
       <div
@@ -45,7 +45,7 @@
     <!-- Summary Stats -->
     <div class="pt-4 border-t border-gray-200 dark:border-gray-700 grid grid-cols-3 gap-4">
       <div class="text-center">
-        <div class="text-2xl font-bold text-gray-900 dark:text-white">
+        <div class="text-xl font-bold text-gray-900 dark:text-white">
           {{ totalResponses }}
         </div>
         <div class="text-sm text-gray-600 dark:text-gray-400">
@@ -53,7 +53,7 @@
         </div>
       </div>
       <div class="text-center">
-        <div class="text-2xl font-bold text-gray-900 dark:text-white">
+        <div class="text-xl font-bold text-gray-900 dark:text-white">
           {{ topResponse?.percentage.toFixed(1) }}%
         </div>
         <div class="text-sm text-gray-600 dark:text-gray-400">
@@ -61,7 +61,7 @@
         </div>
       </div>
       <div class="text-center">
-        <div class="text-2xl font-bold text-gray-900 dark:text-white">
+        <div class="text-xl font-bold text-gray-900 dark:text-white">
           {{ question.responses?.length || 0 }}
         </div>
         <div class="text-sm text-gray-600 dark:text-gray-400">

@@ -617,11 +617,6 @@ Provide data-driven insights about patterns, notable findings, and implications:
             var selectedQuestionResponses = await _responseRepository.GetByQuestionIdAsync(questionId);
             selectedQuestion.Responses = new ObjectListBase<Response>(selectedQuestionResponses);
             
-            Console.WriteLine($"StatSig: Analyzing question {selectedQuestion.QstLabel} (ID: {questionId})");
-            Console.WriteLine($"StatSig: Total questions in survey: {allQuestions.Count}");
-            Console.WriteLine($"StatSig: Selected question has {selectedQuestion.Responses.Count} response categories");
-            Console.WriteLine($"StatSig: Survey data has {surveyData.DataList?.Count ?? 0} rows");
-            
             // Build list of statistical significance items
             var statSigItems = new List<StatSigItemDto>();
 
@@ -635,8 +630,6 @@ Provide data-driven insights about patterns, notable findings, and implications:
                 if (compareQuestion.VariableType != QuestionVariableType.Independent)
                     continue;
                 
-                Console.WriteLine($"StatSig: Comparing against IV: {compareQuestion.QstLabel}");
-                
                 // Load responses for this compare question
                 var compareQuestionResponses = await _responseRepository.GetByQuestionIdAsync(compareQuestion.Id);
                 compareQuestion.Responses = new ObjectListBase<Response>(compareQuestionResponses);
@@ -645,7 +638,6 @@ Provide data-driven insights about patterns, notable findings, and implications:
                 if (selectedQuestion.Responses == null || selectedQuestion.Responses.Count == 0 ||
                     compareQuestion.Responses == null || compareQuestion.Responses.Count == 0)
                 {
-                    Console.WriteLine($"StatSig: Skipping {compareQuestion.QstLabel} - no responses");
                     continue;
                 }
 
@@ -657,8 +649,6 @@ Provide data-driven insights about patterns, notable findings, and implications:
                     
                     // Get stat sig item from crosstab
                     var statSigItem = crosstab.GetStatSigItems();
-                    
-                    Console.WriteLine($"StatSig: {compareQuestion.QstLabel} - TotalN: {crosstab.TotalN}, Phi: {statSigItem.Phi:F3}, ChiSq: {crosstab.ChiSquare:F3}, Sig: {statSigItem.Significance}");
                     
                     // Include ALL IVs (not just significant ones), but only if we have valid data
                     if (crosstab.TotalN > 0 && !double.IsNaN(statSigItem.Phi))
@@ -675,15 +665,12 @@ Provide data-driven insights about patterns, notable findings, and implications:
                 catch (Exception ex)
                 {
                     // Log but continue processing other questions
-                    Console.WriteLine($"Error comparing question {questionId} with {compareQuestion.Id}: {ex.Message}");
                     continue;
                 }
             }
 
             // Sort by Phi value descending (strongest relationships first)
             statSigItems = statSigItems.OrderByDescending(x => x.Phi).ToList();
-            
-            Console.WriteLine($"StatSig: Found {statSigItems.Count} significant relationships");
 
             return Ok(statSigItems);
         }

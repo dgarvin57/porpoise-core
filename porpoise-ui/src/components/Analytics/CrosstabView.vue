@@ -29,7 +29,7 @@
 
       <!-- Empty State -->
       <div 
-        v-else-if="!firstQuestion || !secondQuestion"
+        v-else-if="(!firstQuestion || !secondQuestion) && !crosstabData"
         class="flex items-center justify-center h-full"
       >
         <div class="text-center">
@@ -86,9 +86,9 @@
               </div>
               <!-- Fixed position CROSSTAB title -->
               <div class="absolute left-[45%]">
-                <h1 class="text-xl font-bold text-blue-600 dark:text-blue-400 text-left">
+                <span class="text-base font-semibold text-blue-600 dark:text-blue-400 text-left uppercase tracking-wider">
                   CROSSTAB
-                </h1>
+                </span>
               </div>
               <div class="flex items-center space-x-3 flex-shrink-0">
                 <div class="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">

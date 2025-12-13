@@ -3,31 +3,41 @@
     @click="$emit('click')"
     :class="[
       'w-full flex items-center px-3 py-2.5 text-sm font-medium transition-all duration-200 rounded-lg group relative',
-      collapsed ? 'justify-center' : 'space-x-3',
       isActive
         ? 'text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/20'
         : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
     ]"
   >
-    <!-- Icon -->
-    <component 
-      :is="'svg'" 
-      :class="[
-        'flex-shrink-0 transition-all duration-200',
-        collapsed ? 'w-5 h-5 group-hover:scale-125' : 'w-5 h-5'
-      ]" 
-      fill="none" 
-      stroke="currentColor" 
-      viewBox="0 0 24 24"
-    >
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="iconPath" />
-    </component>
+    <!-- Icon Container (fixed width to prevent shifting) -->
+    <div class="flex justify-center flex-shrink-0 w-5">
+      <component 
+        :is="'svg'" 
+        :class="[
+          'transition-all duration-200',
+          collapsed ? 'w-5 h-5 group-hover:scale-125' : 'w-5 h-5'
+        ]" 
+        fill="none" 
+        stroke="currentColor" 
+        viewBox="0 0 24 24"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="iconPath" />
+      </component>
+    </div>
 
     <!-- Label (visible when expanded) -->
-    <span v-if="!collapsed" class="flex-1 text-left">{{ label }}</span>
+    <span 
+      v-show="!collapsed"
+      class="flex-1 text-left ml-3"
+    >
+      {{ label }}
+    </span>
 
     <!-- Badge (visible when expanded) -->
-    <span v-if="!collapsed && badge" class="text-xs italic text-yellow-500 dark:text-yellow-400 opacity-70">
+    <span 
+      v-if="badge" 
+      v-show="!collapsed"
+      class="text-xs italic text-yellow-500 dark:text-yellow-400 opacity-70"
+    >
       {{ badge }}
     </span>
 

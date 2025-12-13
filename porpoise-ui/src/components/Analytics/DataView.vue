@@ -1,17 +1,12 @@
 <template>
   <div class="h-full flex flex-col bg-white dark:bg-gray-800">
     <!-- Header -->
-    <div class="flex-shrink-0 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-      <div class="flex items-center justify-between">
-        <div>
-          <h2 class="text-xl font-bold text-gray-900 dark:text-white">Raw Survey Data</h2>
-          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            View the imported survey response data
-          </p>
-        </div>
-        <div v-if="data" class="text-sm text-gray-600 dark:text-gray-400">
-          <span class="font-semibold">{{ data.dataRows }}</span> cases × 
-          <span class="font-semibold">{{ data.headerRow.length }}</span> columns
+    <div class="flex-shrink-0 px-6 -mb-1 border-b border-gray-200 dark:border-gray-700">
+      <div class="flex items-center justify-between py-0.5">
+        <h2 class="text-lg font-bold text-gray-900 dark:text-white">Raw Survey Data</h2>
+        <div v-if="tableData.length > 0" class="text-sm text-gray-600 dark:text-gray-400">
+          <span class="font-semibold">{{ tableData.length }}</span> cases × 
+          <span class="font-semibold">{{ columns.length - 1 }}</span> columns
         </div>
       </div>
     </div>
@@ -44,85 +39,42 @@
       </div>
     </div>
 
-    <!-- Data Table -->
-    <div v-else-if="data" class="flex-1 overflow-auto">
-      <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-        <thead class="bg-gray-50 dark:bg-gray-900 sticky top-0 z-10">
-          <tr>
-            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-100 dark:bg-gray-800 sticky left-0 z-20 border-r border-gray-300 dark:border-gray-600">
-              Row #
-            </th>
-            <th 
-              v-for="(header, index) in data.headerRow" 
-              :key="index"
-              scope="col" 
-              class="px-3 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider whitespace-nowrap"
-            >
-              {{ header }}
-            </th>
-          </tr>
-        </thead>
-        <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-          <tr 
-            v-for="(row, rowIndex) in paginatedData" 
-            :key="rowIndex"
-            class="hover:bg-gray-50 dark:hover:bg-gray-700"
-          >
-            <td class="px-3 py-2 text-sm font-medium text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-900 sticky left-0 z-10 border-r border-gray-300 dark:border-gray-600">
-              {{ rowIndex + 1 + (currentPage - 1) * rowsPerPage }}
-            </td>
-            <td 
-              v-for="(cell, cellIndex) in row" 
-              :key="cellIndex"
-              class="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap"
-            >
-              {{ cell }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <!-- PrimeVue DataTable with Virtual Scrolling -->
+    <div v-else-if="tableData.length > 0" class="flex-1 overflow-hidden px-6 py-1 pr-1">
+      <DataTable 
+        :value="tableData" 
+        :virtualScrollerOptions="{ itemSize: 30 }"
+        scrollable 
+        scrollHeight="flex"
+        class="text-xs data-view-table"
+        :rowHover="true"
+      >
+        <!-- Row Number Column (Frozen) -->
+        <Column 
+          field="rowNum" 
+          header="Row #" 
+          frozen
+          :style="{ width: '70px', minWidth: '70px' }"
+          class="font-medium"
+        >
+          <template #body="{ data }">
+            <span class="text-gray-900 dark:text-white font-medium">{{ data.rowNum }}</span>
+          </template>
+        </Column>
 
-    <!-- Pagination Controls -->
-    <div v-if="data && totalPages > 1" class="flex-shrink-0 px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-      <div class="flex items-center justify-between">
-        <div class="text-sm text-gray-700 dark:text-gray-300">
-          Showing {{ ((currentPage - 1) * rowsPerPage) + 1 }} to {{ Math.min(currentPage * rowsPerPage, data.dataRows) }} of {{ data.dataRows }} cases
-        </div>
-        <div class="flex items-center space-x-2">
-          <button
-            @click="currentPage = 1"
-            :disabled="currentPage === 1"
-            class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
-          >
-            First
-          </button>
-          <button
-            @click="currentPage--"
-            :disabled="currentPage === 1"
-            class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
-          >
-            Previous
-          </button>
-          <span class="px-3 py-1 text-sm text-gray-700 dark:text-gray-300">
-            Page {{ currentPage }} of {{ totalPages }}
-          </span>
-          <button
-            @click="currentPage++"
-            :disabled="currentPage === totalPages"
-            class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
-          >
-            Next
-          </button>
-          <button
-            @click="currentPage = totalPages"
-            :disabled="currentPage === totalPages"
-            class="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
-          >
-            Last
-          </button>
-        </div>
-      </div>
+        <!-- Dynamic Data Columns (auto-sized with minimum width to prevent wrapping) -->
+        <Column 
+          v-for="(col, index) in columns.filter(c => c.field !== 'rowNum')" 
+          :key="col.field"
+          :field="col.field" 
+          :header="col.header"
+          :style="{ minWidth: index === columns.length - 2 ? '140px' : '50px' }"
+        >
+          <template #body="{ data }">
+            <span class="text-gray-700 dark:text-gray-300">{{ data[col.field] }}</span>
+          </template>
+        </Column>
+      </DataTable>
     </div>
   </div>
 </template>
@@ -131,6 +83,8 @@
 import { API_BASE_URL } from '@/config/api'
 import { ref, computed, watch } from 'vue'
 import axios from 'axios'
+import DataTable from 'primevue/datatable'
+import Column from 'primevue/column'
 
 const props = defineProps({
   surveyId: {
@@ -142,21 +96,38 @@ const props = defineProps({
 const loading = ref(false)
 const error = ref(null)
 const data = ref(null)
-const currentPage = ref(1)
-const rowsPerPage = ref(100)
 
-const totalPages = computed(() => {
-  if (!data.value) return 0
-  return Math.ceil(data.value.dataRows / rowsPerPage.value)
+// Transform data for PrimeVue DataTable
+const columns = computed(() => {
+  if (!data.value || !data.value.headerRow) return []
+  
+  // First column is row number
+  const cols = [{ field: 'rowNum', header: 'Row #' }]
+  
+  // Add data columns
+  data.value.headerRow.forEach((header, index) => {
+    cols.push({
+      field: `col${index}`,
+      header: header
+    })
+  })
+  
+  return cols
 })
 
-const paginatedData = computed(() => {
+const tableData = computed(() => {
   if (!data.value || !data.value.dataList) return []
   
-  const start = (currentPage.value - 1) * rowsPerPage.value + 1 // +1 to skip header
-  const end = Math.min(start + rowsPerPage.value, data.value.dataList.length)
-  
-  return data.value.dataList.slice(start, end)
+  // Transform rows into objects for DataTable
+  return data.value.dataList.slice(1).map((row, rowIndex) => {
+    const rowData = { rowNum: rowIndex + 1 }
+    
+    row.forEach((cell, cellIndex) => {
+      rowData[`col${cellIndex}`] = cell
+    })
+    
+    return rowData
+  })
 })
 
 const loadData = async () => {
@@ -181,3 +152,36 @@ watch(() => props.surveyId, () => {
   }
 }, { immediate: true })
 </script>
+
+<style scoped>
+/* Override PrimeVue DataTable styles to match your theme */
+.data-view-table :deep(.p-datatable-thead) {
+  @apply bg-gray-100 dark:bg-gray-800;
+}
+
+.data-view-table :deep(.p-datatable-thead > tr > th) {
+  @apply text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider px-2 py-1.5 border-b-2 border-gray-300 dark:border-gray-600;
+}
+
+.data-view-table :deep(.p-datatable-tbody > tr) {
+  @apply bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700;
+}
+
+.data-view-table :deep(.p-datatable-tbody > tr:hover) {
+  @apply bg-gray-50 dark:bg-gray-700;
+}
+
+.data-view-table :deep(.p-datatable-tbody > tr > td) {
+  @apply px-2 py-1 text-xs;
+}
+
+/* Frozen column styling */
+.data-view-table :deep(.p-frozen-column) {
+  @apply bg-gray-100 dark:bg-gray-800 border-r-2 border-gray-300 dark:border-gray-600 font-semibold;
+}
+
+/* Virtual scroller */
+.data-view-table :deep(.p-virtualscroller) {
+  @apply h-full;
+}
+</style>

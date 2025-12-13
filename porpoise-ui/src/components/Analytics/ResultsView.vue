@@ -18,7 +18,7 @@
     <MetricDefinitionsModal :show="showMetricDefinitions" @close="showMetricDefinitions = false" />
 
     <!-- Main Content Area -->
-    <div class="flex-1 overflow-hidden flex flex-col">
+    <div class="flex-1 flex flex-col" style="min-height: 0;">
       <!-- No Question Selected State -->
       <div v-if="!selectedQuestion" class="flex-1 flex items-center justify-center">
         <div class="text-center">
@@ -32,88 +32,13 @@
         </div>
       </div>
 
-      <!-- Question Results -->
+      <!-- Question Results - CLEAN SIMPLE SCROLLING -->
       <template v-else>
-        <!-- Combined Results and Chart Content -->
-        <div class="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-6 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 dark:[&::-webkit-scrollbar-track]:bg-gray-800 [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-gray-600 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-gray-400 dark:[&::-webkit-scrollbar-thumb:hover]:bg-gray-500">
-          <div class="max-w-4xl mx-auto space-y-6">
-            <!-- Results Table -->
-            <div v-if="!hideTable" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-              <div class="px-6 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
-                <h3 class="text-base font-medium text-gray-900 dark:text-white">
-                  Response Results
-                </h3>
-                <div class="relative">
-                  <select
-                    v-model="columnMode"
-                    @change="emit('column-mode-changed', columnMode)"
-                    class="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 cursor-pointer"
-                  >
-                    <option value="totalN">Total N</option>
-                    <option value="cumulative">Show Cumulative</option>
-                    <option value="inverseCumulative">Show Inverse Cumulative</option>
-                    <option value="samplingError">Sampling Error</option>
-                    <option value="blank">Leave Blank</option>
-                  </select>
-                </div>
-              </div>
-              <div class="overflow-x-auto">
-                <table class="min-w-full">
-                  <thead class="bg-gray-50 dark:bg-gray-700">
-                    <tr>
-                      <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        #
-                      </th>
-                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Response
-                      </th>
-                      <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        %
-                      </th>
-                      <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Index
-                      </th>
-                      <th v-if="columnModeConfig.showColumn" class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        {{ columnModeConfig.header }}
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                    <tr v-for="(response, index) in computedResponses" :key="index" class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                      <td class="px-6 py-2 whitespace-nowrap text-sm text-center text-gray-500 dark:text-gray-400">
-                        {{ index + 1 }}
-                      </td>
-                      <td class="px-6 py-2 text-sm text-gray-900 dark:text-white">
-                        {{ response.label }}
-                      </td>
-                      <td class="px-6 py-2 whitespace-nowrap text-sm text-right text-gray-900 dark:text-white font-medium">
-                        {{ response.percentage.toFixed(1) }}
-                      </td>
-                      <td class="px-6 py-2 whitespace-nowrap text-sm text-center text-gray-500 dark:text-gray-400">
-                        {{ response.indexSymbol || '' }}
-                      </td>
-                      <td v-if="columnMode === 'totalN'" class="px-6 py-2 whitespace-nowrap text-sm text-right text-gray-500 dark:text-gray-400">
-                        {{ response.count }}
-                      </td>
-                      <td v-else-if="columnMode === 'cumulative'" class="px-6 py-2 whitespace-nowrap text-sm text-right text-gray-500 dark:text-gray-400">
-                        {{ response.cumulative.toFixed(1) }}
-                      </td>
-                      <td v-else-if="columnMode === 'inverseCumulative'" class="px-6 py-2 whitespace-nowrap text-sm text-right text-gray-500 dark:text-gray-400">
-                        {{ response.inverseCumulative.toFixed(1) }}
-                      </td>
-                      <td v-else-if="columnMode === 'samplingError'" class="px-6 py-2 whitespace-nowrap text-sm text-right text-gray-500 dark:text-gray-400">
-                        {{ response.samplingError.toFixed(1) }}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <!-- Chart -->
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-              <div class="px-6 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                <h3 class="text-base font-medium text-gray-900 dark:text-white">
+        <div class="flex-1 overflow-y-scroll overflow-x-hidden bg-gray-50 dark:bg-gray-900 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 dark:[&::-webkit-scrollbar-track]:bg-gray-800 [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-gray-600 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-gray-400 dark:[&::-webkit-scrollbar-thumb:hover]:bg-gray-500">
+          <div class="p-6 pb-32">
+            <!-- Chart Header -->
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white">
                   Frequency Distribution
                 </h3>
                 <button
@@ -127,43 +52,43 @@
                   Analyze in Crosstab
                 </button>
               </div>
-              <div class="p-6">
-                <QuestionChart :question="selectedQuestion" />
-                
-                <!-- Action Buttons -->
-                <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 flex items-center gap-3">
-                  <Button
-                    @click="showAIModal = true"
-                    variant="ghost"
-                    size="md"
-                    class="relative"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                    </svg>
-                    <span class="text-base font-medium glow-intense">AI Analysis</span>
-                    <span v-if="aiAnalysis === ''" class="absolute -top-1 -right-1 flex h-3 w-3">
-                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                      <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-500 shadow-lg shadow-blue-500/75"></span>
-                    </span>
-                  </Button>
-                  <Button
-                    @click="showUnderstanding = true"
-                    variant="ghost"
-                    size="md"
-                  >
-                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
-                    </svg>
-                    <span class="text-base font-medium">Understanding Results</span>
-                  </Button>
-                </div>
+
+              <!-- Question Chart -->
+              <QuestionChart :question="selectedQuestion" />
+              
+              <!-- Action Buttons -->
+              <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex items-center gap-3">
+                <Button
+                  @click="showAIModal = true"
+                  variant="ghost"
+                  size="md"
+                  class="relative"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                  </svg>
+                  <span class="text-base font-medium glow-intense">AI Analysis</span>
+                  <span v-if="aiAnalysis === ''" class="absolute -top-1 -right-1 flex h-3 w-3">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-500 shadow-lg shadow-blue-500/75"></span>
+                  </span>
+                </Button>
+                <Button
+                  @click="showUnderstanding = true"
+                  variant="ghost"
+                  size="md"
+                >
+                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                  </svg>
+                  <span class="text-base font-medium">Understanding Results</span>
+                </Button>
               </div>
             </div>
           </div>
 
-          <!-- AI Analysis Modal -->
-          <div v-if="showAIModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" @click.self="showAIModal = false">
+        <!-- AI Analysis Modal -->
+        <div v-if="showAIModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" @click.self="showAIModal = false">
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full max-h-[85vh] overflow-y-auto">
               <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
                 <div class="relative flex items-center justify-between">
@@ -320,7 +245,6 @@
               </div>
             </div>
           </div>
-        </div>
       </template>
     </div>
   </div>

@@ -93,9 +93,9 @@
               </div>
               <!-- Fixed position STATISTICAL SIGNIFICANCE title -->
               <div class="absolute left-[45%] transform -translate-x-1/2">
-                <h1 class="text-xl font-bold text-blue-600 dark:text-blue-400 text-left whitespace-nowrap">
+                <span class="text-base font-semibold text-blue-600 dark:text-blue-400 text-left whitespace-nowrap uppercase tracking-wider">
                   STATISTICAL SIGNIFICANCE
-                </h1>
+                </span>
               </div>
               <div class="flex items-center space-x-3 flex-shrink-0">
                 <div class="text-sm text-gray-600 dark:text-gray-400">

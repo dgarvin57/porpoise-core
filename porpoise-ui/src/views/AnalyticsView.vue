@@ -1,10 +1,10 @@
 <template>
-  <div class="fixed inset-0 top-12 flex overflow-hidden bg-gray-50 dark:bg-gray-900">
-    <!-- Sidebar Navigation -->
+  <div class="fixed inset-0 top-12 bg-gray-50 dark:bg-gray-900">
+    <!-- Sidebar Navigation (overlays when expanded) -->
     <aside 
       :class="[
-        'bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto transition-all duration-300',
-        sidebarCollapsed ? 'w-16' : 'w-64'
+        'fixed left-0 top-12 bottom-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto overflow-x-hidden transition-all duration-300 z-20',
+        sidebarCollapsed ? 'w-14' : 'w-64 shadow-2xl'
       ]"
     >
       <!-- Collapse/Expand Button -->
@@ -28,7 +28,7 @@
 
       <!-- Navigation Menu -->
       <nav class="px-2 pb-2">
-        <div class="space-y-1">
+        <div>
           <!-- Analytics Section -->
           <SidebarButton
             label="Analytics"
@@ -42,14 +42,13 @@
         <!-- Divider -->
         <div class="my-4 border-t border-gray-200 dark:border-gray-700"></div>
 
-        <div class="space-y-1">
+        <div>
           <!-- Questions Section -->
           <SidebarButton
             label="Questions"
             icon-path="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
             :is-active="activeSection === 'questions'"
             :collapsed="sidebarCollapsed"
-            badge="in progress"
             @click="activeSection = 'questions'"
           />
 
@@ -59,7 +58,6 @@
             icon-path="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
             :is-active="activeSection === 'dataview'"
             :collapsed="sidebarCollapsed"
-            badge="in progress"
             @click="activeSection = 'dataview'"
           />
 
@@ -69,7 +67,6 @@
             icon-path="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
             :is-active="activeSection === 'datacleansing'"
             :collapsed="sidebarCollapsed"
-            badge="to do"
             @click="activeSection = 'datacleansing'"
           />
         </div>
@@ -88,119 +85,121 @@
       </nav>
     </aside>
 
-    <!-- Permanent Question List with Resizer -->
-    <aside 
-      :style="{ width: questionListWidth + 'px' }"
-      class="bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col relative"
-    >
-      <QuestionListSelector
-        :surveyId="surveyId"
-        :selectionMode="questionListMode"
-        :showNotesIcons="true"
-        :wrapStandaloneQuestions="true"
-        :selectedQuestionId="questionListMode === 'single' ? selectedQuestionId : null"
-        :initialExpandedBlocks="expandedBlocks"
-        :initialFirstSelection="questionListMode === 'crosstab' ? crosstabFirstQuestion : null"
-        :initialSecondSelection="questionListMode === 'crosstab' ? crosstabSecondQuestion : null"
-        @question-selected="handleQuestionListSelection"
-        @crosstab-selection="handleQuestionListCrosstabSelection"
-        @expanded-blocks-changed="handleExpandedBlocksChanged"
-      />
-      
-      <!-- Resize Handle -->
-      <div
-        @mousedown="startResizingQuestionList"
-        class="absolute top-0 right-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-500 dark:hover:bg-blue-400 transition-colors group"
-        title="Drag to resize"
-      >
-        <div class="absolute inset-y-0 -right-1 w-3"></div>
-      </div>
-    </aside>
+    <!-- Main content area with left margin for collapsed sidebar -->
+    <div class="fixed top-12 bottom-0 right-0 left-14 overflow-hidden">
+      <!-- Content Area with Question List (for Analytics sections) -->
+      <template v-if="activeSection !== 'dataview' && activeSection !== 'datacleansing' && activeSection !== 'questions'">
+        <Splitter 
+          layout="horizontal"
+          class="h-full"
+        >
+        <SplitterPanel :size="22" :minSize="15" :maxSize="40">
+        <div class="h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
+          <QuestionListSelector
+            :surveyId="surveyId"
+            :selectionMode="questionListMode"
+            :showNotesIcons="true"
+            :wrapStandaloneQuestions="true"
+            :selectedQuestionId="questionListMode === 'single' ? selectedQuestionId : null"
+            :initialExpandedBlocks="expandedBlocks"
+            :initialFirstSelection="questionListMode === 'crosstab' ? crosstabFirstQuestion : null"
+            :initialSecondSelection="questionListMode === 'crosstab' ? crosstabSecondQuestion : null"
+            @question-selected="handleQuestionListSelection"
+            @crosstab-selection="handleQuestionListCrosstabSelection"
+            @expanded-blocks-changed="handleExpandedBlocksChanged"
+          />
+        </div>
+      </SplitterPanel>
 
-    <!-- Main Content Area -->
-    <main class="flex-1 flex flex-col overflow-hidden">
-      <Splitter layout="vertical" class="flex-1">
-        <!-- Top Panel: Context Area (Response Results + Question/Block Stem) -->
-        <SplitterPanel :size="30" :minSize="15">
-          <div v-if="selectedQuestionWithResponses && (activeSection === 'results' || activeSection === 'crosstab' || activeSection === 'statsig')" 
-               class="h-full bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 overflow-auto">
-            <ResultsTable 
-              :key="selectedQuestionWithResponses.id"
-              :question="selectedQuestionWithResponses"
-              :columnMode="columnMode"
-              :surveyId="surveyId"
-              :activeSection="activeSection"
-              @column-mode-changed="handleColumnModeChanged"
-              @analyze-crosstab="handleAnalyzeCrosstab"
-            />
-          </div>
-        </SplitterPanel>
+      <SplitterPanel :size="78" :minSize="60" :maxSize="85">
+        <!-- Main Content Area -->
+        <main class="h-full flex flex-col min-h-0">
+          <div class="flex-1 flex flex-col min-h-0">
+            <!-- Top: Context Area (Response Results + Question/Block Stem) -->
+            <div class="flex-shrink-0 overflow-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 dark:[&::-webkit-scrollbar-track]:bg-gray-800 [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-gray-600 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-gray-400 dark:[&::-webkit-scrollbar-thumb:hover]:bg-gray-500" style="max-height: 30%;">
+              <div v-if="selectedQuestionWithResponses && (activeSection === 'results' || activeSection === 'crosstab' || activeSection === 'statsig')" 
+                   class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+                <ResultsTable 
+                  :key="selectedQuestionWithResponses.id"
+                  :question="selectedQuestionWithResponses"
+                  :columnMode="columnMode"
+                  :surveyId="surveyId"
+                  :activeSection="activeSection"
+                  @column-mode-changed="handleColumnModeChanged"
+                  @analyze-crosstab="handleAnalyzeCrosstab"
+                />
+              </div>
+            </div>
 
-        <!-- Bottom Panel: Tab Navigation + Analysis Area -->
-        <SplitterPanel :size="70" :minSize="40">
-          <div class="h-full flex flex-col">
-            <!-- Tab Navigation -->
-            <div class="flex-shrink-0 primevue-tabs-wrapper">
-              <Tabs 
+            <!-- Bottom: Tab Navigation + Analysis Area -->
+            <div class="flex-1 flex flex-col" style="min-height: 0;">
+              <div class="flex flex-col h-full min-h-0">
+                <div v-if="activeSection !== 'dataview' && activeSection !== 'datacleansing'" class="flex-shrink-0 primevue-tabs-wrapper">
+                  <Tabs 
                 :value="activeSection" 
                 @update:value="changeTab"
               >
                 <TabList>
                   <Tab v-for="tab in analysisTabs" :key="tab.id" :value="tab.id">
-                    {{ tab.label }}
-                    <span v-if="tab.badge" class="ml-1.5 text-[10px] opacity-60">
-                      ({{ tab.badge }})
-                    </span>
+                    <div class="flex items-center gap-1.5">
+                      <!-- Use text for special symbols like Phi, otherwise use path -->
+                      <svg v-if="tab.iconType === 'text'" class="w-3.5 h-3.5" viewBox="0 0 24 24">
+                        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="18" font-weight="600" fill="currentColor">{{ tab.icon }}</text>
+                      </svg>
+                      <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" :d="tab.icon" />
+                      </svg>
+                      <span>{{ tab.label }}</span>
+                      <span v-if="tab.badge" class="ml-1 text-[10px] opacity-60">
+                        ({{ tab.badge }})
+                      </span>
+                    </div>
                   </Tab>
                 </TabList>
               </Tabs>
             </div>
 
-            <!-- Analysis Area -->
-            <div class="flex-1 overflow-hidden bg-gray-50 dark:bg-gray-900">
+                <!-- Analysis Area -->
+                <div class="flex-1 bg-gray-50 dark:bg-gray-900 min-h-0 overflow-y-scroll overflow-x-hidden [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 dark:[&::-webkit-scrollbar-track]:bg-gray-800 [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-gray-600 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-gray-400 dark:[&::-webkit-scrollbar-thumb:hover]:bg-gray-500">
               <!-- Split View: Results Panel + Crosstab side-by-side -->
-              <div v-show="splitViewEnabled && activeSection === 'crosstab'" class="h-full flex p-4">
+              <Splitter v-show="splitViewEnabled && activeSection === 'crosstab'" layout="horizontal" class="h-full p-4">
                 <!-- Results View (Left) - Shows selected question results only -->
-                <div :style="{ width: splitViewLeftWidth + '%' }" class="h-full bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden flex flex-col">
-                  <div class="bg-gray-100 dark:bg-gray-900 px-3 py-1.5 border-b border-gray-200 dark:border-gray-700">
-                    <h3 class="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Results</h3>
+                <SplitterPanel :size="40" :minSize="20" :maxSize="60">
+                  <div class="h-full bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden flex flex-col">
+                    <div class="bg-gray-100 dark:bg-gray-900 px-3 py-1.5 border-b border-gray-200 dark:border-gray-700">
+                      <h3 class="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Results</h3>
+                    </div>
+                    <div class="flex-1 overflow-hidden">
+                      <ResultsView 
+                        :surveyId="surveyId"
+                        :preselectedQuestionId="selectedQuestionForSplit?.id"
+                        :hideSidebar="true"
+                      />
+                    </div>
                   </div>
-                  <div class="flex-1 overflow-hidden">
-                    <ResultsView 
-                      :surveyId="surveyId"
-                      :preselectedQuestionId="selectedQuestionForSplit?.id"
-                      :hideSidebar="true"
-                    />
-                  </div>
-                </div>
-                
-                <!-- Resizable Splitter with padding -->
-                <div class="px-2 flex items-stretch">
-                  <div 
-                    class="w-0.5 bg-gray-300 dark:bg-gray-600 hover:bg-blue-500 dark:hover:bg-blue-400 hover:w-1 cursor-col-resize transition-all"
-                    @mousedown="startResize"
-                  ></div>
-                </div>
+                </SplitterPanel>
                 
                 <!-- Crosstab (Right) -->
-                <div :style="{ width: (100 - splitViewLeftWidth) + '%' }" class="h-full bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden flex flex-col">
-                  <div class="bg-gray-100 dark:bg-gray-900 px-3 py-1.5 border-b border-gray-200 dark:border-gray-700">
-                    <h3 class="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Crosstab Analysis</h3>
+                <SplitterPanel :size="60" :minSize="40" :maxSize="80">
+                  <div class="h-full bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden flex flex-col">
+                    <div class="bg-gray-100 dark:bg-gray-900 px-3 py-1.5 border-b border-gray-200 dark:border-gray-700">
+                      <h3 class="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Crosstab Analysis</h3>
+                    </div>
+                    <div class="flex-1 overflow-hidden">
+                      <CrosstabView 
+                        v-show="true"
+                        :surveyId="surveyId"
+                        :initialFirstQuestion="crosstabFirstQuestion"
+                        :initialSecondQuestion="crosstabSecondQuestion"
+                        @selections-changed="handleCrosstabSelectionsChanged"
+                      />
+                    </div>
                   </div>
-                  <div class="flex-1 overflow-hidden">
-                    <CrosstabView 
-                      v-show="true"
-                      :surveyId="surveyId"
-                      :initialFirstQuestion="crosstabFirstQuestion"
-                      :initialSecondQuestion="crosstabSecondQuestion"
-                      @selections-changed="handleCrosstabSelectionsChanged"
-                    />
-                  </div>
-                </div>
-              </div>
+                </SplitterPanel>
+              </Splitter>
 
               <!-- Regular Single View -->
-              <div v-if="!splitViewEnabled || activeSection !== 'crosstab'" class="h-full overflow-hidden p-4">
+              <div v-if="!splitViewEnabled || activeSection !== 'crosstab'" class="h-full min-h-0">
                 <!-- Results View (Chart only, table is in context area) -->
                 <ResultsView 
                   v-show="activeSection === 'results'" 
@@ -328,11 +327,40 @@
                   </div>
                 </div>
               </div>
+                </div>
+              </div>
             </div>
           </div>
-        </SplitterPanel>
-      </Splitter>
+        </main>
+      </SplitterPanel>
+    </Splitter>
+      </template>
+
+    <!-- Standalone Main Content (when question list is hidden) -->
+    <main v-if="activeSection === 'dataview' || activeSection === 'datacleansing' || activeSection === 'questions'" class="flex-1 flex flex-col overflow-hidden">
+      <!-- Full-height content for Data View, Data Cleansing, and Questions (no splitter, no question list) -->
+      <div class="h-full flex flex-col">
+        <div class="flex-1 overflow-hidden bg-gray-50 dark:bg-gray-900">
+          <!-- Questions View -->
+          <QuestionsView v-show="activeSection === 'questions'" :surveyId="surveyId" />
+
+          <!-- Data View -->
+          <DataView v-show="activeSection === 'dataview'" :surveyId="surveyId" />
+
+          <!-- Data Cleansing -->
+          <div v-show="activeSection === 'datacleansing'" class="h-full flex items-center justify-center">
+            <div class="text-center">
+              <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+              </svg>
+              <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Data Cleansing</h3>
+              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Coming soon...</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
+    </div>
   </div>
 </template>
 
@@ -372,21 +400,17 @@ const activeSection = ref('results')
 // Sidebar collapse state
 const sidebarCollapsed = ref(localStorage.getItem('sidebarCollapsed') === 'true')
 
-// Question list panel width
-const questionListWidth = ref(parseInt(localStorage.getItem('questionListWidth') || '320'))
-const isResizingQuestionList = ref(false)
-
 // Analysis tabs configuration
 const analysisTabs = [
-  { id: 'results', label: 'Results', badge: null },
-  { id: 'crosstab', label: 'Crosstab', badge: null },
-  { id: 'statsig', label: 'Stat Sig', badge: null },
-  { id: 'fullblock', label: 'Full Block', badge: null },
-  { id: 'matchingblocks', label: 'Matching Blocks', badge: null },
-  { id: 'index', label: 'Index', badge: null },
-  { id: 'indexplus', label: 'Index +', badge: null },
-  { id: 'profile', label: 'Profile', badge: null },
-  { id: 'oneresponse', label: 'One Response', badge: null },
+  { id: 'results', label: 'Results', badge: null, icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
+  { id: 'crosstab', label: 'Crosstab', badge: null, icon: 'M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z' },
+  { id: 'statsig', label: 'Stat Sig', badge: null, icon: 'Φ', iconType: 'text' },
+  { id: 'fullblock', label: 'Full Block', badge: null, icon: 'M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z' },
+  { id: 'matchingblocks', label: 'Matching Blocks', badge: null, icon: 'M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2' },
+  { id: 'index', label: 'Index', badge: null, icon: 'M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z' },
+  { id: 'indexplus', label: 'Index +', badge: null, icon: 'M12 6v6m0 0v6m0-6h6m-6 0H6' },
+  { id: 'profile', label: 'Profile', badge: null, icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
+  { id: 'oneresponse', label: 'One Response', badge: null, icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
 ]
 
 // Function to change tab
@@ -411,8 +435,6 @@ const splitViewEnabled = ref(false)
 
 // For split view - track which question to show in results panel
 const selectedQuestionForSplit = ref(null)
-const splitViewLeftWidth = ref(38)  // ~570px on typical screens
-const isResizing = ref(false)
 
 // Computed property to determine question list mode based on active section
 const questionListMode = computed(() => {
@@ -503,31 +525,7 @@ async function loadQuestionData(questionId) {
   }
 }
 
-const startResize = (e) => {
-  isResizing.value = true
-  document.addEventListener('mousemove', handleResize)
-  document.addEventListener('mouseup', stopResize)
-  e.preventDefault()
-}
-
-const handleResize = (e) => {
-  if (!isResizing.value) return
-  const splitView = e.target.closest('.flex.p-4')
-  if (!splitView) return
-  const rect = splitView.getBoundingClientRect()
-  const offsetX = e.clientX - rect.left
-  const newWidth = (offsetX / rect.width) * 100
-  // Constrain between 20% and 60%
-  splitViewLeftWidth.value = Math.max(20, Math.min(60, newWidth))
-  e.preventDefault()
-}
-
-const stopResize = () => {
-  isResizing.value = false
-  saveSurveyState() // Save the new width when resizing stops
-  document.removeEventListener('mousemove', handleResize)
-  document.removeEventListener('mouseup', stopResize)
-}
+// Resize handlers removed - using PrimeVue Splitter component instead
 
 function getSurveyStateKey() {
   return `survey-state-${surveyId.value}`
@@ -543,7 +541,6 @@ function saveSurveyState() {
     infoTab: infoTab.value,
     crosstabFirstQuestion: crosstabFirstQuestion.value,
     crosstabSecondQuestion: crosstabSecondQuestion.value,
-    splitViewLeftWidth: splitViewLeftWidth.value,
     timestamp: Date.now()
   }
   localStorage.setItem(getSurveyStateKey(), JSON.stringify(state))
@@ -599,7 +596,6 @@ function loadSurveyState() {
         infoTab.value = state.infoTab || 'question'
         crosstabFirstQuestion.value = state.crosstabFirstQuestion || null
         crosstabSecondQuestion.value = state.crosstabSecondQuestion || null
-        splitViewLeftWidth.value = state.splitViewLeftWidth || 38  // Default ~570px on typical screens
       }
     } catch (error) {
       console.error('Error loading saved state:', error)
@@ -818,29 +814,6 @@ function toggleSidebar() {
   localStorage.setItem('sidebarCollapsed', sidebarCollapsed.value)
 }
 
-function startResizingQuestionList(e) {
-  isResizingQuestionList.value = true
-  const startX = e.clientX
-  const startWidth = questionListWidth.value
-
-  const onMouseMove = (e) => {
-    if (!isResizingQuestionList.value) return
-    const delta = e.clientX - startX
-    const newWidth = Math.max(200, Math.min(600, startWidth + delta))
-    questionListWidth.value = newWidth
-  }
-
-  const onMouseUp = () => {
-    isResizingQuestionList.value = false
-    localStorage.setItem('questionListWidth', questionListWidth.value.toString())
-    document.removeEventListener('mousemove', onMouseMove)
-    document.removeEventListener('mouseup', onMouseUp)
-  }
-
-  document.addEventListener('mousemove', onMouseMove)
-  document.addEventListener('mouseup', onMouseUp)
-}
-
 function backToProjects() {
   router.push('/')
 }
@@ -918,5 +891,28 @@ watch(() => route.query, (newQuery, oldQuery) => {
 .primevue-tabs-wrapper :deep(button[role="tab"][data-p-active="true"]) {
   font-weight: 600 !important;
   font-size: 0.875rem !important;
+}
+
+/* Light mode: dark text */
+:root .primevue-tabs-wrapper :deep(button[role="tab"][data-p-active="true"]) {
+  color: rgb(24 24 27) !important; /* zinc-900 */
+}
+
+/* Dark mode: white text */
+.dark .primevue-tabs-wrapper :deep(button[role="tab"][data-p-active="true"]) {
+  color: rgb(255 255 255) !important;
+}
+
+/* Splitter gutter hover effect */
+:deep(.p-splitter-gutter) {
+  transition: background-color 0.2s ease;
+}
+
+:deep(.p-splitter-gutter:hover) {
+  background-color: rgb(59 130 246) !important; /* blue-500 */
+}
+
+:deep(.dark .p-splitter-gutter:hover) {
+  background-color: rgb(96 165 250) !important; /* blue-400 */
 }
 </style>
