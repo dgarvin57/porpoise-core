@@ -698,8 +698,7 @@ Provide data-driven insights about patterns, notable findings, and implications:
         catch (Exception ex)
         {
             // Return a user-friendly fallback message instead of exposing the error
-            var fallbackMessage = "Unable to generate AI analysis at this time. The statistical results show the key findings from your data. " +
-                                  "Please ensure the OPENAI_API_KEY environment variable is configured on the server.";
+            var fallbackMessage = "Unable to generate AI analysis at this time. The statistical results show the key findings from your data.";
             return Ok(new { analysis = fallbackMessage });
         }
     }
@@ -746,8 +745,7 @@ Provide data-driven insights about patterns, notable findings, and implications:
         catch (Exception ex)
         {
             // Return a user-friendly fallback message instead of exposing the error
-            var fallbackMessage = "Unable to generate AI analysis at this time. The statistical results above show the key findings from your crosstab. " +
-                                  "Please ensure the OPENAI_API_KEY environment variable is configured on the server.";
+            var fallbackMessage = "Unable to generate AI analysis at this time. The statistical results above show the key findings from your crosstab.";
             return Ok(new { analysis = fallbackMessage });
         }
     }
@@ -769,13 +767,12 @@ Provide data-driven insights about patterns, notable findings, and implications:
             return Ok(new { analysis });
         }
         catch (Exception ex)
+        catch (Exception ex)
         {
             // Return a user-friendly fallback message instead of exposing the error
-            var fallbackMessage = "Unable to generate AI analysis at this time. The statistical significance results show the key relationships in your data. " +
-                                  "Please ensure the OPENAI_API_KEY environment variable is configured on the server.";
+            var fallbackMessage = "Unable to generate AI analysis at this time. The statistical significance results show the key relationships in your data.";
             return Ok(new { analysis = fallbackMessage });
         }
-    }
 
     private string BuildStatSigAnalysisPrompt(StatSigAnalysisRequest request)
     {

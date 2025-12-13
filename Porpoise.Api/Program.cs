@@ -98,9 +98,18 @@ builder.Services.AddHttpClient<AIInsightsService>();
 builder.Services.AddSingleton<AIInsightsService>(sp => 
 {
     var httpClient = sp.GetRequiredService<IHttpClientFactory>().CreateClient();
-    var provider = builder.Configuration["AI:Provider"] ?? "openai";
+    
+    // Read provider from config or environment variable
+    var provider = builder.Configuration["AI:Provider"] ?? 
+                   Environment.GetEnvironmentVariable("AI_PROVIDER") ?? 
+                   "anthropic"; // Default to anthropic
+    
+    // Read API key from config first, then environment variable based on provider
     var apiKey = builder.Configuration["AI:ApiKey"] ?? 
                  Environment.GetEnvironmentVariable(provider == "anthropic" ? "ANTHROPIC_API_KEY" : "OPENAI_API_KEY");
+    
+    Console.WriteLine($"AI Service Configuration: Provider={provider}, ApiKey={(apiKey != null ? "SET" : "NOT SET")}");
+    
     return new AIInsightsService(httpClient, apiKey, provider);
 });
 
