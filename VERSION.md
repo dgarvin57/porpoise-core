@@ -8,7 +8,17 @@ Porpoise uses **Semantic Versioning** (SemVer): `MAJOR.MINOR.PATCH`
 - **MINOR** (1.X.0): New features, enhancements, non-breaking changes  
 - **PATCH** (1.0.X): Bug fixes, small tweaks, performance improvements
 
-## Current Version: 1.2.3
+## Current Version: 1.2.4
+
+### Single Source of Truth
+Version is maintained in `porpoise-ui/package.json` and auto-synced to:
+- `Porpoise.Api/Porpoise.Api.csproj` (synced by bump script)
+
+### Version History
+
+#### 1.2.4 (2025-12-14)
+- fix: add .env.production with API URL for production builds
+- debug: log raw request body to see what UI sends in production
 
 ### Single Source of Truth
 Version is maintained in `porpoise-ui/package.json` and auto-synced to:
