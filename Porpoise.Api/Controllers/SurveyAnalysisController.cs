@@ -688,15 +688,29 @@ Provide data-driven insights about patterns, notable findings, and implications:
     {
         try
         {
+            Console.WriteLine($"🔍 AnalyzeQuestion called for survey {surveyId}");
+            Console.WriteLine($"   Question: {request?.QuestionLabel}");
+            Console.WriteLine($"   Responses: {request?.Responses?.Count ?? 0}");
+            
+            if (request == null || string.IsNullOrEmpty(request.QuestionLabel))
+            {
+                Console.WriteLine("❌ Invalid request - missing question data");
+                return BadRequest("Invalid request: missing question data");
+            }
+            
             // Build context for AI analysis from provided data
             var prompt = BuildQuestionAnalysisPrompt(request);
+            Console.WriteLine($"📝 Prompt built, length: {prompt.Length}");
             
             var analysis = await _aiService.CallAIAPI(prompt);
+            Console.WriteLine($"✅ AI analysis received, length: {analysis.Length}");
             
             return Ok(new { analysis });
         }
         catch (Exception ex)
         {
+            Console.WriteLine($"❌ Error in AnalyzeQuestion: {ex.Message}");
+            Console.WriteLine($"   Stack: {ex.StackTrace}");
             // Return a user-friendly fallback message instead of exposing the error
             var fallbackMessage = "Unable to generate AI analysis at this time. The statistical results show the key findings from your data.";
             return Ok(new { analysis = fallbackMessage });
