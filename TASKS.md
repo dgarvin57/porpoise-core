@@ -33,6 +33,15 @@
 
 ## Later - Before Production 📋
 
+### Data Migration Completion
+- **Remove BlkLabel/BlkStem from Question model** - Complete migration to QuestionBlocks table
+  - Currently suppressed with `#pragma warning disable CS0618` in 6 files:
+    - ApplyChangesService.cs, SelectPlusService.cs
+    - TwoBlockEngine.cs, FullBlockEngine.cs, SingleResponseEngine.cs, QuestionEngine.cs, SurveyEngine.cs
+  - Update all code to use `Block.Label` and `Block.Stem` via `BlockId` relationship
+  - Remove deprecated properties from Question.cs once all references updated
+  - This completes the normalization started with QuestionBlocks table creation
+
 ### Authentication & Authorization
 - JWT authentication replacing header-based auth
 - User-to-tenant mapping and role-based access control
@@ -50,4 +59,4 @@
 
 ---
 
-**Last Updated:** December 4, 2025
+**Last Updated:** December 13, 2025
