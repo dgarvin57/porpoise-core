@@ -25,7 +25,36 @@ Porpoise uses **Semantic Versioning** (SemVer): `MAJOR.MINOR.PATCH`
 
 ## How to Update Versions
 
-Versions must be updated **manually** in two places:
+Versions are now **automated** using conventional commits!
+
+### Automated Versioning (Recommended)
+
+1. **Make commits using conventional commit format:**
+   - `feat: add new feature` → Bumps MINOR version (1.X.0)
+   - `fix: correct bug` → Bumps PATCH version (1.0.X)
+   - `BREAKING CHANGE: redesign API` → Bumps MAJOR version (X.0.0)
+
+2. **Run the bump script:**
+   ```bash
+   ./scripts/bump-version.sh
+   ```
+
+3. **The script will:**
+   - Analyze commits since last tag
+   - Determine appropriate version bump
+   - Update all version files automatically
+   - Create a git commit and tag
+   - Update VERSION.md with changelog
+
+4. **Push to deploy:**
+   ```bash
+   git push origin develop
+   git push origin --tags
+   ```
+
+### Manual Versioning (Fallback)
+
+If you need to manually set a version:
 
 ### 1. API Version
 Edit `Porpoise.Api/Porpoise.Api.csproj`:
