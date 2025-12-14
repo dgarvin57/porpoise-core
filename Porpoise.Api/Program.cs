@@ -1,4 +1,5 @@
 // Porpoise.Api/Program.cs — NO SWAGGER, JUST PURE API
+using System.Reflection;
 using Porpoise.Api.Configuration;
 using Porpoise.Api.Middleware;
 using Porpoise.Api.Mocks;
@@ -10,6 +11,11 @@ using Porpoise.DataAccess.Context;
 using Porpoise.DataAccess.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Get version information
+var version = Assembly.GetExecutingAssembly().GetName().Version;
+var versionString = version != null ? $"{version.Major}.{version.Minor}.{version.Build}" : "unknown";
+Console.WriteLine($"🚀 Porpoise API v{versionString} starting up...");
 
 builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
@@ -117,6 +123,19 @@ var app = builder.Build();
 
 // CORS must come first to handle preflight requests
 app.UseCors();
+
+// Add version endpoint (before tenant middleware)
+app.MapGet("/version", () => 
+{
+    var version = Assembly.GetExecutingAssembly().GetName().Version;
+    var versionString = version != null ? $"{version.Major}.{version.Minor}.{version.Build}" : "unknown";
+    return Results.Ok(new 
+    { 
+        version = versionString,
+        environment = app.Environment.EnvironmentName,
+        timestamp = DateTime.UtcNow
+    });
+});
 
 // Add health check endpoint (before tenant middleware)
 app.MapGet("/health", () => Results.Ok(new 

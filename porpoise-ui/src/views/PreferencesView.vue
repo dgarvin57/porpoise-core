@@ -234,9 +234,32 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import axios from 'axios'
+import { API_BASE_URL } from '@/config/api'
 import SidebarNav from '../components/SidebarNav.vue'
 
 const activeSection = ref('appearance')
+
+// Version information
+const uiVersion = ref('1.2.0') // From package.json
+const apiVersion = ref(null)
+const apiEnvironment = ref(null)
+const apiVersionLoading = ref(false)
+
+// Fetch API version
+async function fetchApiVersion() {
+  apiVersionLoading.value = true
+  try {
+    const response = await axios.get(`${API_BASE_URL}/version`)
+    apiVersion.value = response.data.version
+    apiEnvironment.value = response.data.environment
+  } catch (error) {
+    console.error('Failed to fetch API version:', error)
+    apiVersion.value = null
+  } finally {
+    apiVersionLoading.value = false
+  }
+}
 
 // Table height preference
 const tableRowsToShow = ref(3)
@@ -246,6 +269,9 @@ const DEFAULT_HEIGHT_KEY = 'porpoise_table_rows_to_show'
 onMounted(() => {
   const savedRows = parseInt(localStorage.getItem(DEFAULT_HEIGHT_KEY) || '3')
   tableRowsToShow.value = Math.max(2, Math.min(6, savedRows))
+  
+  // Fetch API version on mount
+  fetchApiVersion()
 })
 
 function saveTableHeightPreference() {
