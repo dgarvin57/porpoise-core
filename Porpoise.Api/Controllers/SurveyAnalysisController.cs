@@ -767,12 +767,12 @@ Provide data-driven insights about patterns, notable findings, and implications:
             return Ok(new { analysis });
         }
         catch (Exception ex)
-        catch (Exception ex)
         {
             // Return a user-friendly fallback message instead of exposing the error
             var fallbackMessage = "Unable to generate AI analysis at this time. The statistical significance results show the key relationships in your data.";
             return Ok(new { analysis = fallbackMessage });
         }
+    }
 
     private string BuildStatSigAnalysisPrompt(StatSigAnalysisRequest request)
     {
