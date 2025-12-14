@@ -689,13 +689,22 @@ Provide data-driven insights about patterns, notable findings, and implications:
     {
         try
         {
+            // Log raw request body for debugging
+            Request.EnableBuffering();
+            using var reader = new StreamReader(Request.Body, Encoding.UTF8, leaveOpen: true);
+            var rawBody = await reader.ReadToEndAsync();
+            Request.Body.Position = 0;
             Console.WriteLine($"🔍 AnalyzeQuestion called for survey {surveyId}");
-            Console.WriteLine($"   Question: {request?.QuestionLabel}");
+            Console.WriteLine($"   Raw body: {rawBody}");
+            Console.WriteLine($"   Question: {request?.QuestionLabel ?? "NULL"}");
+            Console.WriteLine($"   TotalN: {request?.TotalN ?? 0}");
             Console.WriteLine($"   Responses: {request?.Responses?.Count ?? 0}");
             
             if (request == null || string.IsNullOrEmpty(request.QuestionLabel))
             {
                 Console.WriteLine("❌ Invalid request - missing question data");
+                Console.WriteLine($"   Request is null: {request == null}");
+                Console.WriteLine($"   QuestionLabel is null or empty: {string.IsNullOrEmpty(request?.QuestionLabel)}");
                 return BadRequest("Invalid request: missing question data");
             }
             
