@@ -30,6 +30,41 @@ jobs:
 
       - name: Run tests
         run: dotnet test --no-build --configuration Release --verbosity normal --filter "FullyQualifiedName!~DataAccess.Tests"
+
+  bump-version:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run bump-version.sh
+        run: |
+          chmod +x scripts/bump-version.sh
+          ./scripts/bump-version.sh
+
+      - name: Push version bump and tag
+        run: |
+          git push origin main
+          git push origin --tags
       
       - name: Notify
-        run: echo "✅ Tests passed. Railway will auto-deploy from this commit."
+        run: echo "✅ Tests passed, version bumped. Railway will auto-deploy from this commit."
