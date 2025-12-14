@@ -8,7 +8,19 @@ Porpoise uses **Semantic Versioning** (SemVer): `MAJOR.MINOR.PATCH`
 - **MINOR** (1.X.0): New features, enhancements, non-breaking changes  
 - **PATCH** (1.0.X): Bug fixes, small tweaks, performance improvements
 
-## Current Version: 1.2.0
+## Current Version: 1.2.1
+
+### Single Source of Truth
+Version is maintained in `porpoise-ui/package.json` and auto-synced to:
+- `Porpoise.Api/Porpoise.Api.csproj` (synced by bump script)
+
+### Version History
+
+#### 1.2.1 (2025-12-14)
+- fix: make bump-version.sh non-interactive in CI/CD
+- fix: suppress obsolete BlkLabel/BlkStem warnings during migration
+- ci: automate version bumping in CI/CD pipeline
+- refactor: simplify version management to single source of truth
 
 ### Version History
 
