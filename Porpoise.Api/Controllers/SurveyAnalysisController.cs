@@ -689,12 +689,18 @@ Provide data-driven insights about patterns, notable findings, and implications:
     {
         try
         {
+            Console.WriteLine($"🔍 AnalyzeQuestion called for survey {surveyId}");
+            Console.WriteLine($"   Method: {Request.Method}");
+            Console.WriteLine($"   Content-Type: {Request.ContentType}");
+            Console.WriteLine($"   Content-Length: {Request.ContentLength}");
+            
             // Log raw request body for debugging
             Request.EnableBuffering();
             using var reader = new StreamReader(Request.Body, Encoding.UTF8, leaveOpen: true);
             var rawBody = await reader.ReadToEndAsync();
             Request.Body.Position = 0;
-            Console.WriteLine($"🔍 AnalyzeQuestion called for survey {surveyId}");
+            
+            Console.WriteLine($"   Raw body length: {rawBody.Length}");
             Console.WriteLine($"   Raw body: {rawBody}");
             Console.WriteLine($"   Question: {request?.QuestionLabel ?? "NULL"}");
             Console.WriteLine($"   TotalN: {request?.TotalN ?? 0}");
