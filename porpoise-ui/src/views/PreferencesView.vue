@@ -247,11 +247,12 @@ import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { API_BASE_URL } from '@/config/api'
 import SidebarNav from '../components/SidebarNav.vue'
+import packageJson from '../../package.json'
 
 const activeSection = ref('appearance')
 
-// Version information
-const uiVersion = ref('1.2.0') // From package.json
+// Version information - UI version comes directly from package.json
+const uiVersion = ref(packageJson.version)
 const apiVersion = ref(null)
 const apiEnvironment = ref(null)
 const apiVersionLoading = ref(false)

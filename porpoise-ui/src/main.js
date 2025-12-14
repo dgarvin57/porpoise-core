@@ -6,10 +6,6 @@ import { definePreset } from '@primevue/themes'
 import router from './router'
 import './style.css'
 import App from './App.vue'
-import { checkVersions } from './utils/version'
-
-// Check and display version information
-checkVersions()
 
 const CustomPreset = definePreset(Aura, {
   semantic: {
