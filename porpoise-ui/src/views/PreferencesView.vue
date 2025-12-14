@@ -185,13 +185,23 @@
                   </div>
                   <div>
                     <div class="text-lg font-semibold text-gray-900 dark:text-white">Pulse Analytics</div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">Version 1.0.0</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">
+                      UI Version {{ uiVersion }}
+                      <span v-if="apiVersion"> • API Version {{ apiVersion }}</span>
+                      <span v-else-if="apiVersionLoading"> • Loading API version...</span>
+                    </div>
                   </div>
                 </div>
 
                 <p class="text-sm text-gray-600 dark:text-gray-400">
                   Professional polling and survey analysis platform for political campaigns and market research. Built on the legendary Porpoise survey statistical engine.
                 </p>
+
+                <!-- Environment Badge -->
+                <div v-if="apiEnvironment" class="inline-flex items-center px-2 py-1 rounded text-xs font-medium"
+                     :class="apiEnvironment === 'Production' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'">
+                  {{ apiEnvironment }}
+                </div>
               </div>
 
               <hr class="border-gray-200 dark:border-gray-700">
