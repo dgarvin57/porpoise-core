@@ -7,6 +7,7 @@ using Porpoise.Core.Models;
 using Porpoise.Core.Services;
 using System.Data;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace Porpoise.Api.Controllers;
 
@@ -918,15 +919,25 @@ public class IVIndexInfo
 
 public class QuestionAnalysisRequest
 {
+    [JsonPropertyName("questionLabel")]
     public string QuestionLabel { get; set; } = string.Empty;
+    
+    [JsonPropertyName("totalN")]
     public int TotalN { get; set; }
+    
+    [JsonPropertyName("responses")]
     public List<ResponseData> Responses { get; set; } = new();
 }
 
 public class ResponseData
 {
+    [JsonPropertyName("label")]
     public string Label { get; set; } = string.Empty;
+    
+    [JsonPropertyName("frequency")]
     public int Frequency { get; set; }
+    
+    [JsonPropertyName("percent")]
     public double Percent { get; set; }
 }
 
