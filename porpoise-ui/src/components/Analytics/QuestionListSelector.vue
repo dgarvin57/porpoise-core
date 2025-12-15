@@ -121,7 +121,7 @@
                 <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
               </svg>
               <div class="flex-1 text-left min-w-0">
-                <span class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                <span class="text-xs font-medium text-gray-900 dark:text-white truncate">
                   {{ item.label }}
                 </span>
               </div>
@@ -170,7 +170,7 @@
                 </svg>
                 
                 <div class="flex-1 min-w-0 leading-none">
-                  <span class="text-sm text-gray-700 dark:text-gray-300">{{ question.label }}</span>
+                  <span class="text-xs text-gray-700 dark:text-gray-300">{{ question.label }}</span>
                   <span class="text-xs text-gray-400 dark:text-gray-500 ml-2">{{ question.qstNumber }}</span>
                 </div>
                 
@@ -204,7 +204,7 @@
             </svg>
             
             <div class="flex-1 min-w-0 leading-none">
-              <span class="text-sm text-gray-700 dark:text-gray-300">{{ (item.question || item).label }}</span>
+              <span class="text-xs text-gray-700 dark:text-gray-300">{{ (item.question || item).label }}</span>
               <span class="text-xs text-gray-400 dark:text-gray-500 ml-2">{{ (item.question || item).qstNumber }}</span>
             </div>
             
@@ -315,7 +315,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['question-selected', 'crosstab-selection', 'selection-cleared', 'expanded-blocks-changed'])
+const emit = defineEmits(['question-selected', 'crosstab-selection', 'selection-cleared', 'expanded-blocks-changed', 'questions-loaded'])
 
 // State
 const loading = ref(false)
@@ -536,6 +536,9 @@ async function loadQuestions() {
         if (block) block.isExpanded = true
       })
     }
+    
+    // Emit questions-loaded event for parent to handle initial selection
+    emit('questions-loaded', processed)
   } catch (err) {
     console.error('Failed to load questions:', err)
     error.value = 'Failed to load questions. Please try again.'
@@ -721,6 +724,18 @@ watch(() => props.selectedQuestionId, (newId) => {
     }
   }
 })
+
+// Watch for changes to initialExpandedBlocks and update block expansion state
+watch(() => props.initialExpandedBlocks, (newExpandedBlocks) => {
+  if (newExpandedBlocks && newExpandedBlocks.length > 0 && questions.value.length > 0) {
+    newExpandedBlocks.forEach(blockId => {
+      const block = questions.value.find(q => q.type === 'block' && q.blockId === blockId)
+      if (block && !block.isExpanded) {
+        block.isExpanded = true
+      }
+    })
+  }
+}, { deep: true })
 
 // Load questions on mount
 watch(() => props.surveyId, () => {

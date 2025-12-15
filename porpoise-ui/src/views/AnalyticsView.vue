@@ -89,306 +89,249 @@
     <div class="fixed top-12 bottom-0 right-0 left-14 overflow-hidden">
       <!-- Content Area with Question List (for Analytics sections) -->
       <template v-if="activeSection !== 'dataview' && activeSection !== 'datacleansing' && activeSection !== 'questions'">
-        <Splitter 
-          layout="horizontal"
-          class="h-full"
-        >
-        <SplitterPanel :size="22" :minSize="15" :maxSize="40">
-        <div class="h-full bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
-          <QuestionListSelector
-            :surveyId="surveyId"
-            :selectionMode="questionListMode"
-            :showNotesIcons="true"
-            :wrapStandaloneQuestions="true"
-            :selectedQuestionId="questionListMode === 'single' ? selectedQuestionId : null"
-            :initialExpandedBlocks="expandedBlocks"
-            :initialFirstSelection="questionListMode === 'crosstab' ? crosstabFirstQuestion : null"
-            :initialSecondSelection="questionListMode === 'crosstab' ? crosstabSecondQuestion : null"
-            @question-selected="handleQuestionListSelection"
-            @crosstab-selection="handleQuestionListCrosstabSelection"
-            @expanded-blocks-changed="handleExpandedBlocksChanged"
-          />
-        </div>
-      </SplitterPanel>
-
-      <SplitterPanel :size="78" :minSize="60" :maxSize="85">
-        <!-- Main Content Area -->
-        <main class="h-full flex flex-col min-h-0">
-          <div class="flex-1 flex flex-col min-h-0">
-            <!-- Top: Context Area (Response Results + Question/Block Stem) -->
-            <div class="flex-shrink-0 overflow-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 dark:[&::-webkit-scrollbar-track]:bg-gray-800 [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-gray-600 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-gray-400 dark:[&::-webkit-scrollbar-thumb:hover]:bg-gray-500" style="max-height: 30%;">
-              <!-- Show ResultsTable with data when question is selected -->
-              <div v-if="selectedQuestionWithResponses && (activeSection === 'results' || activeSection === 'crosstab' || activeSection === 'statsig')" 
-                   class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                <ResultsTable 
-                  :key="selectedQuestionWithResponses.id"
-                  :question="selectedQuestionWithResponses"
-                  :columnMode="columnMode"
-                  :surveyId="surveyId"
-                  :activeSection="activeSection"
-                  @column-mode-changed="handleColumnModeChanged"
-                  @analyze-crosstab="handleAnalyzeCrosstab"
-                />
-              </div>
-              
-              <!-- Show skeleton/placeholder when no question is selected -->
-              <div v-else-if="activeSection === 'results' || activeSection === 'crosstab' || activeSection === 'statsig'" 
-                   class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                <div class="sticky top-0 z-30 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 py-1">
-                  <div class="relative flex items-center justify-between px-4">
-                    <div class="flex items-center space-x-3 min-w-0">
-                      <div class="w-5 h-5 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-                      <div class="w-5 h-5 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-                      <div class="h-4 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-                    </div>
-                    <div class="absolute left-[45%]">
-                      <span class="text-base font-semibold text-blue-600 dark:text-blue-400 text-left uppercase tracking-wider">
-                        RESULTS
-                      </span>
-                    </div>
-                    <div class="flex items-center space-x-3 flex-shrink-0">
-                      <div class="flex items-center space-x-4">
-                        <div class="h-3 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-                        <div class="h-3 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-                        <div class="h-3 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div style="height: 250px;">
-                  <Splitter layout="horizontal" class="h-full">
-                    <SplitterPanel :size="45" :minSize="30" :maxSize="60">
-                      <div class="h-full p-4">
-                        <div class="space-y-3">
-                          <div class="h-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-                          <div class="h-8 bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
-                          <div class="h-8 bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
-                          <div class="h-8 bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
-                        </div>
-                      </div>
-                    </SplitterPanel>
-                    
-                    <SplitterPanel :size="55" :minSize="40" :maxSize="70">
-                      <div class="h-full p-4">
-                        <div class="space-y-2">
-                          <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-3/4"></div>
-                          <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-                          <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-5/6"></div>
-                        </div>
-                      </div>
-                    </SplitterPanel>
-                  </Splitter>
-                </div>
-              </div>
-            </div>
-
-            <!-- Bottom: Tab Navigation + Analysis Area -->
-            <div class="flex-1 flex flex-col" style="min-height: 0;">
-              <div class="flex flex-col h-full min-h-0">
-                <div v-if="activeSection !== 'dataview' && activeSection !== 'datacleansing'" class="flex-shrink-0 primevue-tabs-wrapper">
-                  <Tabs 
-                :value="activeSection" 
-                @update:value="changeTab"
-              >
-                <TabList>
-                  <Tab v-for="tab in analysisTabs" :key="tab.id" :value="tab.id">
-                    <div class="flex items-center gap-1.5">
-                      <!-- Use text for special symbols like Phi, otherwise use path -->
-                      <svg v-if="tab.iconType === 'text'" class="w-3.5 h-3.5" viewBox="0 0 24 24">
-                        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="18" font-weight="600" fill="currentColor">{{ tab.icon }}</text>
-                      </svg>
-                      <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" :d="tab.icon" />
-                      </svg>
-                      <span>{{ tab.label }}</span>
-                      <span v-if="tab.badge" class="ml-1 text-[10px] opacity-60">
-                        ({{ tab.badge }})
-                      </span>
-                    </div>
-                  </Tab>
-                </TabList>
-              </Tabs>
-            </div>
-
-                <!-- Analysis Area -->
-                <div class="flex-1 bg-gray-50 dark:bg-gray-900 min-h-0 overflow-y-scroll overflow-x-hidden [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-100 dark:[&::-webkit-scrollbar-track]:bg-gray-800 [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-gray-600 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb:hover]:bg-gray-400 dark:[&::-webkit-scrollbar-thumb:hover]:bg-gray-500">
-              <!-- Split View: Results Panel + Crosstab side-by-side -->
-              <Splitter v-show="splitViewEnabled && activeSection === 'crosstab'" layout="horizontal" class="h-full p-4">
-                <!-- Results View (Left) - Shows selected question results only -->
-                <SplitterPanel :size="40" :minSize="20" :maxSize="60">
-                  <div class="h-full bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden flex flex-col">
-                    <div class="bg-gray-100 dark:bg-gray-900 px-3 py-1.5 border-b border-gray-200 dark:border-gray-700">
-                      <h3 class="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Results</h3>
-                    </div>
-                    <div class="flex-1 overflow-hidden">
-                      <ResultsView 
-                        :surveyId="surveyId"
-                        :preselectedQuestionId="selectedQuestionForSplit?.id"
-                        :hideSidebar="true"
-                      />
-                    </div>
-                  </div>
-                </SplitterPanel>
-                
-                <!-- Crosstab (Right) -->
-                <SplitterPanel :size="60" :minSize="40" :maxSize="80">
-                  <div class="h-full bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden flex flex-col">
-                    <div class="bg-gray-100 dark:bg-gray-900 px-3 py-1.5 border-b border-gray-200 dark:border-gray-700">
-                      <h3 class="text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Crosstab Analysis</h3>
-                    </div>
-                    <div class="flex-1 overflow-hidden">
-                      <CrosstabView 
-                        v-show="true"
-                        :surveyId="surveyId"
-                        :initialFirstQuestion="crosstabFirstQuestion"
-                        :initialSecondQuestion="crosstabSecondQuestion"
-                        @selections-changed="handleCrosstabSelectionsChanged"
-                      />
-                    </div>
-                  </div>
-                </SplitterPanel>
-              </Splitter>
-
-              <!-- Regular Single View -->
-              <div v-if="!splitViewEnabled || activeSection !== 'crosstab'" class="h-full min-h-0">
-                <!-- Results View (Chart only, table is in context area) -->
-                <ResultsView 
-                  v-show="activeSection === 'results'" 
-                  :surveyId="surveyId"
-                  :preselectedQuestionId="selectedQuestionId"
-                  :hideSidebar="true"
-                  :hideTable="true"
-                  :initialQuestionId="selectedQuestionId"
-                  :initialExpandedBlocks="expandedBlocks"
-                  :initialColumnMode="columnMode"
-                  :initialInfoExpanded="infoExpanded"
-                  :initialInfoTab="infoTab"
-                  @question-selected="handleQuestionSelected"
-                  @expanded-blocks-changed="handleExpandedBlocksChanged"
-                  @column-mode-changed="handleColumnModeChanged"
-                  @info-expanded-changed="handleInfoExpandedChanged"
-                  @info-tab-changed="handleInfoTabChanged"
-                  @analyze-crosstab="handleAnalyzeCrosstab"
-                />
-
-                <!-- Crosstab View (Table is shown above) -->
-                <CrosstabView 
-                  v-show="activeSection === 'crosstab'" 
-                  :surveyId="surveyId"
-                  :hideSidebar="true"
-                  :initialFirstQuestion="crosstabFirstQuestion"
-                  :initialSecondQuestion="crosstabSecondQuestion"
-                  @selections-changed="handleCrosstabSelectionsChanged"
-                />
-
-                <!-- Stat Sig View -->
-                <StatSigView 
-                  v-show="activeSection === 'statsig'" 
-                  :surveyId="surveyId"
-                  :selectedQuestion="selectedQuestionWithResponses"
-                  @question-selected="handleStatSigQuestionSelected"
-                />
-
-                <!-- Index View -->
-                <div v-show="activeSection === 'index'" class="h-full flex items-center justify-center">
-                  <div class="text-center">
-                    <svg class="mx-auto h-12 w-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
-                    </svg>
-                    <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Index</h3>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Quickest way to select target groups</p>
-                    <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">★★★★ Priority - Coming soon...</p>
-                  </div>
-                </div>
-
-                <!-- Index + View -->
-                <div v-show="activeSection === 'indexplus'" class="h-full flex items-center justify-center">
-                  <div class="text-center">
-                    <svg class="mx-auto h-12 w-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Index +</h3>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Compare two questions within a block</p>
-                    <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">★★★ Priority - Coming soon...</p>
-                  </div>
-                </div>
-
-                <!-- Profile View -->
-                <div v-show="activeSection === 'profile'" class="h-full flex items-center justify-center">
-                  <div class="text-center">
-                    <svg class="mx-auto h-12 w-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                    <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Profile</h3>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Quick targeting and media strategy advice</p>
-                    <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">★★★★ Priority - Coming soon...</p>
-                  </div>
-                </div>
-
-                <!-- One Response View -->
-                <div v-show="activeSection === 'oneresponse'" class="h-full flex items-center justify-center">
-                  <div class="text-center">
-                    <svg class="mx-auto h-12 w-12 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                    <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">One Response</h3>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Compare specific responses across a block</p>
-                    <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">★★★ Priority - Coming soon...</p>
-                  </div>
-                </div>
-
-                <!-- Full Block View -->
-                <div v-show="activeSection === 'fullblock'" class="h-full flex items-center justify-center">
-                  <div class="text-center">
-                    <svg class="mx-auto h-12 w-12 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-                    </svg>
-                    <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Full Block</h3>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">See patterns when graphically displayed</p>
-                    <p class="mt-1 text-xs text-yellow-600 dark:text-yellow-400">★★★★★ Critical Priority - Coming soon...</p>
-                  </div>
-                </div>
-
-                <!-- Matching Blocks View -->
-                <div v-show="activeSection === 'matchingblocks'" class="h-full flex items-center justify-center">
-                  <div class="text-center">
-                    <svg class="mx-auto h-12 w-12 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
-                    </svg>
-                    <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Matching Blocks</h3>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">The researcher's technological storyteller</p>
-                    <p class="mt-1 text-xs text-yellow-600 dark:text-yellow-400">★★★★★ Critical Priority - Coming soon...</p>
-                  </div>
-                </div>
-
-                <!-- Questions View -->
-                <QuestionsView v-show="activeSection === 'questions'" :surveyId="surveyId" />
-
-                <!-- Data View -->
-                <DataView v-show="activeSection === 'dataview'" :surveyId="surveyId" />
-
-                <!-- Data Cleansing -->
-                <div v-show="activeSection === 'cleansing'" class="h-full flex items-center justify-center">
-                  <div class="text-center">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
-                    </svg>
-                    <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Data Cleansing</h3>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Coming soon...</p>
-                  </div>
-                </div>
-              </div>
-                </div>
-              </div>
+        <!-- Horizontal Layout: Question List | Main Content -->
+        <div class="flex h-full">
+          <!-- Left: Question List -->
+          <div 
+            :style="{ width: questionListWidth + 'px' }"
+            class="flex-shrink-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-hidden"
+          >
+            <div class="h-full overflow-y-auto">
+              <QuestionListSelector
+                :surveyId="surveyId"
+                :selectionMode="questionListMode"
+                :showNotesIcons="true"
+                :wrapStandaloneQuestions="true"
+                :selectedQuestionId="questionListMode === 'single' ? selectedQuestionId : null"
+                :initialExpandedBlocks="expandedBlocks"
+                :initialFirstSelection="questionListMode === 'crosstab' ? crosstabFirstQuestion : null"
+                :initialSecondSelection="questionListMode === 'crosstab' ? crosstabSecondQuestion : null"
+                @question-selected="handleQuestionListSelection"
+                @crosstab-selection="handleQuestionListCrosstabSelection"
+                @expanded-blocks-changed="handleExpandedBlocksChanged"
+                @questions-loaded="handleQuestionsLoaded"
+              />
             </div>
           </div>
-        </main>
-      </SplitterPanel>
-    </Splitter>
-      </template>
 
-    <!-- Standalone Main Content (when question list is hidden) -->
+          <!-- Vertical Resize Handle for Question List -->
+          <div
+            class="w-1 bg-gray-200 dark:bg-gray-700 hover:bg-blue-500 dark:hover:bg-blue-600 cursor-col-resize flex-shrink-0 transition-colors"
+            @mousedown="startResizeQuestionList"
+          ></div>
+
+          <!-- Right: Main Content Area (Context + Content) -->
+          <div class="flex-1 flex flex-col min-w-0">
+            <!-- Top: Context Area (Responses Table + Question/Block) -->
+            <div 
+              :style="{ height: contextHeight + 'px' }"
+              class="flex-shrink-0 flex"
+            >
+              <!-- Left: Responses Table -->
+              <div 
+                :style="{ width: responsesTableWidth + 'px' }"
+                class="flex-shrink-0 bg-white dark:bg-gray-800 overflow-hidden"
+              >
+                <div class="h-full">
+                  <ResponsesTableOnly 
+                    v-show="selectedQuestionWithResponses"
+                    :question="selectedQuestionWithResponses || {}"
+                    :columnMode="columnMode"
+                    @column-mode-changed="handleColumnModeChanged"
+                  />
+                  
+                  <!-- Show placeholder when no question is selected -->
+                  <div v-show="!selectedQuestionWithResponses" class="h-full flex flex-col">
+                    <!-- Skeleton header -->
+                    <div class="flex-shrink-0 px-4 py-1 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
+                      <div class="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                      <div class="h-6 w-28 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                    </div>
+                    <!-- Skeleton table -->
+                    <div class="flex-1 p-4 space-y-2">
+                      <div class="h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                      <div class="h-6 bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
+                      <div class="h-6 bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
+                      <div class="h-6 bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Vertical Resize Handle for Responses Table -->
+              <div
+                class="w-1 bg-gray-200 dark:bg-gray-700 hover:bg-blue-500 dark:hover:bg-blue-600 cursor-col-resize flex-shrink-0 transition-colors"
+                @mousedown="startResizeResponsesTable"
+              ></div>
+
+              <!-- Right: Question/Block Text -->
+              <div class="flex-1 bg-white dark:bg-gray-800 overflow-hidden min-w-0">
+                <div class="h-full">
+                  <QuestionBlockText 
+                    v-show="selectedQuestionWithResponses"
+                    :question="selectedQuestionWithResponses || {}"
+                    :surveyId="surveyId"
+                  />
+                  
+                  <!-- Show placeholder when no question is selected -->
+                  <div v-show="!selectedQuestionWithResponses" class="h-full flex flex-col">
+                    <!-- Skeleton tabs -->
+                    <div class="flex-shrink-0 border-b border-gray-200 dark:border-gray-700">
+                      <div class="flex gap-2 p-2">
+                        <div class="h-8 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                        <div class="h-8 w-20 bg-gray-100 dark:bg-gray-800 rounded animate-pulse"></div>
+                      </div>
+                    </div>
+                    <!-- Skeleton content -->
+                    <div class="flex-1 p-4 space-y-2">
+                      <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-full"></div>
+                      <div class="h-4 bg-gray-100 dark:bg-gray-800 rounded animate-pulse w-5/6"></div>
+                      <div class="h-4 bg-gray-100 dark:bg-gray-800 rounded animate-pulse w-4/5"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Horizontal Resize Handle for Context Area -->
+            <div
+              class="h-1 bg-gray-200 dark:bg-gray-700 hover:bg-blue-500 dark:hover:bg-blue-600 cursor-row-resize flex-shrink-0 transition-colors"
+              @mousedown="startResizeContext"
+            ></div>
+
+            <!-- Bottom: Content Area (Tabs + Chart) -->
+            <div class="flex-1 bg-gray-50 dark:bg-gray-900 overflow-hidden min-h-0 flex flex-col">
+              <!-- Analysis Tabs -->
+              <div class="flex-shrink-0 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+                <div class="flex gap-1 px-4">
+                  <!-- Visible Tabs: Results, Crosstab, Stat Sig, (+ Promoted Tab) -->
+                  <button
+                    v-for="tab in visibleTabs"
+                    :key="tab.id"
+                    @click="activeAnalysisTab = tab.id"
+                    :class="[
+                      'flex items-center gap-2 px-4 py-1.5 text-sm font-medium whitespace-nowrap transition-colors border-b-2',
+                      activeAnalysisTab === tab.id
+                        ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+                    ]"
+                  >
+                    <svg
+                      v-if="tab.iconType !== 'text'"
+                      class="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="tab.icon" />
+                    </svg>
+                    <span v-else class="text-lg font-bold">{{ tab.icon }}</span>
+                    <span>{{ tab.label }}</span>
+                  </button>
+
+                  <!-- More Tabs Dropdown -->
+                  <div class="relative" v-click-outside="() => showMoreTabs = false">
+                    <button
+                      @click="showMoreTabs = !showMoreTabs"
+                      :class="[
+                        'flex items-center gap-1 px-4 pt-[13px] pb-[12px] text-sm font-medium whitespace-nowrap transition-colors border-b-2',
+                        availableMoreTabs.some(t => t.id === activeAnalysisTab)
+                          ? 'border-transparent text-blue-600 dark:text-blue-400'
+                          : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+                      ]"
+                    >
+                      <span>More</span>
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    
+                    <!-- Dropdown Menu -->
+                    <div
+                      v-if="showMoreTabs"
+                      class="absolute top-full left-0 mt-1 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50"
+                    >
+                      <button
+                        v-for="tab in availableMoreTabs"
+                        :key="tab.id"
+                        @click="() => { promotedTab = tab; activeAnalysisTab = tab.id; showMoreTabs = false }"
+                        :class="[
+                          'w-full flex items-center gap-3 px-4 py-1.5 text-sm transition-colors',
+                          activeAnalysisTab === tab.id
+                            ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                        ]"
+                      >
+                        <svg
+                          v-if="tab.iconType !== 'text'"
+                          class="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="tab.icon" />
+                        </svg>
+                        <span v-else class="text-lg font-bold">{{ tab.icon }}</span>
+                        <span>{{ tab.label }}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tab Content -->
+              <div class="flex-1 overflow-auto">
+                <!-- Results Tab -->
+                <div v-if="activeAnalysisTab === 'results'" class="p-6">
+                  <QuestionChart
+                    v-if="selectedQuestionWithResponses"
+                    :question="selectedQuestionWithResponses"
+                    :questionLabel="selectedQuestionWithResponses.label || selectedQuestionWithResponses.qstLabel || ''"
+                    @analyze-crosstab="handleAnalyzeCrosstab"
+                    @ai-analysis="handleAIAnalysis"
+                    @show-info="handleShowInfo"
+                  />
+                  
+                  <!-- Empty state -->
+                  <div v-else class="h-full flex items-center justify-center text-gray-400 dark:text-gray-500">
+                    <div class="text-center">
+                      <svg class="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                      <p class="text-lg font-medium">Select a question to view response distribution</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Other Tabs (placeholders for now) -->
+                <div v-else class="p-6 h-full flex items-center justify-center text-gray-400 dark:text-gray-500">
+                  <div class="text-center">
+                    <p class="text-lg font-medium">{{ analysisTabs.find(t => t.id === activeAnalysisTab)?.label }} view</p>
+                    <p class="text-sm mt-2">Coming soon...</p>
+                  </div>
+                </div>
+              </div>
+      </div>
+    </div>
+
+    <!-- AI Analysis Modal -->
+    <AIAnalysisModal
+      :show="showAIModal"
+      :questionLabel="selectedQuestionWithResponses?.label || selectedQuestionWithResponses?.qstLabel || ''"
+      :analysis="aiAnalysis"
+      :loading="loadingAnalysis"
+      @close="showAIModal = false"
+      @generate="generateAIAnalysis"
+      @regenerate="generateAIAnalysis"
+    />
+
+    <!-- Understanding Results Modal -->
+    <UnderstandingResultsModal
+      :show="showUnderstandingModal"
+      @close="showUnderstandingModal = false"
+    />
+  </div>
+</template>    <!-- Standalone Main Content (when question list is hidden) -->
     <main v-if="activeSection === 'dataview' || activeSection === 'datacleansing' || activeSection === 'questions'" class="h-full w-full overflow-hidden">
       <!-- Questions View -->
       <QuestionsView v-if="activeSection === 'questions'" :surveyId="surveyId" class="h-full w-full" />
@@ -412,24 +355,34 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed, nextTick } from 'vue'
+import { ref, onMounted, watch, computed, nextTick, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import Tabs from 'primevue/tabs'
-import TabList from 'primevue/tablist'
-import Tab from 'primevue/tab'
-import Splitter from 'primevue/splitter'
-import SplitterPanel from 'primevue/splitterpanel'
 import axios from 'axios'
 import { API_BASE_URL } from '@/config/api'
 import SidebarButton from '../components/SidebarButton.vue'
-import ResultsView from '../components/Analytics/ResultsView.vue'
-import CrosstabView from '../components/Analytics/CrosstabView.vue'
-import StatSigView from '../components/Analytics/StatSigView.vue'
 import QuestionsView from '../components/Analytics/QuestionsView.vue'
 import DataView from '../components/Analytics/DataView.vue'
-import QuestionListSelector from '../components/Analytics/QuestionListSelector.vue'
-import CondensedResultsTable from '../components/Analytics/CondensedResultsTable.vue'
-import ResultsTable from '../components/Analytics/ResultsTable.vue'
+import QuestionListSelector from '@/components/Analytics/QuestionListSelector.vue'
+import ResponsesTableOnly from '@/components/Analytics/ResponsesTableOnly.vue'
+import QuestionBlockText from '@/components/Analytics/QuestionBlockText.vue'
+import QuestionChart from '@/components/Analytics/QuestionChart.vue'
+import AIAnalysisModal from '@/components/Analytics/AIAnalysisModal.vue'
+import UnderstandingResultsModal from '@/components/Analytics/UnderstandingResultsModal.vue'
+
+// Click outside directive
+const vClickOutside = {
+  mounted(el, binding) {
+    el.clickOutsideEvent = (event) => {
+      if (!(el === event.target || el.contains(event.target))) {
+        binding.value(event)
+      }
+    }
+    document.addEventListener('click', el.clickOutsideEvent)
+  },
+  unmounted(el) {
+    document.removeEventListener('click', el.clickOutsideEvent)
+  }
+}
 
 const route = useRoute()
 const router = useRouter()
@@ -447,18 +400,116 @@ const activeSection = ref('results')
 // Sidebar collapse state
 const sidebarCollapsed = ref(localStorage.getItem('sidebarCollapsed') === 'true')
 
+// Resize state
+const questionListWidth = ref(320) // Default 320px (~22% of 1440px)
+const contextHeight = ref(140) // Default 140px for context area (reduced from 200px)
+const responsesTableWidth = ref(400) // Default 400px for responses table
+const isContextCollapsed = ref(false) // Context area collapse state
+
+let isResizing = ref(false)
+let resizeType = ref(null) // 'questionList', 'context', 'responsesTable'
+let startX = ref(0)
+let startY = ref(0)
+let startWidth = ref(0)
+let startHeight = ref(0)
+
+// Resize handlers
+function startResizeQuestionList(event) {
+  isResizing.value = true
+  resizeType.value = 'questionList'
+  startX.value = event.clientX
+  startWidth.value = questionListWidth.value
+  document.body.style.cursor = 'col-resize'
+  document.addEventListener('mousemove', handleMouseMove)
+  document.addEventListener('mouseup', stopResize)
+  event.preventDefault()
+}
+
+function startResizeContext(event) {
+  isResizing.value = true
+  resizeType.value = 'context'
+  startY.value = event.clientY
+  startHeight.value = contextHeight.value
+  document.body.style.cursor = 'row-resize'
+  document.addEventListener('mousemove', handleMouseMove)
+  document.addEventListener('mouseup', stopResize)
+  event.preventDefault()
+}
+
+function startResizeResponsesTable(event) {
+  isResizing.value = true
+  resizeType.value = 'responsesTable'
+  startX.value = event.clientX
+  startWidth.value = responsesTableWidth.value
+  document.body.style.cursor = 'col-resize'
+  document.addEventListener('mousemove', handleMouseMove)
+  document.addEventListener('mouseup', stopResize)
+  event.preventDefault()
+}
+
+function handleMouseMove(event) {
+  if (!isResizing.value) return
+
+  if (resizeType.value === 'questionList') {
+    const deltaX = event.clientX - startX.value
+    const newWidth = Math.max(200, Math.min(600, startWidth.value + deltaX))
+    questionListWidth.value = newWidth
+  } else if (resizeType.value === 'context') {
+    const deltaY = event.clientY - startY.value
+    const newHeight = Math.max(150, Math.min(600, startHeight.value + deltaY))
+    contextHeight.value = newHeight
+  } else if (resizeType.value === 'responsesTable') {
+    const deltaX = event.clientX - startX.value
+    const newWidth = Math.max(250, Math.min(800, startWidth.value + deltaX))
+    responsesTableWidth.value = newWidth
+  }
+}
+
+function stopResize() {
+  isResizing.value = false
+  resizeType.value = null
+  document.body.style.cursor = ''
+  document.removeEventListener('mousemove', handleMouseMove)
+  document.removeEventListener('mouseup', stopResize)
+}
+
+// Cleanup on unmount
+onUnmounted(() => {
+  document.removeEventListener('mousemove', handleMouseMove)
+  document.removeEventListener('mouseup', stopResize)
+})
+
 // Analysis tabs configuration
-const analysisTabs = [
-  { id: 'results', label: 'Results', badge: null, icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
-  { id: 'crosstab', label: 'Crosstab', badge: null, icon: 'M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z' },
-  { id: 'statsig', label: 'Stat Sig', badge: null, icon: 'Φ', iconType: 'text' },
-  { id: 'fullblock', label: 'Full Block', badge: null, icon: 'M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z' },
-  { id: 'matchingblocks', label: 'Matching Blocks', badge: null, icon: 'M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2' },
-  { id: 'index', label: 'Index', badge: null, icon: 'M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z' },
-  { id: 'indexplus', label: 'Index +', badge: null, icon: 'M12 6v6m0 0v6m0-6h6m-6 0H6' },
-  { id: 'profile', label: 'Profile', badge: null, icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
-  { id: 'oneresponse', label: 'One Response', badge: null, icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
+const mainTabs = [
+  { id: 'results', label: 'Results', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
+  { id: 'crosstab', label: 'Crosstab', icon: 'M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z' },
+  { id: 'statsig', label: 'Stat Sig', icon: 'Φ', iconType: 'text' },
 ]
+
+const moreTabs = [
+  { id: 'fullblock', label: 'Full Block', icon: 'M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z' },
+  { id: 'matchingblocks', label: 'Matching Blocks', icon: 'M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2' },
+  { id: 'index', label: 'Index', icon: 'M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z' },
+  { id: 'indexplus', label: 'Index +', icon: 'M12 6v6m0 0v6m0-6h6m-6 0H6' },
+  { id: 'profile', label: 'Profile', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
+  { id: 'oneresponse', label: 'One Response', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
+]
+
+// Computed: visible tabs including promoted tab
+const visibleTabs = computed(() => {
+  const tabs = [...mainTabs]
+  if (promotedTab.value) {
+    tabs.push(promotedTab.value)
+  }
+  return tabs
+})
+
+// Computed: more dropdown tabs (including promoted, which shows as selected)
+const availableMoreTabs = computed(() => {
+  return moreTabs
+})
+
+const analysisTabs = [...mainTabs, ...moreTabs]
 
 // Function to change tab
 const changeTab = (tabId) => {
@@ -472,6 +523,14 @@ const selectedQuestionWithResponses = ref(null)
 const expandedBlocks = ref([])
 const columnMode = ref('totalN')
 const infoExpanded = ref(false)
+const activeAnalysisTab = ref('results')
+const showMoreTabs = ref(false)
+const promotedTab = ref(null) // Currently promoted tab from More dropdown
+const showAIModal = ref(false)
+const showUnderstandingModal = ref(false)
+const aiAnalysis = ref('')
+const loadingAnalysis = ref(false)
+const currentQuestion = ref(null)
 const infoTab = ref('question')
 const isInitialRouteLoad = ref(true)  // Track initial load to prevent route query interference
 
@@ -563,8 +622,6 @@ async function loadQuestionData(questionId) {
     const questions = response.data
     const fullQuestion = questions.find(q => q.id === questionId)
     if (fullQuestion) {
-      // Use nextTick to avoid race condition with Vue's update cycle
-      await nextTick()
       selectedQuestionWithResponses.value = fullQuestion
     }
   } catch (error) {
@@ -745,6 +802,40 @@ function handleExpandedBlocksChanged(blocks) {
   expandedBlocks.value = blocks
 }
 
+// Handle questions loaded event - select first question if none selected
+async function handleQuestionsLoaded(questions) {
+  // Only auto-select if no question is currently selected
+  if (!selectedQuestionId.value && questions && questions.length > 0) {
+    // Find the first question (could be standalone or in a block)
+    let firstQuestion = null
+    let blockToExpand = null
+    
+    for (const item of questions) {
+      if (item.type === 'block' && item.questions && item.questions.length > 0) {
+        firstQuestion = item.questions[0]
+        blockToExpand = item.blockId
+        break
+      } else if (item.type === 'question') {
+        firstQuestion = item
+        break
+      }
+    }
+    
+    if (firstQuestion) {
+      // Expand block if needed - must happen before selecting question
+      if (blockToExpand && !expandedBlocks.value.includes(blockToExpand)) {
+        expandedBlocks.value = [...expandedBlocks.value, blockToExpand]
+        // Give time for block to expand in DOM
+        await nextTick()
+      }
+      
+      // Select the first question
+      selectedQuestionId.value = firstQuestion.id
+      selectedQuestion.value = firstQuestion
+    }
+  }
+}
+
 // Handle column mode changes from ResultsView
 function handleColumnModeChanged(mode) {
   columnMode.value = mode
@@ -820,6 +911,45 @@ function handleAnalyzeCrosstab(question) {
     activeSection.value = 'crosstab'
     saveSurveyState()
   })
+}
+
+function handleAIAnalysis(question) {
+  showAIModal.value = true
+  aiAnalysis.value = '' // Reset analysis
+}
+
+async function generateAIAnalysis() {
+  if (!selectedQuestionWithResponses.value) return
+  
+  loadingAnalysis.value = true
+  try {
+    const context = {
+      questionLabel: selectedQuestionWithResponses.value.label || selectedQuestionWithResponses.value.qstLabel,
+      totalN: selectedQuestionWithResponses.value.responses?.reduce((sum, r) => sum + r.count, 0) || 0,
+      responses: selectedQuestionWithResponses.value.responses?.map(r => ({
+        label: r.label,
+        frequency: r.count || 0,
+        percent: r.percentage || 0
+      })) || []
+    }
+    
+    const response = await axios.post(
+      `${API_BASE_URL}/api/survey-analysis/${surveyId.value}/analyze-question`,
+      context
+    )
+    
+    aiAnalysis.value = response.data.analysis
+  } catch (error) {
+    console.error('Error generating AI analysis:', error)
+    aiAnalysis.value = 'Unable to generate analysis at this time. The results above show the key findings from your question.'
+  } finally {
+    loadingAnalysis.value = false
+  }
+}
+
+function handleShowInfo(question) {
+  currentQuestion.value = question
+  showUnderstandingModal.value = true
 }
 
 async function loadSurveyInfo() {

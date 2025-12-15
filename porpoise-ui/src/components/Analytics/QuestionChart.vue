@@ -1,98 +1,66 @@
 <template>
   <div class="space-y-4">
-    <!-- Horizontal Bar Chart -->
-    <div class="space-y-3">
-      <div
-        v-for="(response, index) in sortedResponses"
-        :key="index"
-        class="flex items-center space-x-4"
-      >
-        <!-- Response Label -->
-        <div class="w-32 text-sm text-right text-gray-700 dark:text-gray-300 truncate">
-          {{ response.label }}
+    <!-- Header with question label and buttons -->
+    <div class="flex items-start justify-between mb-2">
+      <div>
+        <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1">
+          {{ questionLabel }}
+        </h3>
+        <div class="text-[10px] font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide">
+          Frequency Distribution
         </div>
-
-        <!-- Bar -->
-        <div class="flex-1 relative">
-          <div class="bg-gray-200 dark:bg-gray-700 rounded-full h-8 overflow-hidden">
-            <div
-              :style="{ width: response.percentage + '%' }"
-              class="h-full bg-blue-600 dark:bg-blue-500 transition-all duration-500 ease-out flex items-center justify-end pr-3"
-            >
-              <span class="text-xs font-semibold text-white">
-                {{ response.percentage.toFixed(1) }}%
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Count -->
-        <div class="w-16 text-sm text-gray-600 dark:text-gray-400 text-right">
-          {{ response.count }}
-        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <button 
+          @click="handleAnalyzeInCrosstab"
+          class="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition-colors"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+          Analyze in Crosstab
+        </button>
+        <div class="flex-1"></div>
+        <AIAnalysisButtons 
+          @ai-analysis="handleAIAnalysis"
+        />
       </div>
     </div>
 
-    <!-- X-axis scale labels -->
-    <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 pl-36">
-      <span>0</span>
-      <span>25</span>
-      <span>50</span>
-      <span>75</span>
-      <span>100</span>
-    </div>
-
-    <!-- Summary Stats -->
-    <div class="pt-4 border-t border-gray-200 dark:border-gray-700 grid grid-cols-3 gap-4">
-      <div class="text-center">
-        <div class="text-xl font-bold text-gray-900 dark:text-white">
-          {{ totalResponses }}
-        </div>
-        <div class="text-sm text-gray-600 dark:text-gray-400">
-          Total Responses
-        </div>
-      </div>
-      <div class="text-center">
-        <div class="text-xl font-bold text-gray-900 dark:text-white">
-          {{ topResponse?.percentage.toFixed(1) }}%
-        </div>
-        <div class="text-sm text-gray-600 dark:text-gray-400">
-          Top Response
-        </div>
-      </div>
-      <div class="text-center">
-        <div class="text-xl font-bold text-gray-900 dark:text-white">
-          {{ question.responses?.length || 0 }}
-        </div>
-        <div class="text-sm text-gray-600 dark:text-gray-400">
-          Answer Options
-        </div>
-      </div>
-    </div>
+    <!-- Frequency Distribution Chart Component -->
+    <FrequencyDistributionChart 
+      :question="question"
+      @show-info="handleShowInfo"
+    />
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import FrequencyDistributionChart from './FrequencyDistributionChart.vue'
+import AIAnalysisButtons from './AIAnalysisButtons.vue'
 
 const props = defineProps({
   question: {
     type: Object,
     required: true
+  },
+  questionLabel: {
+    type: String,
+    default: ''
   }
 })
 
-const sortedResponses = computed(() => {
-  if (!props.question.responses) return []
-  return [...props.question.responses].sort((a, b) => b.percentage - a.percentage)
-})
+const emit = defineEmits(['analyze-crosstab', 'ai-analysis', 'show-info'])
 
-const totalResponses = computed(() => {
-  if (!props.question.responses) return 0
-  return props.question.responses.reduce((sum, r) => sum + r.count, 0)
-})
+const handleAnalyzeInCrosstab = () => {
+  emit('analyze-crosstab', props.question)
+}
 
-const topResponse = computed(() => {
-  return sortedResponses.value[0] || null
-})
+const handleAIAnalysis = () => {
+  emit('ai-analysis', props.question)
+}
+
+const handleShowInfo = () => {
+  emit('show-info', props.question)
+}
 </script>
