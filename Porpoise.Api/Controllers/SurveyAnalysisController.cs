@@ -22,7 +22,6 @@ public class SurveyAnalysisController : ControllerBase
     private readonly AIInsightsService _aiService;
     private readonly AiPromptConfiguration _promptConfig;
     private readonly PromptTemplateEngine _templateEngine;
-    private readonly ILogger<SurveyAnalysisController> _logger;
 
     public SurveyAnalysisController(
         ISurveyRepository surveyRepository,
@@ -31,8 +30,7 @@ public class SurveyAnalysisController : ControllerBase
         IResponseRepository responseRepository,
         AIInsightsService aiService,
         AiPromptConfiguration promptConfig,
-        PromptTemplateEngine templateEngine,
-        ILogger<SurveyAnalysisController> logger)
+        PromptTemplateEngine templateEngine)
     {
         _surveyRepository = surveyRepository;
         _questionRepository = questionRepository;
@@ -41,7 +39,6 @@ public class SurveyAnalysisController : ControllerBase
         _aiService = aiService;
         _promptConfig = promptConfig;
         _templateEngine = templateEngine;
-        _logger = logger;
     }
 
     /// <summary>
@@ -690,37 +687,21 @@ Provide data-driven insights about patterns, notable findings, and implications:
     [HttpPost("{surveyId:guid}/analyze-question")]
     public async Task<IActionResult> AnalyzeQuestion(Guid surveyId, [FromBody] QuestionAnalysisRequest request)
     {
-        _logger.LogWarning("=== ANALYZE QUESTION ENDPOINT HIT ===");
-        _logger.LogWarning($"Survey ID: {surveyId}");
-        _logger.LogWarning($"Request is null: {request == null}");
-        
-        if (request != null)
-        {
-            _logger.LogWarning($"QuestionLabel: '{request.QuestionLabel}'");
-            _logger.LogWarning($"TotalN: {request.TotalN}");
-            _logger.LogWarning($"Responses count: {request.Responses?.Count ?? 0}");
-        }
-        
         try
         {
             if (request == null || string.IsNullOrEmpty(request.QuestionLabel))
             {
-                _logger.LogError("Invalid request - missing question data");
                 return BadRequest("Invalid request: missing question data");
             }
             
             // Build context for AI analysis from provided data
             var prompt = BuildQuestionAnalysisPrompt(request);
-            _logger.LogInformation($"Prompt built, calling AI API");
-            
             var analysis = await _aiService.CallAIAPI(prompt);
-            _logger.LogInformation($"AI analysis received");
             
             return Ok(new { analysis });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error in AnalyzeQuestion");
             // Return a user-friendly fallback message instead of exposing the error
             var fallbackMessage = "Unable to generate AI analysis at this time. The statistical results show the key findings from your data.";
             return Ok(new { analysis = fallbackMessage });

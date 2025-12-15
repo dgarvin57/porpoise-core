@@ -568,12 +568,6 @@ const generateAIAnalysis = async () => {
   
   loadingAnalysis.value = true
   try {
-    // Debug: Log the question object to see what properties it has
-    console.log('selectedQuestion.value:', selectedQuestion.value)
-    console.log('Label:', selectedQuestion.value.Label)
-    console.log('label:', selectedQuestion.value.label)
-    console.log('qstLabel:', selectedQuestion.value.qstLabel)
-    
     // Prepare context for AI - send data from frontend like CrosstabView does
     const context = {
       questionLabel: selectedQuestion.value.Label || selectedQuestion.value.label || selectedQuestion.value.qstLabel,
@@ -584,8 +578,6 @@ const generateAIAnalysis = async () => {
         percent: r.percentage || 0
       })) || []
     }
-    
-    console.log('Context being sent:', context)
     
     const response = await axios.post(
       `${API_BASE_URL}/api/survey-analysis/${props.surveyId}/analyze-question`,
