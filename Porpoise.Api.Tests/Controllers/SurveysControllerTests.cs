@@ -315,4 +315,484 @@ public class SurveysControllerTests
         var stats = okResult!.Value;
         stats.Should().NotBeNull();
     }
+
+    #region PatchSurvey Tests
+
+    [Fact]
+    public async Task PatchSurvey_UpdatesSurveyNotes_Successfully()
+    {
+        // Arrange
+        var surveyId = Guid.NewGuid();
+        var survey = new Survey 
+        { 
+            Id = surveyId, 
+            SurveyName = "Test Survey", 
+            SurveyNotes = "Old notes",
+            Status = SurveyStatus.Initial 
+        };
+        var updates = new Dictionary<string, object> { { "surveyNotes", "New notes" } };
+        
+        _mockRepository.Setup(r => r.GetByIdAsync(surveyId)).ReturnsAsync(survey);
+        _mockRepository.Setup(r => r.UpdateAsync(It.IsAny<Survey>())).ReturnsAsync(survey);
+
+        // Act
+        var result = await _controller.PatchSurvey(surveyId, updates);
+
+        // Assert
+        result.Should().BeOfType<OkObjectResult>();
+        _mockRepository.Verify(r => r.UpdateAsync(It.Is<Survey>(s => s.SurveyNotes == "New notes")), Times.Once);
+    }
+
+    [Fact]
+    public async Task PatchSurvey_UpdatesSurveyName_Successfully()
+    {
+        // Arrange
+        var surveyId = Guid.NewGuid();
+        var survey = new Survey 
+        { 
+            Id = surveyId, 
+            SurveyName = "Old Name", 
+            Status = SurveyStatus.Initial 
+        };
+        var updates = new Dictionary<string, object> { { "surveyName", "New Name" } };
+        
+        _mockRepository.Setup(r => r.GetByIdAsync(surveyId)).ReturnsAsync(survey);
+        _mockRepository.Setup(r => r.SurveyNameExistsAsync("New Name", surveyId)).ReturnsAsync(false);
+        _mockRepository.Setup(r => r.UpdateAsync(It.IsAny<Survey>())).ReturnsAsync(survey);
+
+        // Act
+        var result = await _controller.PatchSurvey(surveyId, updates);
+
+        // Assert
+        result.Should().BeOfType<OkObjectResult>();
+        _mockRepository.Verify(r => r.UpdateAsync(It.Is<Survey>(s => s.SurveyName == "New Name")), Times.Once);
+    }
+
+    [Fact]
+    public async Task PatchSurvey_UpdatesStatus_Successfully()
+    {
+        // Arrange
+        var surveyId = Guid.NewGuid();
+        var survey = new Survey 
+        { 
+            Id = surveyId, 
+            SurveyName = "Test Survey", 
+            Status = SurveyStatus.Initial 
+        };
+        var updates = new Dictionary<string, object> { { "status", (int)SurveyStatus.Verified } };
+        
+        _mockRepository.Setup(r => r.GetByIdAsync(surveyId)).ReturnsAsync(survey);
+        _mockRepository.Setup(r => r.UpdateAsync(It.IsAny<Survey>())).ReturnsAsync(survey);
+
+        // Act
+        var result = await _controller.PatchSurvey(surveyId, updates);
+
+        // Assert
+        result.Should().BeOfType<OkObjectResult>();
+        _mockRepository.Verify(r => r.UpdateAsync(It.Is<Survey>(s => s.Status == SurveyStatus.Verified)), Times.Once);
+    }
+
+    [Fact]
+    public async Task PatchSurvey_ReturnsNotFound_WhenSurveyDoesNotExist()
+    {
+        // Arrange
+        var surveyId = Guid.NewGuid();
+        var updates = new Dictionary<string, object> { { "surveyNotes", "New notes" } };
+        
+        _mockRepository.Setup(r => r.GetByIdAsync(surveyId)).ReturnsAsync((Survey?)null);
+
+        // Act
+        var result = await _controller.PatchSurvey(surveyId, updates);
+
+        // Assert
+        result.Should().BeOfType<NotFoundObjectResult>();
+    }
+
+    [Fact]
+    public async Task PatchSurvey_ReturnsConflict_WhenSurveyNameAlreadyExists()
+    {
+        // Arrange
+        var surveyId = Guid.NewGuid();
+        var survey = new Survey 
+        { 
+            Id = surveyId, 
+            SurveyName = "Old Name", 
+            Status = SurveyStatus.Initial 
+        };
+        var updates = new Dictionary<string, object> { { "surveyName", "Duplicate Name" } };
+        
+        _mockRepository.Setup(r => r.GetByIdAsync(surveyId)).ReturnsAsync(survey);
+        _mockRepository.Setup(r => r.SurveyNameExistsAsync("Duplicate Name", surveyId)).ReturnsAsync(true);
+
+        // Act
+        var result = await _controller.PatchSurvey(surveyId, updates);
+
+        // Assert
+        result.Should().BeOfType<ConflictObjectResult>();
+    }
+
+    #endregion
+
+    #region PatchQuestion Tests
+
+    [Fact]
+    public async Task PatchQuestion_UpdatesQuestionNotes_Successfully()
+    {
+        // Arrange
+        var surveyId = Guid.NewGuid();
+        var questionId = Guid.NewGuid();
+        var question = new Question 
+        { 
+            Id = questionId, 
+            QstNumber = "Q1", 
+            QstLabel = "Test", 
+            QuestionNotes = "Old notes" 
+        };
+        var updates = new Dictionary<string, object> { { "questionNotes", "New notes" } };
+        
+        _mockQuestionRepository.Setup(r => r.GetByIdAsync(questionId)).ReturnsAsync(question);
+        _mockQuestionRepository.Setup(r => r.UpdateQuestionNotesAsync(questionId, "New notes")).ReturnsAsync(true);
+
+        // Act
+        var result = await _controller.PatchQuestion(surveyId, questionId, updates);
+
+        // Assert
+        result.Should().BeOfType<OkObjectResult>();
+        _mockQuestionRepository.Verify(r => r.UpdateQuestionNotesAsync(questionId, "New notes"), Times.Once);
+    }
+
+    [Fact]
+    public async Task PatchQuestion_ReturnsNotFound_WhenQuestionDoesNotExist()
+    {
+        // Arrange
+        var surveyId = Guid.NewGuid();
+        var questionId = Guid.NewGuid();
+        var updates = new Dictionary<string, object> { { "questionNotes", "New notes" } };
+        
+        _mockQuestionRepository.Setup(r => r.GetByIdAsync(questionId)).ReturnsAsync((Question?)null);
+
+        // Act
+        var result = await _controller.PatchQuestion(surveyId, questionId, updates);
+
+        // Assert
+        result.Should().BeOfType<NotFoundObjectResult>();
+    }
+
+    [Fact]
+    public async Task PatchQuestion_ReturnsProblem_WhenUpdateFails()
+    {
+        // Arrange
+        var surveyId = Guid.NewGuid();
+        var questionId = Guid.NewGuid();
+        var question = new Question 
+        { 
+            Id = questionId, 
+            QstNumber = "Q1", 
+            QstLabel = "Test", 
+            QuestionNotes = "Old notes" 
+        };
+        var updates = new Dictionary<string, object> { { "questionNotes", "New notes" } };
+        
+        _mockQuestionRepository.Setup(r => r.GetByIdAsync(questionId)).ReturnsAsync(question);
+        _mockQuestionRepository.Setup(r => r.UpdateQuestionNotesAsync(questionId, "New notes")).ReturnsAsync(false);
+
+        // Act
+        var result = await _controller.PatchQuestion(surveyId, questionId, updates);
+
+        // Assert
+        result.Should().BeOfType<ObjectResult>();
+    }
+
+    #endregion
+
+    #region SoftDelete/Restore/Permanent Delete Tests
+
+    [Fact]
+    public async Task SoftDeleteSurvey_ReturnsOk_WhenSuccessful()
+    {
+        // Arrange
+        var surveyId = Guid.NewGuid();
+        _mockRepository.Setup(r => r.SoftDeleteSurveyAsync(surveyId)).ReturnsAsync(true);
+
+        // Act
+        var result = await _controller.SoftDeleteSurvey(surveyId);
+
+        // Assert
+        result.Should().BeOfType<OkObjectResult>();
+    }
+
+    [Fact]
+    public async Task SoftDeleteSurvey_ReturnsNotFound_WhenSurveyDoesNotExist()
+    {
+        // Arrange
+        var surveyId = Guid.NewGuid();
+        _mockRepository.Setup(r => r.SoftDeleteSurveyAsync(surveyId)).ReturnsAsync(false);
+
+        // Act
+        var result = await _controller.SoftDeleteSurvey(surveyId);
+
+        // Assert
+        result.Should().BeOfType<NotFoundObjectResult>();
+    }
+
+    [Fact]
+    public async Task RestoreSurvey_ReturnsOk_WhenSuccessful()
+    {
+        // Arrange
+        var surveyId = Guid.NewGuid();
+        _mockRepository.Setup(r => r.RestoreSurveyAsync(surveyId)).ReturnsAsync(true);
+
+        // Act
+        var result = await _controller.RestoreSurvey(surveyId);
+
+        // Assert
+        result.Should().BeOfType<OkObjectResult>();
+    }
+
+    [Fact]
+    public async Task RestoreSurvey_ReturnsNotFound_WhenSurveyDoesNotExist()
+    {
+        // Arrange
+        var surveyId = Guid.NewGuid();
+        _mockRepository.Setup(r => r.RestoreSurveyAsync(surveyId)).ReturnsAsync(false);
+
+        // Act
+        var result = await _controller.RestoreSurvey(surveyId);
+
+        // Assert
+        result.Should().BeOfType<NotFoundObjectResult>();
+    }
+
+    [Fact]
+    public async Task PermanentlyDeleteSurvey_ReturnsOk_WhenSuccessful()
+    {
+        // Arrange
+        var surveyId = Guid.NewGuid();
+        _mockRepository.Setup(r => r.PermanentlyDeleteSurveyAsync(surveyId)).ReturnsAsync(true);
+
+        // Act
+        var result = await _controller.PermanentlyDeleteSurvey(surveyId);
+
+        // Assert
+        result.Should().BeOfType<OkObjectResult>();
+    }
+
+    [Fact]
+    public async Task PermanentlyDeleteSurvey_ReturnsNotFound_WhenSurveyDoesNotExist()
+    {
+        // Arrange
+        var surveyId = Guid.NewGuid();
+        _mockRepository.Setup(r => r.PermanentlyDeleteSurveyAsync(surveyId)).ReturnsAsync(false);
+
+        // Act
+        var result = await _controller.PermanentlyDeleteSurvey(surveyId);
+
+        // Assert
+        result.Should().BeOfType<NotFoundObjectResult>();
+    }
+
+    [Fact]
+    public async Task GetDeletedSurveys_ReturnsOkWithSurveys()
+    {
+        // Arrange
+        var surveys = new List<Survey>
+        {
+            new() { Id = Guid.NewGuid(), SurveyName = "Deleted Survey 1", IsDeleted = true },
+            new() { Id = Guid.NewGuid(), SurveyName = "Deleted Survey 2", IsDeleted = true }
+        };
+        _mockRepository.Setup(r => r.GetDeletedSurveysAsync()).ReturnsAsync(surveys);
+
+        // Act
+        var result = await _controller.GetDeletedSurveys();
+
+        // Assert
+        result.Should().BeOfType<OkObjectResult>();
+        var okResult = result as OkObjectResult;
+        var returnedSurveys = okResult!.Value as List<Survey>;
+        returnedSurveys.Should().HaveCount(2);
+    }
+
+    #endregion
+
+    #region GetSurveyData Tests
+
+    [Fact]
+    public async Task GetSurveyData_ReturnsOkWithData()
+    {
+        // Arrange
+        var surveyId = Guid.NewGuid();
+        var surveyData = new SurveyData
+        {
+            DataList = new List<List<string>>
+            {
+                new() { "Col1", "Col2", "Col3" },
+                new() { "1", "2", "3" },
+                new() { "4", "5", "6" }
+            },
+            DataFilePath = "test.csv"
+        };
+        
+        _mockSurveyDataRepository.Setup(r => r.GetBySurveyIdAsync(surveyId)).ReturnsAsync(surveyData);
+
+        // Act
+        var result = await _controller.GetSurveyData(surveyId);
+
+        // Assert
+        result.Should().BeOfType<OkObjectResult>();
+    }
+
+    [Fact]
+    public async Task GetSurveyData_ReturnsNotFound_WhenNoData()
+    {
+        // Arrange
+        var surveyId = Guid.NewGuid();
+        _mockSurveyDataRepository.Setup(r => r.GetBySurveyIdAsync(surveyId)).ReturnsAsync((SurveyData?)null);
+
+        // Act
+        var result = await _controller.GetSurveyData(surveyId);
+
+        // Assert
+        result.Should().BeOfType<NotFoundObjectResult>();
+    }
+
+    [Fact]
+    public async Task GetSurveyData_ReturnsNotFound_WhenDataListIsEmpty()
+    {
+        // Arrange
+        var surveyId = Guid.NewGuid();
+        var surveyData = new SurveyData
+        {
+            DataList = new List<List<string>>()
+        };
+        
+        _mockSurveyDataRepository.Setup(r => r.GetBySurveyIdAsync(surveyId)).ReturnsAsync(surveyData);
+
+        // Act
+        var result = await _controller.GetSurveyData(surveyId);
+
+        // Assert
+        result.Should().BeOfType<NotFoundObjectResult>();
+    }
+
+    #endregion
+
+    #region GetSurveyQuestionsList Tests
+
+    [Fact]
+    public async Task GetSurveyQuestionsList_ReturnsOkWithQuestions()
+    {
+        // Arrange
+        var surveyId = Guid.NewGuid();
+        var survey = new Survey { Id = surveyId, SurveyName = "Test Survey", Status = SurveyStatus.Initial };
+        var questions = new List<Question>
+        {
+            new() { Id = Guid.NewGuid(), QstNumber = "Q1", QstLabel = "Question 1", DataFileCol = 1 },
+            new() { Id = Guid.NewGuid(), QstNumber = "Q2", QstLabel = "Question 2", DataFileCol = 2 }
+        };
+        
+        _mockRepository.Setup(r => r.GetByIdAsync(surveyId)).ReturnsAsync(survey);
+        _mockQuestionRepository.Setup(r => r.GetBySurveyIdAsync(surveyId)).ReturnsAsync(questions);
+
+        // Act
+        var result = await _controller.GetSurveyQuestionsList(surveyId);
+
+        // Assert
+        result.Should().BeOfType<OkObjectResult>();
+    }
+
+    [Fact]
+    public async Task GetSurveyQuestionsList_ReturnsNotFound_WhenSurveyDoesNotExist()
+    {
+        // Arrange
+        var surveyId = Guid.NewGuid();
+        _mockRepository.Setup(r => r.GetByIdAsync(surveyId)).ReturnsAsync((Survey?)null);
+
+        // Act
+        var result = await _controller.GetSurveyQuestionsList(surveyId);
+
+        // Assert
+        result.Should().BeOfType<NotFoundObjectResult>();
+    }
+
+    #endregion
+
+    #region GetQuestionResults Tests
+
+    [Fact]
+    public async Task GetQuestionResults_ReturnsOkWithResults()
+    {
+        // Arrange
+        var surveyId = Guid.NewGuid();
+        var questionId = Guid.NewGuid();
+        var survey = new Survey { Id = surveyId, SurveyName = "Test Survey", Status = SurveyStatus.Initial };
+        var question = new Question 
+        { 
+            Id = questionId, 
+            QstNumber = "Q1", 
+            QstLabel = "Test Question",
+            DataFileCol = 1
+        };
+        var responses = new List<Response>
+        {
+            new() { Id = Guid.NewGuid(), RespValue = 1, Label = "Yes", Weight = 1.0 },
+            new() { Id = Guid.NewGuid(), RespValue = 2, Label = "No", Weight = 1.0 }
+        };
+        var surveyData = new SurveyData
+        {
+            DataList = new List<List<string>>
+            {
+                new() { "CaseNum", "Q1" },
+                new() { "1", "1" },
+                new() { "2", "2" },
+                new() { "3", "1" }
+            }
+        };
+        
+        _mockRepository.Setup(r => r.GetByIdAsync(surveyId)).ReturnsAsync(survey);
+        _mockQuestionRepository.Setup(r => r.GetByIdAsync(questionId)).ReturnsAsync(question);
+        _mockResponseRepository.Setup(r => r.GetByQuestionIdAsync(questionId)).ReturnsAsync(responses);
+        _mockSurveyDataRepository.Setup(r => r.GetBySurveyIdAsync(surveyId)).ReturnsAsync(surveyData);
+
+        // Act
+        var result = await _controller.GetQuestionResults(surveyId, questionId);
+
+        // Assert
+        result.Should().BeOfType<OkObjectResult>();
+    }
+
+    [Fact]
+    public async Task GetQuestionResults_ReturnsNotFound_WhenSurveyDoesNotExist()
+    {
+        // Arrange
+        var surveyId = Guid.NewGuid();
+        var questionId = Guid.NewGuid();
+        
+        _mockRepository.Setup(r => r.GetByIdAsync(surveyId)).ReturnsAsync((Survey?)null);
+
+        // Act
+        var result = await _controller.GetQuestionResults(surveyId, questionId);
+
+        // Assert
+        result.Should().BeOfType<NotFoundObjectResult>();
+    }
+
+    [Fact]
+    public async Task GetQuestionResults_ReturnsNotFound_WhenQuestionDoesNotExist()
+    {
+        // Arrange
+        var surveyId = Guid.NewGuid();
+        var questionId = Guid.NewGuid();
+        var survey = new Survey { Id = surveyId, SurveyName = "Test Survey", Status = SurveyStatus.Initial };
+        
+        _mockRepository.Setup(r => r.GetByIdAsync(surveyId)).ReturnsAsync(survey);
+        _mockQuestionRepository.Setup(r => r.GetByIdAsync(questionId)).ReturnsAsync((Question?)null);
+
+        // Act
+        var result = await _controller.GetQuestionResults(surveyId, questionId);
+
+        // Assert
+        result.Should().BeOfType<NotFoundObjectResult>();
+    }
+
+    #endregion
 }

@@ -25,7 +25,7 @@ public class ProjectSurveyRelationshipTests : IntegrationTestBase
         _surveyRepository = new SurveyRepository(Context, _tenantContext);
     }
 
-    [Fact(Skip = "Requires MySQL database")]
+    [Fact]
     public async Task CanCreateProjectAndAssignSurveys()
     {
         // Arrange
@@ -74,7 +74,7 @@ public class ProjectSurveyRelationshipTests : IntegrationTestBase
         await _projectRepository.DeleteAsync(project.Id);
     }
 
-    [Fact(Skip = "Requires MySQL database")]
+    [Fact]
     public async Task GetProjectWithSurveysAsync_LoadsSurveyList()
     {
         // Arrange
@@ -111,7 +111,7 @@ public class ProjectSurveyRelationshipTests : IntegrationTestBase
         await _projectRepository.DeleteAsync(project.Id);
     }
 
-    [Fact(Skip = "Requires MySQL database")]
+    [Fact]
     public async Task CanReassignSurveyToAnotherProject()
     {
         // Arrange
@@ -159,7 +159,7 @@ public class ProjectSurveyRelationshipTests : IntegrationTestBase
         await _projectRepository.DeleteAsync(project2.Id);
     }
 
-    [Fact(Skip = "Requires MySQL database")]
+    [Fact]
     public async Task CanRemoveProjectIdFromSurvey()
     {
         // Arrange
@@ -198,7 +198,7 @@ public class ProjectSurveyRelationshipTests : IntegrationTestBase
         await _projectRepository.DeleteAsync(project.Id);
     }
 
-    [Fact(Skip = "Requires MySQL database")]
+    [Fact]
     public async Task GetSurveysByProjectIdAsync_ReturnsEmptyForProjectWithNoSurveys()
     {
         // Arrange
@@ -221,7 +221,7 @@ public class ProjectSurveyRelationshipTests : IntegrationTestBase
         await _projectRepository.DeleteAsync(project.Id);
     }
 
-    [Fact(Skip = "Requires MySQL database")]
+    [Fact]
     public async Task GetProjectWithSurveysAsync_ReturnsNullForNonExistentProject()
     {
         // Act
@@ -231,7 +231,7 @@ public class ProjectSurveyRelationshipTests : IntegrationTestBase
         project.Should().BeNull();
     }
 
-    [Fact(Skip = "Requires MySQL database")]
+    [Fact]
     public async Task CanCreateMultipleSurveysForPooling()
     {
         // Arrange - Create a project with multiple surveys for pooling/trending
@@ -278,8 +278,8 @@ public class ProjectSurveyRelationshipTests : IntegrationTestBase
         await _projectRepository.DeleteAsync(project.Id);
     }
 
-    [Fact(Skip = "Requires MySQL database")]
-    public async Task DeleteProject_LeavesOrphanedSurveys()
+    [Fact]
+    public async Task DeleteProject_CascadesDeleteToSurveys()
     {
         // Arrange
         var project = new Project
@@ -292,7 +292,7 @@ public class ProjectSurveyRelationshipTests : IntegrationTestBase
         var survey = new Survey
         {
             Id = Guid.NewGuid(),
-            SurveyName = "Orphaned Survey",
+            SurveyName = "Survey That Will Be Deleted",
             ProjectId = project.Id,
             Status = SurveyStatus.Initial,
         };
@@ -300,7 +300,7 @@ public class ProjectSurveyRelationshipTests : IntegrationTestBase
         await _projectRepository.AddAsync(project);
         await _surveyRepository.AddAsync(survey);
 
-        // Act - Delete project but not surveys (no CASCADE)
+        // Act - Delete project (CASCADE deletes surveys)
         await _projectRepository.DeleteAsync(project.Id);
 
         var retrievedSurvey = await _surveyRepository.GetByIdAsync(survey.Id);
@@ -308,14 +308,10 @@ public class ProjectSurveyRelationshipTests : IntegrationTestBase
 
         // Assert
         retrievedProject.Should().BeNull();
-        retrievedSurvey.Should().NotBeNull();
-        retrievedSurvey!.ProjectId.Should().Be(project.Id); // Still points to deleted project
-
-        // Cleanup
-        await _surveyRepository.DeleteAsync(survey.Id);
+        retrievedSurvey.Should().BeNull(); // Survey was cascade deleted
     }
 
-    [Fact(Skip = "Requires MySQL database")]
+    [Fact]
     public async Task GetByClientAsync_ReturnsProjectsWithSurveys()
     {
         // Arrange

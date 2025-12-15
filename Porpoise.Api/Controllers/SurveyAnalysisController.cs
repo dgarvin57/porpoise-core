@@ -663,7 +663,7 @@ Provide data-driven insights about patterns, notable findings, and implications:
                         });
                     }
                 }
-                catch (Exception ex)
+                catch
                 {
                     // Log but continue processing other questions
                     continue;
@@ -700,7 +700,7 @@ Provide data-driven insights about patterns, notable findings, and implications:
             
             return Ok(new { analysis });
         }
-        catch (Exception ex)
+        catch
         {
             // Return a user-friendly fallback message instead of exposing the error
             var fallbackMessage = "Unable to generate AI analysis at this time. The statistical results show the key findings from your data.";
@@ -747,7 +747,7 @@ Provide data-driven insights about patterns, notable findings, and implications:
             
             return Ok(new { analysis });
         }
-        catch (Exception ex)
+        catch
         {
             // Return a user-friendly fallback message instead of exposing the error
             var fallbackMessage = "Unable to generate AI analysis at this time. The statistical results above show the key findings from your crosstab.";
@@ -771,7 +771,7 @@ Provide data-driven insights about patterns, notable findings, and implications:
             
             return Ok(new { analysis });
         }
-        catch (Exception ex)
+        catch
         {
             // Return a user-friendly fallback message instead of exposing the error
             var fallbackMessage = "Unable to generate AI analysis at this time. The statistical significance results show the key relationships in your data.";

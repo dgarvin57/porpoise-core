@@ -26,7 +26,7 @@ public class AIInsightsService
     /// <summary>
     /// Generate executive summary for survey statistics
     /// </summary>
-    public async Task<string> GenerateSurveySummary(
+    public virtual async Task<string> GenerateSurveySummary(
         int totalSurveys, 
         int totalQuestions, 
         int totalCases, 
@@ -45,7 +45,7 @@ public class AIInsightsService
         {
             return await CallAIAPI(prompt);
         }
-        catch (Exception ex)
+        catch
         {
             return GenerateFallbackSummary(totalSurveys, totalQuestions, totalCases, projectName);
         }
@@ -54,7 +54,7 @@ public class AIInsightsService
     /// <summary>
     /// Generate insights about specific survey results
     /// </summary>
-    public async Task<string> GenerateSurveyInsights(
+    public virtual async Task<string> GenerateSurveyInsights(
         string surveyName, 
         int questionCount, 
         int caseCount,
@@ -120,7 +120,7 @@ Comment on sample size, survey complexity, and any initial observations about th
     /// <summary>
     /// Call AI API with custom prompt and optional temperature control
     /// </summary>
-    public async Task<string> CallAIAPI(string prompt, double temperature = 0.7)
+    public virtual async Task<string> CallAIAPI(string prompt, double temperature = 0.7)
     {
         if (_provider == "openai")
         {
