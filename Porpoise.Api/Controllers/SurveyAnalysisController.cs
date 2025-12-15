@@ -22,6 +22,7 @@ public class SurveyAnalysisController : ControllerBase
     private readonly AIInsightsService _aiService;
     private readonly AiPromptConfiguration _promptConfig;
     private readonly PromptTemplateEngine _templateEngine;
+    private readonly ILogger<SurveyAnalysisController> _logger;
 
     public SurveyAnalysisController(
         ISurveyRepository surveyRepository,
@@ -30,7 +31,8 @@ public class SurveyAnalysisController : ControllerBase
         IResponseRepository responseRepository,
         AIInsightsService aiService,
         AiPromptConfiguration promptConfig,
-        PromptTemplateEngine templateEngine)
+        PromptTemplateEngine templateEngine,
+        ILogger<SurveyAnalysisController> logger)
     {
         _surveyRepository = surveyRepository;
         _questionRepository = questionRepository;
@@ -39,6 +41,7 @@ public class SurveyAnalysisController : ControllerBase
         _aiService = aiService;
         _promptConfig = promptConfig;
         _templateEngine = templateEngine;
+        _logger = logger;
     }
 
     /// <summary>
@@ -687,46 +690,37 @@ Provide data-driven insights about patterns, notable findings, and implications:
     [HttpPost("{surveyId:guid}/analyze-question")]
     public async Task<IActionResult> AnalyzeQuestion(Guid surveyId, [FromBody] QuestionAnalysisRequest request)
     {
+        _logger.LogWarning("=== ANALYZE QUESTION ENDPOINT HIT ===");
+        _logger.LogWarning($"Survey ID: {surveyId}");
+        _logger.LogWarning($"Request is null: {request == null}");
+        
+        if (request != null)
+        {
+            _logger.LogWarning($"QuestionLabel: '{request.QuestionLabel}'");
+            _logger.LogWarning($"TotalN: {request.TotalN}");
+            _logger.LogWarning($"Responses count: {request.Responses?.Count ?? 0}");
+        }
+        
         try
         {
-            Console.WriteLine($"🔍 AnalyzeQuestion called for survey {surveyId}");
-            Console.WriteLine($"   Method: {Request.Method}");
-            Console.WriteLine($"   Content-Type: {Request.ContentType}");
-            Console.WriteLine($"   Content-Length: {Request.ContentLength}");
-            
-            // Log raw request body for debugging
-            Request.EnableBuffering();
-            using var reader = new StreamReader(Request.Body, Encoding.UTF8, leaveOpen: true);
-            var rawBody = await reader.ReadToEndAsync();
-            Request.Body.Position = 0;
-            
-            Console.WriteLine($"   Raw body length: {rawBody.Length}");
-            Console.WriteLine($"   Raw body: {rawBody}");
-            Console.WriteLine($"   Question: {request?.QuestionLabel ?? "NULL"}");
-            Console.WriteLine($"   TotalN: {request?.TotalN ?? 0}");
-            Console.WriteLine($"   Responses: {request?.Responses?.Count ?? 0}");
-            
             if (request == null || string.IsNullOrEmpty(request.QuestionLabel))
             {
-                Console.WriteLine("❌ Invalid request - missing question data");
-                Console.WriteLine($"   Request is null: {request == null}");
-                Console.WriteLine($"   QuestionLabel is null or empty: {string.IsNullOrEmpty(request?.QuestionLabel)}");
+                _logger.LogError("Invalid request - missing question data");
                 return BadRequest("Invalid request: missing question data");
             }
             
             // Build context for AI analysis from provided data
             var prompt = BuildQuestionAnalysisPrompt(request);
-            Console.WriteLine($"📝 Prompt built, length: {prompt.Length}");
+            _logger.LogInformation($"Prompt built, calling AI API");
             
             var analysis = await _aiService.CallAIAPI(prompt);
-            Console.WriteLine($"✅ AI analysis received, length: {analysis.Length}");
+            _logger.LogInformation($"AI analysis received");
             
             return Ok(new { analysis });
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Error in AnalyzeQuestion: {ex.Message}");
-            Console.WriteLine($"   Stack: {ex.StackTrace}");
+            _logger.LogError(ex, "Error in AnalyzeQuestion");
             // Return a user-friendly fallback message instead of exposing the error
             var fallbackMessage = "Unable to generate AI analysis at this time. The statistical results show the key findings from your data.";
             return Ok(new { analysis = fallbackMessage });
