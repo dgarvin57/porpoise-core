@@ -47,7 +47,6 @@ public class AIInsightsService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"AI API call failed: {ex.Message}");
             return GenerateFallbackSummary(totalSurveys, totalQuestions, totalCases, projectName);
         }
     }
@@ -169,11 +168,8 @@ Comment on sample size, survey complexity, and any initial observations about th
 
     private async Task<string> CallAnthropic(string prompt, double temperature)
     {
-        Console.WriteLine($"🤖 CallAnthropic: API Key = {(_apiKey != null ? $"SET (length: {_apiKey.Length})" : "NOT SET")}");
-        
         if (string.IsNullOrEmpty(_apiKey))
         {
-            Console.WriteLine("❌ API key is null or empty!");
             throw new InvalidOperationException("Anthropic API key not configured");
         }
         
@@ -189,9 +185,6 @@ Comment on sample size, survey complexity, and any initial observations about th
         };
 
         var requestJson = JsonSerializer.Serialize(request);
-        Console.WriteLine($"📤 Sending request to Anthropic API");
-        Console.WriteLine($"   Model: claude-3-haiku-20240307");
-        Console.WriteLine($"   Prompt length: {prompt.Length}");
         
         var httpRequest = new HttpRequestMessage(HttpMethod.Post, "https://api.anthropic.com/v1/messages")
         {
@@ -204,14 +197,6 @@ Comment on sample size, survey complexity, and any initial observations about th
         };
 
         var response = await _httpClient.SendAsync(httpRequest);
-        Console.WriteLine($"📥 Anthropic response: {response.StatusCode}");
-        
-        if (!response.IsSuccessStatusCode)
-        {
-            var errorBody = await response.Content.ReadAsStringAsync();
-            Console.WriteLine($"❌ Anthropic API error: {errorBody}");
-        }
-        
         response.EnsureSuccessStatusCode();
 
         var responseJson = await response.Content.ReadAsStringAsync();
@@ -222,7 +207,6 @@ Comment on sample size, survey complexity, and any initial observations about th
             .GetProperty("text")
             .GetString() ?? "Unable to generate insights.";
             
-        Console.WriteLine($"✅ Anthropic analysis generated: {result.Length} characters");
         return result;
     }
 
