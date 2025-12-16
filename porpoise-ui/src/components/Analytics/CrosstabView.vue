@@ -1,16 +1,52 @@
 <template>
   <div class="h-full flex flex-col bg-gray-50 dark:bg-gray-900">
-      <!-- Loading State -->
+      <!-- Loading State - Skeleton -->
       <div 
         v-if="loading"
-        class="flex items-center justify-center h-full"
+        class="h-full overflow-auto"
       >
-        <div class="text-center">
-          <svg class="animate-spin h-12 w-12 mx-auto text-blue-500" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <p class="mt-4 text-sm text-gray-600 dark:text-gray-400">Generating crosstab...</p>
+        <div class="pt-3 px-6 pb-6 flex justify-center">
+          <div class="w-full max-w-[848px]">
+            <!-- Header Skeleton -->
+            <div class="flex items-end justify-between mb-2 pb-2">
+              <div class="space-y-2">
+                <div class="h-5 bg-gray-200 dark:bg-gray-700 rounded w-64 animate-pulse"></div>
+                <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-24 animate-pulse"></div>
+              </div>
+              <div class="flex gap-3">
+                <div class="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                <div class="h-8 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              </div>
+            </div>
+
+            <!-- Table Skeleton -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
+              <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead class="bg-blue-50 dark:bg-gray-700">
+                    <tr>
+                      <th class="px-6 py-1.5 text-left">
+                        <div class="h-3 bg-gray-300 dark:bg-gray-600 rounded w-24 animate-pulse"></div>
+                      </th>
+                      <th class="px-6 py-1.5 text-center" v-for="i in 4" :key="i">
+                        <div class="h-3 bg-gray-300 dark:bg-gray-600 rounded w-16 mx-auto animate-pulse"></div>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    <tr v-for="i in 5" :key="i" :class="i % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700/30'">
+                      <td class="px-6 py-1">
+                        <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-32 animate-pulse"></div>
+                      </td>
+                      <td class="px-6 py-1 text-center" v-for="j in 4" :key="j">
+                        <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-12 mx-auto animate-pulse"></div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -562,18 +598,6 @@ const aiAnalysis = ref('')
 const loadingAnalysis = ref(false)
 
 // Watch for prop changes
-watch(() => props.firstQuestion, (newVal) => {
-  if (!newVal) {
-    crosstabData.value = null
-  }
-}, { deep: true })
-
-watch(() => props.secondQuestion, (newVal) => {
-  if (!newVal) {
-    crosstabData.value = null
-  }
-}, { deep: true })
-
 // Auto-generate crosstab when both questions are selected
 watch([() => props.firstQuestion, () => props.secondQuestion], ([first, second]) => {
   if (first && second) {

@@ -172,28 +172,23 @@
                 v-for="question in item.questions"
                 :key="question.id"
                 :class="getQuestionClasses(question)"
-                class="w-full flex items-center px-2 py-0.5 rounded cursor-pointer transition-all border-l"
+                class="w-full flex items-center px-2 py-0.5 rounded cursor-pointer transition-all border-l group"
               >
-                <!-- Toggle button for DV selection (crosstab radio mode only) -->
-                <button
+                <!-- Radio button for DV selection (crosstab radio mode only) -->
+                <input
                   v-if="selectionMode === 'crosstab' && USE_RADIO_BUTTON_MODE"
+                  type="radio"
+                  name="dv-selection"
+                  :checked="firstSelection?.id === question.id"
                   @click.stop="handleRadioDVClick(question)"
                   :disabled="props.activeTab === 'statsig' && question.variableType === 1"
                   :class="[
-                    'w-7 h-3.5 rounded-full transition-colors duration-200 ease-in-out flex-shrink-0 relative mr-2',
-                    firstSelection?.id === question.id 
-                      ? 'bg-blue-600' 
-                      : 'bg-gray-300 dark:bg-gray-600',
-                    props.activeTab === 'statsig' && question.variableType === 1 ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
+                    'w-3.5 h-3.5 transition-all duration-200 ease-in-out flex-shrink-0 mr-2 cursor-pointer',
+                    'border-2 border-gray-300 dark:border-gray-600',
+                    'text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0',
+                    firstSelection?.id === question.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+                    props.activeTab === 'statsig' && question.variableType === 1 ? 'opacity-40 cursor-not-allowed' : ''
                   ]"
-                >
-                  <span
-                    :class="[
-                      'absolute top-0.5 left-0.5 bg-white dark:bg-gray-200 rounded-full h-2.5 w-2.5 transition-transform duration-200 ease-in-out',
-                      firstSelection?.id === question.id ? 'translate-x-3.5' : 'translate-x-0'
-                    ]"
-                  ></span>
-                </button>
                 
                 <!-- Wrapper for indentation (always indent block questions) -->
                 <div class="flex items-center space-x-2 flex-1 min-w-0 ml-6">
@@ -230,28 +225,24 @@
           <div
             v-else
             :class="getQuestionClasses(item.question || item)"
-            class="w-full flex items-center space-x-2 px-2 py-0 rounded cursor-pointer transition-all border-l-2"
+            class="w-full flex items-center space-x-2 px-2 py-0 rounded cursor-pointer transition-all border-l-2 group"
           >
-            <!-- Toggle button for DV selection (crosstab radio mode only) -->
-            <button
+            <!-- Radio button for DV selection (crosstab radio mode only) -->
+            <input
               v-if="selectionMode === 'crosstab' && USE_RADIO_BUTTON_MODE"
+              type="radio"
+              name="dv-selection"
+              :checked="firstSelection?.id === (item.question || item).id"
               @click.stop="handleRadioDVClick(item.question || item)"
               :disabled="props.activeTab === 'statsig' && (item.question || item).variableType === 1"
               :class="[
-                'w-7 h-3.5 rounded-full transition-colors duration-200 ease-in-out flex-shrink-0 relative',
-                firstSelection?.id === (item.question || item).id 
-                  ? 'bg-blue-600' 
-                  : 'bg-gray-300 dark:bg-gray-600',
-                props.activeTab === 'statsig' && (item.question || item).variableType === 1 ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
+                'w-3.5 h-3.5 transition-all duration-200 ease-in-out flex-shrink-0 cursor-pointer',
+                'border-2 border-gray-300 dark:border-gray-600',
+                'text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0',
+                firstSelection?.id === (item.question || item).id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+                props.activeTab === 'statsig' && (item.question || item).variableType === 1 ? 'opacity-40 cursor-not-allowed' : ''
               ]"
-            >
-              <span
-                :class="[
-                  'absolute top-0.5 left-0.5 bg-white dark:bg-gray-200 rounded-full h-2.5 w-2.5 transition-transform duration-200 ease-in-out',
-                  firstSelection?.id === (item.question || item).id ? 'translate-x-3.5' : 'translate-x-0'
-                ]"
-              ></span>
-            </button>
+            />
             
             <!-- Variable Type Icon (always show) -->
             <svg 
