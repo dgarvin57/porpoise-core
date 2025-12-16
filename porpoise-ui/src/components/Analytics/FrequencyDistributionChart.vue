@@ -46,30 +46,30 @@
       <div class="flex items-end justify-center gap-6">
         <!-- Total Responses -->
         <div class="text-center">
-          <div class="text-lg font-semibold text-purple-600/70 dark:text-purple-400/70">
+          <div class="text-lg font-semibold text-purple-600 dark:text-purple-400/70">
             {{ totalResponses }}
           </div>
-          <div class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+          <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
             Total Responses (N)
           </div>
         </div>
 
         <!-- Top Response -->
         <div class="text-center">
-          <div class="text-lg font-semibold text-orange-600/70 dark:text-orange-400/70">
+          <div class="text-lg font-semibold text-orange-600 dark:text-orange-400/70">
             {{ topResponsePercentage }}%
           </div>
-          <div class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+          <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
             Top Response
           </div>
         </div>
 
         <!-- Answer Options -->
         <div class="text-center">
-          <div class="text-lg font-semibold text-pink-600/70 dark:text-pink-400/70">
+          <div class="text-lg font-semibold text-pink-600 dark:text-pink-400/70">
             {{ answerOptions }}
           </div>
-          <div class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+          <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
             Answer Options
           </div>
         </div>
@@ -79,20 +79,20 @@
 
         <!-- Index -->
         <div class="text-center">
-          <div class="text-lg font-semibold text-blue-600/70 dark:text-blue-400/70">
+          <div class="text-lg font-semibold text-blue-600 dark:text-blue-400/70">
             {{ index }}
           </div>
-          <div class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+          <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
             Index
           </div>
         </div>
 
         <!-- CI -->
         <div class="text-center">
-          <div class="text-lg font-semibold text-green-600/70 dark:text-green-400/70">
+          <div class="text-lg font-semibold text-green-600 dark:text-green-400/70">
             {{ confidenceInterval }}
           </div>
-          <div class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+          <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
             CI
           </div>
         </div>

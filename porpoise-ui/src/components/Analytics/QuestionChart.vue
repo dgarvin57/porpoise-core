@@ -1,9 +1,9 @@
 <template>
   <div class="space-y-4">
     <!-- Header with question label and buttons -->
-    <div class="flex items-start justify-between mb-2">
+    <div class="flex items-end justify-between mb-2 pb-2">
       <div>
-        <h3 class="text-base font-semibold text-gray-900 dark:text-white mb-1">
+        <h3 class="text-base font-semibold text-gray-900 dark:text-white">
           {{ questionLabel }}
         </h3>
         <div class="text-[10px] font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide">
@@ -20,7 +20,6 @@
           </svg>
           Analyze in Crosstab
         </button>
-        <div class="flex-1"></div>
         <AIAnalysisButtons 
           @ai-analysis="handleAIAnalysis"
         />

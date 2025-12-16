@@ -3,7 +3,7 @@
     <!-- Responses Header -->
     <div class="flex-shrink-0 pl-4 pr-1 pb-1 pt-0.5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
       <div class="flex items-center gap-2">
-        <h3 class="text-sm font-medium text-gray-900 dark:text-white">
+        <h3 class="text-sm font-medium text-gray-800 dark:text-white">
           Responses
         </h3>
         <span class="text-xs text-gray-400 dark:text-gray-500">
@@ -31,19 +31,19 @@
       <table class="min-w-full text-xs">
         <thead class="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
           <tr>
-            <th class="px-2 py-1 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+            <th class="px-2 py-1 text-center text-xs font-medium text-gray-700 dark:text-gray-400 uppercase tracking-wider">
               #
             </th>
-            <th class="px-2 py-1 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+            <th class="px-2 py-1 text-left text-xs font-medium text-gray-700 dark:text-gray-400 uppercase tracking-wider">
               Response
             </th>
-            <th class="px-2 py-1 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+            <th class="px-2 py-1 text-right text-xs font-medium text-gray-700 dark:text-gray-400 uppercase tracking-wider">
               %
             </th>
-            <th class="px-2 py-1 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+            <th class="px-2 py-1 text-center text-xs font-medium text-gray-700 dark:text-gray-400 uppercase tracking-wider">
               Index
             </th>
-            <th v-if="localColumnMode !== 'blank'" class="px-2 py-1 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+            <th v-if="localColumnMode !== 'blank'" class="px-2 py-1 text-right text-xs font-medium text-gray-700 dark:text-gray-400 uppercase tracking-wider">
               {{ columnModeLabel }}
             </th>
           </tr>

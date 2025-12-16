@@ -121,7 +121,7 @@
                 <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
               </svg>
               <div class="flex-1 text-left min-w-0">
-                <span class="text-xs font-medium text-gray-900 dark:text-white truncate">
+                <span class="text-xs font-medium text-gray-800 dark:text-white truncate">
                   {{ item.label }}
                 </span>
               </div>
@@ -157,7 +157,7 @@
                 :key="question.id"
                 @click="handleQuestionClick(question)"
                 :class="getQuestionClasses(question)"
-                class="w-full flex items-center space-x-2 px-2 py-0.5 rounded cursor-pointer transition-all border-l"
+                class="w-full flex items-center space-x-2 px-2 py-0 rounded cursor-pointer transition-all border-l"
               >
                 <!-- Variable Type Icon (always show) -->
                 <svg 
@@ -191,7 +191,7 @@
             v-else
             @click="handleQuestionClick(item.question || item)"
             :class="getQuestionClasses(item.question || item)"
-            class="w-full flex items-center space-x-2 px-2 py-0.5 rounded cursor-pointer transition-all border-l-2"
+            class="w-full flex items-center space-x-2 px-2 py-0 rounded cursor-pointer transition-all border-l-2"
           >
             <!-- Variable Type Icon (always show) -->
             <svg 

@@ -20,11 +20,12 @@ defineEmits(['ai-analysis'])
 .ai-button {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  padding: 0.375rem 0 0.375rem 0.75rem;
+  padding: 0.375rem 0.75rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: rgb(229 231 235);
+  color: rgb(55, 65, 81); /* gray-700 for light mode */
   background-color: transparent;
   border: none;
   border-radius: 0.5rem;
@@ -32,12 +33,20 @@ defineEmits(['ai-analysis'])
   cursor: pointer;
 }
 
+.dark .ai-button {
+  color: rgb(229 231 235); /* gray-200 for dark mode */
+}
+
 .ai-button-emphasized {
   /* Emphasis styles if needed in future */
 }
 
 .ai-button:hover {
-  background-color: rgba(55, 65, 81, 0.5);
+  background-color: rgba(229, 231, 235, 0.5); /* light gray for light mode */
+}
+
+.dark .ai-button:hover {
+  background-color: rgba(55, 65, 81, 0.5); /* dark gray for dark mode */
 }
 
 .ai-button:focus {

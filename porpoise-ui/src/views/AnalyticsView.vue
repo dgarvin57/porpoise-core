@@ -35,7 +35,7 @@
             icon-path="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
             :is-active="activeSection === 'results' || activeSection === 'crosstab' || activeSection === 'statsig' || activeSection === 'fullblock' || activeSection === 'matchingblocks' || activeSection === 'index' || activeSection === 'indexplus' || activeSection === 'profile' || activeSection === 'oneresponse'"
             :collapsed="sidebarCollapsed"
-            @click="activeSection = 'results'"
+            @click="() => { activeSection = 'results'; sidebarCollapsed = true; }"
           />
         </div>
 
@@ -49,7 +49,7 @@
             icon-path="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
             :is-active="activeSection === 'questions'"
             :collapsed="sidebarCollapsed"
-            @click="activeSection = 'questions'"
+            @click="() => { activeSection = 'questions'; sidebarCollapsed = true; }"
           />
 
           <!-- Data View Section -->
@@ -58,7 +58,7 @@
             icon-path="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
             :is-active="activeSection === 'dataview'"
             :collapsed="sidebarCollapsed"
-            @click="activeSection = 'dataview'"
+            @click="() => { activeSection = 'dataview'; sidebarCollapsed = true; }"
           />
 
           <!-- Data Cleansing Section -->
@@ -67,7 +67,7 @@
             icon-path="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
             :is-active="activeSection === 'datacleansing'"
             :collapsed="sidebarCollapsed"
-            @click="activeSection = 'datacleansing'"
+            @click="() => { activeSection = 'datacleansing'; sidebarCollapsed = true; }"
           />
         </div>
 
@@ -202,7 +202,7 @@
             <!-- Bottom: Content Area (Tabs + Chart) -->
             <div class="flex-1 bg-gray-50 dark:bg-gray-900 overflow-hidden min-h-0 flex flex-col">
               <!-- Analysis Tabs -->
-              <div class="flex-shrink-0 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+              <div class="flex-shrink-0 border-t border-t-blue-500 dark:border-t-black border-b border-gray-200 dark:border-gray-700 bg-blue-50 dark:bg-gray-800 shadow-sm dark:shadow-none">
                 <div class="flex gap-1 px-4">
                   <!-- Visible Tabs: Results, Crosstab, Stat Sig, (+ Promoted Tab) -->
                   <button
@@ -210,7 +210,7 @@
                     :key="tab.id"
                     @click="activeAnalysisTab = tab.id"
                     :class="[
-                      'flex items-center gap-2 px-4 py-1.5 text-sm font-medium whitespace-nowrap transition-colors border-b-2',
+                      'flex items-center gap-2 px-3 py-0.5 text-xs font-medium whitespace-nowrap transition-colors border-b-2',
                       activeAnalysisTab === tab.id
                         ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
                         : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
@@ -234,7 +234,7 @@
                     <button
                       @click="showMoreTabs = !showMoreTabs"
                       :class="[
-                        'flex items-center gap-1 px-4 pt-[13px] pb-[12px] text-sm font-medium whitespace-nowrap transition-colors border-b-2',
+                        'flex items-center gap-1 px-3 pt-[9px] pb-[8px] text-xs font-medium whitespace-nowrap transition-colors border-b-2',
                         availableMoreTabs.some(t => t.id === activeAnalysisTab)
                           ? 'border-transparent text-blue-600 dark:text-blue-400'
                           : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
@@ -256,7 +256,7 @@
                         :key="tab.id"
                         @click="() => { promotedTab = tab; activeAnalysisTab = tab.id; showMoreTabs = false }"
                         :class="[
-                          'w-full flex items-center gap-3 px-4 py-1.5 text-sm transition-colors',
+                          'w-full flex items-center gap-3 px-3 py-0.5 text-xs transition-colors',
                           activeAnalysisTab === tab.id
                             ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
                             : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -645,6 +645,7 @@ function saveSurveyState() {
     infoTab: infoTab.value,
     crosstabFirstQuestion: crosstabFirstQuestion.value,
     crosstabSecondQuestion: crosstabSecondQuestion.value,
+    promotedTabId: promotedTab.value?.id || null,
     timestamp: Date.now()
   }
   localStorage.setItem(getSurveyStateKey(), JSON.stringify(state))
@@ -700,6 +701,10 @@ function loadSurveyState() {
         infoTab.value = state.infoTab || 'question'
         crosstabFirstQuestion.value = state.crosstabFirstQuestion || null
         crosstabSecondQuestion.value = state.crosstabSecondQuestion || null
+        // Restore promoted tab by finding it in moreTabs
+        if (state.promotedTabId) {
+          promotedTab.value = moreTabs.find(t => t.id === state.promotedTabId) || null
+        }
       }
     } catch (error) {
       console.error('Error loading saved state:', error)
@@ -772,6 +777,10 @@ watch(crosstabFirstQuestion, (newVal, oldVal) => {
 watch(crosstabSecondQuestion, (newVal, oldVal) => {
   saveSurveyState()
 }, { deep: true })
+
+watch(promotedTab, () => {
+  saveSurveyState()
+})
 
 // Watch selectedQuestionId and load full question data
 watch(selectedQuestionId, (newId) => {

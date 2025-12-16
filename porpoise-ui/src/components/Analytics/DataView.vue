@@ -156,19 +156,23 @@ watch(() => props.surveyId, () => {
 <style scoped>
 /* Override PrimeVue DataTable styles to match your theme */
 .data-view-table :deep(.p-datatable-thead) {
-  @apply bg-gray-100 dark:bg-gray-800;
+  @apply bg-blue-50 dark:bg-gray-800;
 }
 
 .data-view-table :deep(.p-datatable-thead > tr > th) {
-  @apply text-xs font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider px-2 py-1.5 border-b-2 border-gray-300 dark:border-gray-600;
+  @apply text-xs font-semibold text-gray-800 dark:text-gray-300 uppercase tracking-wider px-2 py-1.5 border-b-2 border-blue-200 dark:border-gray-600;
 }
 
 .data-view-table :deep(.p-datatable-tbody > tr) {
   @apply bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700;
 }
 
+.data-view-table :deep(.p-datatable-tbody > tr:nth-child(even)) {
+  @apply bg-gray-50 dark:bg-gray-900;
+}
+
 .data-view-table :deep(.p-datatable-tbody > tr:hover) {
-  @apply bg-gray-50 dark:bg-gray-700;
+  @apply bg-blue-50 dark:bg-gray-700;
 }
 
 .data-view-table :deep(.p-datatable-tbody > tr > td) {
