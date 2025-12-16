@@ -4,7 +4,7 @@
     <aside 
       :class="[
         'fixed left-0 top-12 bottom-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto overflow-x-hidden transition-all duration-300 z-20',
-        sidebarCollapsed ? 'w-14' : 'w-64 shadow-2xl'
+        sidebarCollapsed ? 'w-14' : 'w-72 shadow-2xl'
       ]"
     >
       <!-- Collapse/Expand Button -->
@@ -281,10 +281,10 @@
               </div>
 
               <!-- Tab Content -->
-              <div class="flex-1 overflow-auto">
+              <div class="flex-1 overflow-auto ">
                 <!-- Results Tab -->
-                <div v-show="activeAnalysisTab === 'results'" class="h-full">
-                  <div v-if="selectedQuestionWithResponses" class="p-3 px-6">
+                <div v-show="activeAnalysisTab === 'results'" class="h-full flex justify-center">
+                  <div v-if="selectedQuestionWithResponses" class="p-3 px-6 w-full max-w-[896px] mt-[10px]">
                     <ResultsChart
                       :question="selectedQuestionWithResponses"
                       :questionLabel="selectedQuestionWithResponses.label || selectedQuestionWithResponses.qstLabel || ''"
@@ -309,7 +309,7 @@
                 <!-- Crosstab Tab -->
                 <div v-show="activeAnalysisTab === 'crosstab'" class="h-full">
                   <CrosstabView
-                    v-if="crosstabFirstQuestion && crosstabSecondQuestion"
+                    v-if="crosstabFirstQuestion"
                     :surveyId="surveyId"
                     :firstQuestion="crosstabFirstQuestion"
                     :secondQuestion="crosstabSecondQuestion"
@@ -322,19 +322,20 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                       </svg>
                       <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No Variables Selected</h3>
-                      <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Select two questions from the list to create a crosstab analysis</p>
-                      <p class="text-xs text-gray-400 dark:text-gray-500 italic">Tip: Click the hamburger menu to open the question list and select your variables</p>
+                      <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Use the toggle button to select a dependent variable, then click a question label to select an independent variable</p>
+                      <p class="text-xs text-gray-400 dark:text-gray-500 italic">Tip: Click the hamburger menu to open the question list</p>
                     </div>
                   </div>
                 </div>
 
                 <!-- Statistical Significance Tab -->
-                <div v-show="activeAnalysisTab === 'statsig'" class="h-full">
-                  <StatSigView
-                    v-if="selectedQuestion"
-                    :surveyId="surveyId"
-                    :selectedQuestion="selectedQuestion"
-                  />
+                <div v-show="activeAnalysisTab === 'statsig'" class="h-full flex justify-center ">
+                  <div v-if="selectedQuestion" class="w-full">
+                    <StatSigView
+                      :surveyId="surveyId"
+                      :selectedQuestion="selectedQuestion"
+                    />
+                  </div>
                   
                   <!-- Empty state for StatSig -->
                   <div v-else class="h-full flex items-center justify-center">
@@ -451,7 +452,7 @@ const activeSection = ref('results')
 const sidebarCollapsed = ref(true) // Default to collapsed (closed) when survey first opens
 
 // Resize state
-const questionListWidth = ref(288) // Default 288px (reduced from 320px for more compact layout)
+const questionListWidth = ref(300) // Default 300px (reduced from 320px for more compact layout)
 const contextHeight = ref(140) // Default 140px for context area (reduced from 200px)
 const responsesTableWidth = ref(400) // Default 400px for responses table
 const isContextCollapsed = ref(false) // Context area collapse state
@@ -621,7 +622,7 @@ function handleStatSigQuestionSelected(question) {
 }
 
 // Handle crosstab selection from permanent question list
-function handleQuestionListCrosstabSelection({ first, second }) {
+async function handleQuestionListCrosstabSelection({ first, second }) {
   crosstabFirstQuestion.value = first
   crosstabSecondQuestion.value = second
   
@@ -632,7 +633,12 @@ function handleQuestionListCrosstabSelection({ first, second }) {
     selectedQuestionId.value = first.id
     
     // Load full question data for first variable
-    loadQuestionData(first.id)
+    await loadQuestionData(first.id)
+    
+    // Update crosstabFirstQuestion with full data including responses
+    if (selectedQuestionWithResponses.value) {
+      crosstabFirstQuestion.value = selectedQuestionWithResponses.value
+    }
   }
   
   saveSurveyState()
@@ -784,6 +790,19 @@ watch(activeSection, (newSection, oldSection) => {
   saveSurveyState()
 })
 
+// Watch activeAnalysisTab changes separately for tab-specific logic
+watch(activeAnalysisTab, (newTab, oldTab) => {
+  // When switching FROM crosstab to results or statsig, sync the selected question
+  if ((newTab === 'results' || newTab === 'statsig') && oldTab === 'crosstab' && crosstabFirstQuestion.value) {
+    if (!selectedQuestionId.value || selectedQuestionId.value !== crosstabFirstQuestion.value.id) {
+      selectedQuestionId.value = crosstabFirstQuestion.value.id
+      selectedQuestion.value = crosstabFirstQuestion.value
+      loadQuestionData(crosstabFirstQuestion.value.id)
+    }
+  }
+  saveSurveyState()
+})
+
 watch(selectedQuestionId, () => {
   saveSurveyState()
 })
@@ -814,7 +833,7 @@ watch(infoTab, () => {
 
 watch(crosstabFirstQuestion, (newVal, oldVal) => {
   // When crosstab first question changes and we're in results/statsig, sync the selection
-  if (newVal && (activeSection.value === 'results' || activeSection.value === 'statsig')) {
+  if (newVal && (activeAnalysisTab.value === 'results' || activeAnalysisTab.value === 'statsig')) {
     if (!selectedQuestionId.value || selectedQuestionId.value !== newVal.id) {
       selectedQuestionId.value = newVal.id
       selectedQuestion.value = newVal
@@ -967,7 +986,7 @@ function handleAnalyzeCrosstab(question) {
   // Switch to crosstab view - must happen AFTER setting crosstabFirstQuestion
   // Use nextTick to ensure the watch has time to process
   nextTick(() => {
-    activeSection.value = 'crosstab'
+    activeAnalysisTab.value = 'crosstab'
     saveSurveyState()
   })
 }

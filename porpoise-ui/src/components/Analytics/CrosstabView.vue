@@ -16,7 +16,7 @@
 
       <!-- Empty State -->
       <div 
-        v-else-if="!crosstabData"
+        v-else-if="!crosstabData && !props.firstQuestion"
         class="flex items-center justify-center h-full"
       >
         <div class="text-center p-6">
@@ -30,6 +30,68 @@
           <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
             Tip: Click to select the first question (dependent variable), then click another to select the second question (independent variable)
           </p>
+        </div>
+      </div>
+
+      <!-- Partial State - Only DV Selected -->
+      <div 
+        v-else-if="!crosstabData && props.firstQuestion && !props.secondQuestion"
+        class="h-full overflow-auto"
+      >
+        <div class="pt-3 px-6 pb-6 flex justify-center">
+          <div class="w-full max-w-[848px]">
+            <!-- Header -->
+            <div class="flex items-end justify-between mb-2 pb-2">
+              <div>
+                <h3 class="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                  <span>{{ props.firstQuestion.label }}</span>
+                  <span class="inline-flex items-center justify-center w-4 h-4 rounded bg-blue-600 text-white text-xs font-semibold flex-shrink-0">1</span>
+                  <span class="text-gray-500 dark:text-gray-400 font-normal">by</span>
+                </h3>
+                <div class="text-[10px] font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide">
+                  CROSSTAB
+                </div>
+              </div>
+            </div>
+            
+            <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+              Click a question label to select an independent variable
+            </p>
+            
+            <!-- Partial Table - DV rows only -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
+              <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead class="bg-blue-50 dark:bg-gray-700">
+                    <tr>
+                      <th class="px-6 py-1.5 text-left text-xs font-semibold text-gray-800 dark:text-gray-400 uppercase tracking-wider">
+                        {{ props.firstQuestion.label }}
+                      </th>
+                      <th class="px-6 py-1.5 text-center text-xs font-semibold text-gray-500 dark:text-gray-500 uppercase tracking-wider italic">
+                        Select IV...
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    <tr
+                      v-for="(response, idx) in dvResponses"
+                      :key="idx"
+                      :class="[
+                        idx % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700/30'
+                      ]"
+                    >
+                      <td class="px-6 py-1 text-xs font-medium text-gray-900 dark:text-white whitespace-nowrap">
+                        {{ response }}
+                      </td>
+                      <td class="px-6 py-1 text-xs text-gray-400 dark:text-gray-600 text-center">
+                        —
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -52,69 +114,61 @@
       </div>
 
       <!-- Crosstab Results -->
-      <div v-else-if="crosstabData" class="flex flex-col h-full">
-        <!-- Sticky Header -->
-        <div class="sticky top-0 z-10 border-b border-gray-200 dark:border-gray-700">
-          <div class="bg-white dark:bg-gray-800 py-3 px-6">
-            <div class="relative flex items-center justify-between">
-              <div class="flex items-center space-x-3 min-w-0">
-                <!-- Back to Stat Sig button (only show when coming from Stat Sig) -->
-                <button
-                  v-if="isFromStatSig"
-                  @click="backToStatSig"
-                  class="flex items-center space-x-1 px-2 py-1 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
-                  title="Return to Statistical Significance view"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                  </svg>
-                  <span>Stat Sig</span>
-                </button>
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-                  {{ crosstabData.firstQuestion.label }}&nbsp;&nbsp;<span class="text-gray-500 dark:text-gray-400 font-normal">by</span>&nbsp;&nbsp;{{ crosstabData.secondQuestion.label }}
-                </h2>
-              </div>
-              <!-- Fixed position CROSSTAB title -->
-              <div class="absolute left-[45%]">
-                <span class="text-base font-semibold text-blue-600 dark:text-blue-400 text-left uppercase tracking-wider">
+      <div v-else-if="crosstabData" class="h-full overflow-auto">
+        <div class="pt-3 px-6 pb-6 flex justify-center">
+          <div class="w-full max-w-[833px] mt-[10px]">
+            <!-- Header with question label and buttons -->
+            <div class="flex items-end justify-between mb-2 pb-2">
+              <div>
+                <h3 class="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                  <span>{{ crosstabData.firstQuestion.label }}</span>
+                  <span class="inline-flex items-center justify-center w-4 h-4 rounded bg-blue-600 text-white text-xs font-semibold flex-shrink-0">1</span>
+                  <span class="text-gray-500 dark:text-gray-400 font-normal">by</span>
+                  <span>{{ crosstabData.secondQuestion.label }}</span>
+                  <span class="inline-flex items-center justify-center w-4 h-4 rounded bg-green-600 text-white text-xs font-semibold flex-shrink-0">2</span>
+                </h3>
+                <div class="text-[10px] font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide">
                   CROSSTAB
-                </span>
-              </div>
-              <div class="flex items-center space-x-3 flex-shrink-0">
-                <div class="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
-                  <span v-if="crosstabData.significant" :class="crosstabData.pValue < 0.05 ? 'text-green-600 dark:text-green-400 font-medium' : ''">
-                    {{ crosstabData.significant }}
-                  </span>
-                  <span>•</span>
-                  <span><span class="font-medium">Total N:</span> {{ crosstabData.totalN }}</span>
                 </div>
-                <button
-                  @click="showStatistics = true"
-                  class="p-1 bg-transparent text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:text-gray-400 dark:hover:text-blue-400 dark:hover:bg-gray-800 transition-colors border-0"
-                  title="View statistical measures (Chi-Square, Phi, Cramér's V)"
+              </div>
+              <div class="flex gap-0">
+                <!-- Total N Display -->
+                <div class="text-sm text-gray-600 dark:text-gray-400 mt-[5px]">
+                  <span class="font-medium">Total N:</span> {{ crosstabData.totalN }}
+                </div>
+                <!-- Info Button -->
+                <button 
+                  @click="showExplanation = true"
+                  class="inline-flex gap-2 pl-3 py-1 px-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                  title="Understanding crosstabs and statistical measures"
                 >
                   <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" fill="currentColor" />
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
                   </svg>
+                </button>
+                <!-- AI Analysis Button -->
+                <button 
+                  @click="showAIModal = true"
+                  class="inline-flex justify-center gap-2 px-3 py-1 text-gray-700 dark:text-gray-200 bg-transparent hover:bg-gray-200/50 dark:hover:bg-gray-700/50 rounded-lg transition-colors"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                  </svg>
+                  AI Analysis
                 </button>
               </div>
             </div>
-          </div>
-        </div>
 
-        <!-- Scrollable Content -->
-        <div class="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-6">
-        <div class="max-w-5xl mx-auto space-y-6">
-        <!-- Table -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <!-- Table Card -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
           <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead class="bg-gray-50 dark:bg-gray-700">
+              <thead class="bg-blue-50 dark:bg-gray-700">
                 <tr>
                   <th 
                     v-for="(col, idx) in tableColumns"
                     :key="idx"
-                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                    class="px-6 py-1.5 text-left text-xs font-semibold text-gray-800 dark:text-gray-400 uppercase tracking-wider"
                   >
                     {{ col.trim() === '' ? '' : col }}
                   </th>
@@ -124,12 +178,15 @@
                 <tr
                   v-for="(row, rowIdx) in crosstabData.table"
                   :key="rowIdx"
-                  class="hover:bg-gray-50 dark:hover:bg-gray-700"
+                  :class="[
+                    'hover:bg-blue-50 dark:hover:bg-gray-700',
+                    rowIdx % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700/30'
+                  ]"
                 >
                   <td
                     v-for="(col, colIdx) in tableColumns"
                     :key="colIdx"
-                    class="px-4 py-3 text-sm whitespace-nowrap"
+                    class="px-6 py-1 text-xs whitespace-nowrap"
                     :class="colIdx === 0 ? 'font-medium text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-300'"
                   >
                     {{ formatCellValue(row[col]) }}
@@ -140,67 +197,79 @@
           </div>
         </div>
 
-        <!-- Chart -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <div class="px-6 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-            <h3 class="text-base font-medium text-gray-900 dark:text-white">
+        <!-- Chart Card -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm mt-4">
+          <div class="px-6 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <h3 class="text-sm font-medium text-gray-900 dark:text-white">
               {{ crosstabData.firstQuestion.label }}
             </h3>
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3">
               <label class="flex items-center cursor-pointer">
                 <input
                   type="radio"
                   v-model="graphMode"
                   value="index"
-                  class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  class="w-3 h-3 text-blue-600 border-gray-300 focus:ring-blue-500"
                 />
-                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Graph Index</span>
+                <span class="ml-1.5 text-xs text-gray-700 dark:text-gray-300">Graph Index</span>
               </label>
               <label class="flex items-center cursor-pointer">
                 <input
                   type="radio"
                   v-model="graphMode"
                   value="posneg"
-                  class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  class="w-3 h-3 text-blue-600 border-gray-300 focus:ring-blue-500"
                 />
-                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Graph Pos/Neg Percent</span>
+                <span class="ml-1.5 text-xs text-gray-700 dark:text-gray-300">Graph Pos/Neg Percent</span>
               </label>
             </div>
           </div>
-          <div class="p-6">
+          <div class="p-4">
           
           <!-- Index Mode Chart -->
-          <div v-if="graphMode === 'index'" class="space-y-3">
+          <div v-if="graphMode === 'index'" class="space-y-2">
             <div
               v-for="(bar, idx) in chartData"
               :key="idx"
-              class="flex items-center gap-3"
+              class="flex items-center gap-2"
             >
-              <div class="w-32 text-sm text-gray-700 dark:text-gray-300 text-right truncate">
+              <div class="w-24 text-xs text-gray-700 dark:text-gray-300 text-right truncate">
                 {{ bar.label }}
               </div>
               <div class="flex-1 flex items-center gap-2">
-                <div class="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-8 overflow-hidden">
+                <div class="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-6 overflow-hidden">
                   <div
                     :style="{ width: Math.min((bar.value / 200 * 100), 100) + '%', backgroundColor: bar.color }"
                     class="h-full transition-all"
                   ></div>
                 </div>
-                <div class="w-16 text-sm font-medium text-gray-900 dark:text-white text-right">
+                <div class="w-12 text-xs font-medium text-gray-900 dark:text-white text-right">
                   {{ bar.value }}
                 </div>
               </div>
             </div>
+            <!-- X-axis labels for index mode (0-200 scale) -->
+            <div class="flex items-center gap-2 mt-3">
+              <div class="w-24"></div>
+              <div class="flex-1 flex justify-between text-xs text-gray-500 dark:text-gray-400 px-0.5">
+                <span>0</span>
+                <span>50</span>
+                <span>100</span>
+                <span>150</span>
+                <span>200</span>
+              </div>
+              <div class="w-12"></div>
+            </div>
           </div>
           
           <!-- Pos/Neg Mode Chart -->
-          <div v-else class="space-y-4">
+          <div v-else class="space-y-3">
             <div
               v-for="(bar, idx) in chartData"
               :key="idx"
-              class="flex items-start gap-3"
+              class="flex items-start gap-2"
             >
-              <div class="w-32 text-sm text-gray-700 dark:text-gray-300 text-right pt-2">
+              <div class="w-24 text-xs text-gray-700 dark:text-gray-300 text-right pt-1">
                 {{ bar.label }}
               </div>
               <div class="flex-1 space-y-1">
@@ -209,77 +278,91 @@
                   :key="segIdx"
                   class="flex items-center gap-2"
                 >
-                  <div class="flex-1 bg-gray-200 dark:bg-gray-700 rounded h-5 overflow-hidden max-w-md">
+                  <div class="flex-1 bg-gray-200 dark:bg-gray-700 rounded h-4 overflow-hidden max-w-md">
                     <div
                       :style="{ width: Math.min(segment.value, 100) + '%', backgroundColor: segment.color }"
                       class="h-full transition-all"
                       :title="`${segment.label}: ${segment.value.toFixed(1)}%`"
                     ></div>
                   </div>
-                  <div class="w-12 text-xs font-medium text-gray-700 dark:text-gray-300 text-right">
+                  <div class="w-10 text-xs font-medium text-gray-700 dark:text-gray-300 text-right">
                     {{ segment.value.toFixed(1) }}%
                   </div>
                 </div>
               </div>
             </div>
+            <!-- X-axis labels for pos/neg mode (0-100% scale) -->
+            <div class="flex items-start gap-2 mt-3">
+              <div class="w-24"></div>
+              <div class="flex-1">
+                <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 max-w-md px-0.5">
+                  <span>0</span>
+                  <span>25</span>
+                  <span>50</span>
+                  <span>75</span>
+                  <span>100</span>
+                </div>
+              </div>
+              <div class="w-10"></div>
+            </div>
           </div>
 
-          <!-- Legend and Action Buttons -->
-          <div class="mt-6 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <Button
-                @click="showAIModal = true"
-                variant="ghost"
-                size="md"
-                class="relative"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                </svg>
-                <span class="text-base font-medium glow-intense">AI Analysis</span>
-                <span v-if="!aiAnalysis" class="absolute -top-1 -right-1 flex h-3 w-3">
-                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                  <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-500 shadow-lg shadow-blue-500/75"></span>
-                </span>
-              </Button>
-              <Button
-                @click="showExplanation = true"
-                variant="ghost"
-                size="md"
-              >
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
-                </svg>
-                <span class="text-base font-medium">Understanding Crosstabs</span>
-              </Button>
+          <!-- Legend -->
+          <div v-if="graphMode === 'posneg'" class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700 flex flex-wrap gap-3">
+            <div class="flex items-center gap-1.5">
+              <div class="w-3 h-3 rounded bg-blue-500"></div>
+              <span class="text-xs text-gray-700 dark:text-gray-300">Positive Indexes</span>
             </div>
-            <div v-if="graphMode === 'posneg'" class="flex flex-wrap gap-4">
-              <div class="flex items-center gap-2">
-                <div class="w-4 h-4 rounded bg-blue-500"></div>
-                <span class="text-sm text-gray-700 dark:text-gray-300">Positive Indexes</span>
-              </div>
-              <div class="flex items-center gap-2">
-                <div class="w-4 h-4 rounded bg-red-500"></div>
-                <span class="text-sm text-gray-700 dark:text-gray-300">Negative Indexes</span>
-              </div>
+            <div class="flex items-center gap-1.5">
+              <div class="w-3 h-3 rounded bg-red-500"></div>
+              <span class="text-xs text-gray-700 dark:text-gray-300">Negative Indexes</span>
             </div>
           </div>
-          </div> <!-- Close p-6 div -->
-        </div> <!-- Close chart div -->
-        </div> <!-- Close max-w-6xl container -->
-        </div> <!-- Close scrollable content -->
-      </div> <!-- Close crosstab results -->
+          </div>
+        </div>
+          </div>
+        </div>
+      </div>
     
-    <!-- Explanation Modal (Understanding Crosstab) -->
+    <!-- Combined Explanation & Statistics Modal -->
     <div v-if="showExplanation" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" @click.self="showExplanation = false">
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full max-h-[85vh] overflow-y-auto">
         <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
           <div class="flex items-center justify-between">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Understanding Crosstabs</h3>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Understanding Crosstabs & Statistics</h3>
             <CloseButton @click="showExplanation = false" />
           </div>
         </div>
         <div class="px-6 py-4 space-y-4">
+          <!-- Statistical Measures Section -->
+          <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <h4 class="font-semibold text-gray-900 dark:text-white mb-3 text-sm">Current Analysis Statistics</h4>
+            <div class="grid grid-cols-2 gap-3">
+              <!-- Chi-Square -->
+              <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Chi-Square (χ²)</div>
+                <div class="text-xl font-bold text-gray-900 dark:text-white">{{ formatNumber(crosstabData?.chiSquare) }}</div>
+                <div v-if="crosstabData?.significant" class="text-xs mt-1" :class="crosstabData.pValue < 0.05 ? 'text-green-600 dark:text-green-400 font-medium' : 'text-gray-500 dark:text-gray-400'">
+                  {{ crosstabData.significant }}
+                </div>
+              </div>
+              <!-- Phi -->
+              <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Phi (φ)</div>
+                <div class="text-xl font-bold text-gray-900 dark:text-white">{{ formatNumber(crosstabData?.phi) }}</div>
+              </div>
+              <!-- Cramér's V -->
+              <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Cramér's V</div>
+                <div class="text-xl font-bold text-gray-900 dark:text-white">{{ formatNumber(crosstabData?.cramersV) }}</div>
+              </div>
+              <!-- Total N -->
+              <div class="bg-white dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">Total N</div>
+                <div class="text-xl font-bold text-gray-900 dark:text-white">{{ crosstabData?.totalN || 0 }}</div>
+              </div>
+            </div>
+          </div>
           <!-- Quick Tip -->
           <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
             <div class="flex gap-3">
@@ -433,7 +516,7 @@
     </div>
     
     <!-- Statistics Modal -->
-    <CrosstabStatisticsModal :show="showStatistics" :data="crosstabData" @close="showStatistics = false" />
+    <!-- Removed: Now merged with Explanation modal above -->
   </div>
 </template>
 
@@ -444,7 +527,6 @@ import axios from 'axios'
 import { API_BASE_URL } from '@/config/api'
 import Button from '../common/Button.vue'
 import CloseButton from '../common/CloseButton.vue'
-import CrosstabStatisticsModal from '../CrosstabStatisticsModal.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -476,7 +558,6 @@ const crosstabData = ref(null)
 const graphMode = ref('index') // 'index' or 'posneg'
 const showExplanation = ref(false)
 const showAIModal = ref(false)
-const showStatistics = ref(false)
 const aiAnalysis = ref('')
 const loadingAnalysis = ref(false)
 
@@ -503,6 +584,12 @@ watch([() => props.firstQuestion, () => props.secondQuestion], ([first, second])
 }, { immediate: true })
 
 // Computed
+const dvResponses = computed(() => {
+  // Get response labels from firstQuestion for partial crosstab display
+  if (!props.firstQuestion?.responses) return []
+  return props.firstQuestion.responses.map(r => r.label)
+})
+
 const tableColumns = computed(() => {
   if (!crosstabData.value || !crosstabData.value.table || crosstabData.value.table.length === 0) {
     return []

@@ -126,9 +126,10 @@
 
       <!-- Statistical Significance Results -->
       <div v-else-if="statSigData && statSigData.length > 0" key="results" class="h-full overflow-auto">
-        <div class="pt-3 px-6 pb-6">
-          <!-- Header with question label and buttons (matching Results tab) -->
-          <div class="flex items-end justify-between mb-2 pb-2">
+        <div class="pt-3 px-6 pb-6 flex justify-center">
+          <div class="w-full max-w-[833px] mt-[10px]">
+            <!-- Header with question label and buttons (matching Results tab) -->
+            <div class="flex items-end justify-between mb-2 pb-2">
             <div>
               <h3 class="text-base font-semibold text-gray-900 dark:text-white">
                 {{ selectedQuestion.label || selectedQuestion.qstLabel }}
@@ -207,11 +208,11 @@
                 </thead>
                 <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   <tr 
-                    v-for="item in sortedStatSigData"
+                    v-for="(item, idx) in sortedStatSigData"
                     :key="item.id"
                     :class="[
                       'hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer transition-colors',
-                      activeQuestionId === item.id ? 'bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-500' : ''
+                      activeQuestionId === item.id ? 'bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-500' : (idx % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700/30')
                     ]"
                     @click="navigateToQuestion(item.id)"
                   >
@@ -221,7 +222,7 @@
                     <td class="px-6 py-1 whitespace-nowrap text-xs">
                       <span 
                         :class="[
-                          'inline-flex px-2 py-0.5 text-xs font-semibold rounded-full',
+                          'inline-flex px-2 py-0 text-xs font-semibold rounded-full',
                           item.significance.includes('p<0.01') || item.significance.includes('p<.01')
                             ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                             : item.significance.includes('p<0.05') || item.significance.includes('p<.05')
@@ -236,7 +237,7 @@
                       <div class="flex items-center gap-2">
                         <!-- Variable Type Icon -->
                         <svg 
-                          class="w-4 h-4 flex-shrink-0 text-red-400"
+                          class="w-3.5 h-3.5 flex-shrink-0 text-red-400"
                           fill="currentColor" 
                           viewBox="0 0 20 20"
                           title="Independent Variable"
@@ -252,6 +253,7 @@
                 </tbody>
               </table>
             </div>
+          </div>
           </div>
         </div>
       </div>

@@ -1,8 +1,8 @@
 <template>
   <div class="h-full flex flex-col">
-    <!-- Crosstab Selection Panel -->
+    <!-- Crosstab Selection Panel (only show in non-radio mode) -->
     <div 
-      v-if="selectionMode === 'crosstab'" 
+      v-if="selectionMode === 'crosstab' && !USE_RADIO_BUTTON_MODE" 
       class="px-3 pt-3 pb-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800"
     >
       <!-- DV Selection -->
@@ -25,7 +25,7 @@
           :class="replaceMode === 1 ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-600'"
           class="px-2 py-0.5 rounded text-xs font-medium hover:opacity-80 transition-all flex-shrink-0"
         >
-          {{ replaceMode === 1 ? 'Click to Replace' : 'Change' }}
+          {{ replaceMode === 1 ? 'Select to Replace' : 'Change' }}
         </button>
       </div>
       
@@ -49,13 +49,13 @@
           :class="replaceMode === 2 ? 'bg-green-600 text-white' : 'bg-white dark:bg-gray-700 text-green-600 dark:text-green-400 border border-green-300 dark:border-green-600'"
           class="px-2 py-0.5 rounded text-xs font-medium hover:opacity-80 transition-all flex-shrink-0"
         >
-          {{ replaceMode === 2 ? 'Click to Replace' : 'Change' }}
+          {{ replaceMode === 2 ? 'Select to Replace' : 'Change' }}
         </button>
       </div>
     </div>
     
     <!-- Search Bar -->
-    <div class="p-3 border-b border-gray-200 dark:border-gray-700">
+    <div class="p-2 border-b border-gray-200 dark:border-gray-700">
       <div class="relative">
         <input
           v-model="searchQuery"
@@ -64,7 +64,7 @@
           autocomplete="off"
           data-1p-ignore
           data-lpignore="true"
-          class="w-full px-3 py-1.5 pl-9 pr-9 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          class="w-full px-3 py-1 pl-9 pr-9 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <svg class="absolute left-3 top-2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -80,7 +80,7 @@
           </svg>
         </button>
       </div>
-      <div class="flex items-center justify-between text-xs mt-1">
+      <div class="flex items-center justify-between text-xs mt-0.5">
         <div class="flex items-center space-x-1.5">
           <a
             @click="expandAll"
@@ -123,7 +123,7 @@
             <!-- Block Header -->
             <button
               @click="toggleBlock(item)"
-              class="w-full flex items-center space-x-2 px-2 py-1 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded transition-colors text-left"
+              class="w-full flex items-center space-x-2 px-2 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded transition-colors text-left"
             >
               <svg 
                 class="w-3 h-3 text-gray-500 dark:text-gray-400 transition-transform flex-shrink-0"
@@ -167,34 +167,58 @@
             </button>
             
             <!-- Block Questions -->
-            <div v-show="item.isExpanded" class="ml-6 mt-0.5 space-y-0">
+            <div v-show="item.isExpanded" class="mt-0.5 space-y-0">
               <div
                 v-for="question in item.questions"
                 :key="question.id"
-                @click="handleQuestionClick(question)"
                 :class="getQuestionClasses(question)"
-                class="w-full flex items-center space-x-2 px-2 py-0 rounded cursor-pointer transition-all border-l"
+                class="w-full flex items-center px-2 py-0.5 rounded cursor-pointer transition-all border-l"
               >
-                <!-- Variable Type Icon (always show) -->
-                <svg 
-                  class="w-3.5 h-3.5 flex-shrink-0" 
-                  :class="question.variableType === 1 ? 'text-red-400' : question.variableType === 2 ? 'text-blue-400' : 'text-gray-400'"
-                  fill="currentColor" 
-                  viewBox="0 0 20 20"
+                <!-- Toggle button for DV selection (crosstab radio mode only) -->
+                <button
+                  v-if="selectionMode === 'crosstab' && USE_RADIO_BUTTON_MODE"
+                  @click.stop="handleRadioDVClick(question)"
+                  :disabled="props.activeTab === 'statsig' && question.variableType === 1"
+                  :class="[
+                    'w-7 h-3.5 rounded-full transition-colors duration-200 ease-in-out flex-shrink-0 relative mr-2',
+                    firstSelection?.id === question.id 
+                      ? 'bg-blue-600' 
+                      : 'bg-gray-300 dark:bg-gray-600',
+                    props.activeTab === 'statsig' && question.variableType === 1 ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
+                  ]"
                 >
-                  <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
-                </svg>
+                  <span
+                    :class="[
+                      'absolute top-0.5 left-0.5 bg-white dark:bg-gray-200 rounded-full h-2.5 w-2.5 transition-transform duration-200 ease-in-out',
+                      firstSelection?.id === question.id ? 'translate-x-3.5' : 'translate-x-0'
+                    ]"
+                  ></span>
+                </button>
                 
-                <div class="flex-1 min-w-0 leading-none">
-                  <span class="text-xs text-gray-700 dark:text-gray-300">{{ question.label }}</span>
-                  <span class="text-xs text-gray-400 dark:text-gray-500 ml-2">{{ question.qstNumber }}</span>
+                <!-- Wrapper for indentation (always indent block questions) -->
+                <div class="flex items-center space-x-2 flex-1 min-w-0 ml-6">
+                  <!-- Variable Type Icon (always show) -->
+                  <svg 
+                    class="w-3.5 h-3.5 flex-shrink-0" 
+                    :class="question.variableType === 1 ? 'text-red-400' : question.variableType === 2 ? 'text-blue-400' : 'text-gray-400'"
+                    fill="currentColor" 
+                    viewBox="0 0 20 20"
+                    @click="handleQuestionClick(question)"
+                  >
+                    <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
+                  </svg>
+                  
+                  <div class="flex-1 min-w-0 leading-none" @click="handleQuestionClick(question)">
+                    <span class="text-xs text-gray-700 dark:text-gray-300">{{ question.label }}</span>
+                    <span class="text-xs text-gray-400 dark:text-gray-500 ml-2">{{ question.qstNumber }}</span>
+                  </div>
                 </div>
                 
                 <!-- Selection Badge (right side) -->
                 <span 
                   v-if="getSelectionNumber(question)"
                   :class="getSelectionBadgeClasses(question)"
-                  class="inline-flex items-center justify-center w-5 h-5 rounded font-semibold text-white text-xs flex-shrink-0"
+                  class="inline-flex items-center justify-center w-4 h-4 rounded font-semibold text-white text-xs flex-shrink-0"
                 >
                   {{ getSelectionNumber(question) }}
                 </span>
@@ -205,21 +229,42 @@
           <!-- Standalone Question -->
           <div
             v-else
-            @click="handleQuestionClick(item.question || item)"
             :class="getQuestionClasses(item.question || item)"
             class="w-full flex items-center space-x-2 px-2 py-0 rounded cursor-pointer transition-all border-l-2"
           >
+            <!-- Toggle button for DV selection (crosstab radio mode only) -->
+            <button
+              v-if="selectionMode === 'crosstab' && USE_RADIO_BUTTON_MODE"
+              @click.stop="handleRadioDVClick(item.question || item)"
+              :disabled="props.activeTab === 'statsig' && (item.question || item).variableType === 1"
+              :class="[
+                'w-7 h-3.5 rounded-full transition-colors duration-200 ease-in-out flex-shrink-0 relative',
+                firstSelection?.id === (item.question || item).id 
+                  ? 'bg-blue-600' 
+                  : 'bg-gray-300 dark:bg-gray-600',
+                props.activeTab === 'statsig' && (item.question || item).variableType === 1 ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
+              ]"
+            >
+              <span
+                :class="[
+                  'absolute top-0.5 left-0.5 bg-white dark:bg-gray-200 rounded-full h-2.5 w-2.5 transition-transform duration-200 ease-in-out',
+                  firstSelection?.id === (item.question || item).id ? 'translate-x-3.5' : 'translate-x-0'
+                ]"
+              ></span>
+            </button>
+            
             <!-- Variable Type Icon (always show) -->
             <svg 
               class="w-3.5 h-3.5 flex-shrink-0" 
               :class="(item.question || item).variableType === 1 ? 'text-red-400' : (item.question || item).variableType === 2 ? 'text-blue-400' : 'text-gray-400'"
               fill="currentColor" 
               viewBox="0 0 20 20"
+              @click="handleQuestionClick(item.question || item)"
             >
               <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
             </svg>
             
-            <div class="flex-1 min-w-0 leading-none">
+            <div class="flex-1 min-w-0 leading-none" @click="handleQuestionClick(item.question || item)">
               <span class="text-xs text-gray-700 dark:text-gray-300">{{ (item.question || item).label }}</span>
               <span class="text-xs text-gray-400 dark:text-gray-500 ml-2">{{ (item.question || item).qstNumber }}</span>
             </div>
@@ -228,7 +273,7 @@
             <span 
               v-if="getSelectionNumber(item.question || item)"
               :class="getSelectionBadgeClasses(item.question || item)"
-              class="inline-flex items-center justify-center w-5 h-5 rounded font-semibold text-white text-xs flex-shrink-0"
+              class="inline-flex items-center justify-center w-4 h-4 rounded font-semibold text-white text-xs flex-shrink-0"
             >
               {{ getSelectionNumber(item.question || item) }}
             </span>
@@ -244,6 +289,9 @@ import { API_BASE_URL } from '@/config/api'
 import { ref, computed, watch } from 'vue'
 import axios from 'axios'
 import Button from '../common/Button.vue'
+
+// Feature flag: Set to true to use radio button DV selection mode
+const USE_RADIO_BUTTON_MODE = true
 
 const props = defineProps({
   surveyId: {
@@ -514,24 +562,62 @@ function handleQuestionClick(question) {
     singleSelection.value = question
     emit('question-selected', question)
   } else if (props.selectionMode === 'crosstab') {
-    handleCrosstabSelection(question)
+    if (USE_RADIO_BUTTON_MODE) {
+      handleRadioModeCrosstabSelection(question)
+    } else {
+      handleCrosstabSelection(question)
+    }
   } else if (props.selectionMode === 'multiple') {
     emit('question-selected', question)
   }
+}
+
+function handleRadioDVClick(question) {
+  // On statsig tab, don't allow selecting IVs as DV
+  if (props.activeTab === 'statsig' && question.variableType === 1) {
+    return
+  }
+  
+  // Radio button clicked - set as DV
+  firstSelection.value = question
+  // Keep current IV if it's not the same as the new DV
+  if (secondSelection.value?.id === question.id) {
+    secondSelection.value = null
+  }
+  emit('crosstab-selection', { first: question, second: secondSelection.value })
+}
+
+function handleRadioModeCrosstabSelection(question) {
+  // In radio mode, clicking the question label always selects/toggles IV
+  // Don't allow selecting the same question as both DV and IV
+  if (firstSelection.value?.id === question.id) {
+    // Clicking the DV - do nothing or could deselect it
+    return
+  }
+  
+  // Set/replace as IV
+  secondSelection.value = question
+  emit('crosstab-selection', { first: firstSelection.value, second: question })
 }
 
 function handleCrosstabSelection(question) {
   // If in replace mode, replace the appropriate variable
   if (replaceMode.value === 1) {
     firstSelection.value = question
-    replaceMode.value = null
+    // After replacing DV, automatically go back to IV replace mode
+    replaceMode.value = 2
     emit('crosstab-selection', { first: question, second: secondSelection.value })
     return
   }
   
   if (replaceMode.value === 2) {
+    // Don't allow selecting the same question as both DV and IV
+    if (firstSelection.value?.id === question.id) {
+      return // Do nothing
+    }
     secondSelection.value = question
-    replaceMode.value = null
+    // Stay in replace mode for IV to allow easy comparison
+    // replaceMode.value stays as 2
     emit('crosstab-selection', { first: firstSelection.value, second: question })
     return
   }
@@ -552,9 +638,17 @@ function handleCrosstabSelection(question) {
   // Select first, then second
   if (!firstSelection.value) {
     firstSelection.value = question
+    // After selecting first DV, automatically go to IV replace mode
+    // (Don't set replaceMode yet - wait until IV is selected)
     emit('crosstab-selection', { first: question, second: secondSelection.value })
   } else if (!secondSelection.value) {
+    // Don't allow selecting the same question as both DV and IV
+    if (firstSelection.value?.id === question.id) {
+      return // Do nothing
+    }
     secondSelection.value = question
+    // Automatically enter replace mode for IV after initial selection
+    replaceMode.value = 2
     emit('crosstab-selection', { first: firstSelection.value, second: question })
   } else {
     // Both already selected - ignore the click (UI shows Change buttons)
@@ -592,15 +686,19 @@ function getQuestionClasses(question) {
     const isFirst = firstSelection.value?.id === questionId
     const isSecond = secondSelection.value?.id === questionId
     
-    // If in replace mode, dim the non-selected questions
+    // If in replace mode, show appropriate highlighting
     if (replaceMode.value !== null) {
       if (isFirst && replaceMode.value === 1) {
-        // Replacing DV - show current DV as highlighted
+        // Replacing DV - show current DV as highlighted for replacement
         return 'bg-blue-100 dark:bg-blue-900/40 border-blue-500 dark:border-blue-400 border-2'
       }
       if (isSecond && replaceMode.value === 2) {
-        // Replacing IV - show current IV as highlighted
+        // Replacing IV - show current IV as highlighted for replacement
         return 'bg-green-100 dark:bg-green-900/40 border-green-500 dark:border-green-400 border-2'
+      }
+      if (isFirst && replaceMode.value === 2) {
+        // Replacing IV but this is the DV - keep DV highlighted but subtle
+        return 'bg-blue-50 dark:bg-blue-900/30 border-blue-400/60 dark:border-blue-500/60 border'
       }
       // Dim other questions slightly
       return 'hover:bg-blue-50 dark:hover:bg-blue-900/20 border-transparent opacity-80'
