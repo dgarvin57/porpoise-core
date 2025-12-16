@@ -8,7 +8,31 @@ Porpoise uses **Semantic Versioning** (SemVer): `MAJOR.MINOR.PATCH`
 - **MINOR** (1.X.0): New features, enhancements, non-breaking changes  
 - **PATCH** (1.0.X): Bug fixes, small tweaks, performance improvements
 
-## Current Version: 1.2.4
+## Current Version: 1.3.0
+
+### Single Source of Truth
+Version is maintained in `porpoise-ui/package.json` and auto-synced to:
+- `Porpoise.Api/Porpoise.Api.csproj` (synced by bump script)
+
+### Version History
+
+#### 1.3.0 (2025-12-16)
+- UI improvements: toggle button styling, question list formatting, and crosstab layout
+- Remove debug console logging from StatSigView
+- Refactor crosstab selection UX with Mode+Replace approach
+- fix: clear promoted tab when switching to different survey
+- feat: improve StatSig tab styling and state preservation
+- refactor: reduce question list width and default sidebar to closed
+- feat: improve light mode styling and UX
+- Reduce font sizes and tab heights, refine More dropdown styling
+- Add comprehensive test coverage for API controllers and services
+- cleanup: remove all console logging from AI service
+- cleanup: remove debug logging after fixing API key configuration
+- debug: use ILogger for Railway-visible logs and simplify analyze-question logging
+- debug: add console logging to track questionLabel issue
+- chore: bump API version to 1.2.5 to force Railway rebuild with latest logging
+- chore: bump UI version to 1.2.5 to force Railway rebuild
+- debug: add more detailed request logging for AI endpoint
 
 ### Single Source of Truth
 Version is maintained in `porpoise-ui/package.json` and auto-synced to:
