@@ -8,7 +8,16 @@ Porpoise uses **Semantic Versioning** (SemVer): `MAJOR.MINOR.PATCH`
 - **MINOR** (1.X.0): New features, enhancements, non-breaking changes  
 - **PATCH** (1.0.X): Bug fixes, small tweaks, performance improvements
 
-## Current Version: 1.3.1
+## Current Version: 1.3.2
+
+### Single Source of Truth
+Version is maintained in `porpoise-ui/package.json` and auto-synced to:
+- `Porpoise.Api/Porpoise.Api.csproj` (synced by bump script)
+
+### Version History
+
+#### 1.3.2 (2025-12-16)
+- fix: prevent duplicate crosstab API calls on selection
 
 ### Single Source of Truth
 Version is maintained in `porpoise-ui/package.json` and auto-synced to:
