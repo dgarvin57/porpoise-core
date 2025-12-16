@@ -398,10 +398,10 @@ const questionCount = ref(0)
 const activeSection = ref('results')
 
 // Sidebar collapse state
-const sidebarCollapsed = ref(localStorage.getItem('sidebarCollapsed') === 'true')
+const sidebarCollapsed = ref(true) // Default to collapsed (closed) when survey first opens
 
 // Resize state
-const questionListWidth = ref(320) // Default 320px (~22% of 1440px)
+const questionListWidth = ref(288) // Default 288px (reduced from 320px for more compact layout)
 const contextHeight = ref(140) // Default 140px for context area (reduced from 200px)
 const responsesTableWidth = ref(400) // Default 400px for responses table
 const isContextCollapsed = ref(false) // Context area collapse state
