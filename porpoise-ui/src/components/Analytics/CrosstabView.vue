@@ -597,13 +597,24 @@ const showAIModal = ref(false)
 const aiAnalysis = ref('')
 const loadingAnalysis = ref(false)
 
+// Track last request to prevent duplicates
+const lastRequestKey = ref('')
+
 // Watch for prop changes
 // Auto-generate crosstab when both questions are selected
 watch([() => props.firstQuestion, () => props.secondQuestion], ([first, second]) => {
   if (first && second) {
-    generateCrosstab()
+    // Create a unique key for this request
+    const requestKey = `${first.id}-${second.id}`
+    
+    // Only generate if it's a different request than last time
+    if (requestKey !== lastRequestKey.value) {
+      lastRequestKey.value = requestKey
+      generateCrosstab()
+    }
   } else {
     crosstabData.value = null
+    lastRequestKey.value = ''
   }
 }, { immediate: true })
 
@@ -817,6 +828,7 @@ watch(() => props.surveyId, (newId, oldId) => {
     aiAnalysis.value = ''
     error.value = null
     loading.value = false
+    lastRequestKey.value = ''
   }
 }, { immediate: false })
 </script>
