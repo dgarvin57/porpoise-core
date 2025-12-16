@@ -1,5 +1,59 @@
 <template>
   <div class="h-full flex flex-col">
+    <!-- Crosstab Selection Panel -->
+    <div 
+      v-if="selectionMode === 'crosstab'" 
+      class="px-3 pt-3 pb-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800"
+    >
+      <!-- DV Selection -->
+      <div class="flex items-center space-x-2 mb-1.5">
+        <div class="flex items-center space-x-1.5 flex-1 min-w-0">
+          <span class="inline-flex items-center justify-center w-5 h-5 rounded bg-blue-600 text-white text-xs font-semibold flex-shrink-0">1</span>
+          <span class="text-xs font-medium text-gray-700 dark:text-gray-300 flex-shrink-0">DV:</span>
+          <span 
+            v-if="firstSelection" 
+            class="text-xs text-gray-900 dark:text-gray-100 truncate"
+            :title="firstSelection.label"
+          >
+            {{ firstSelection.label }}
+          </span>
+          <span v-else class="text-xs text-gray-400 dark:text-gray-500 italic">None selected</span>
+        </div>
+        <button
+          v-if="firstSelection"
+          @click="enterReplaceMode(1)"
+          :class="replaceMode === 1 ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-600'"
+          class="px-2 py-0.5 rounded text-xs font-medium hover:opacity-80 transition-all flex-shrink-0"
+        >
+          {{ replaceMode === 1 ? 'Click to Replace' : 'Change' }}
+        </button>
+      </div>
+      
+      <!-- IV Selection -->
+      <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-1.5 flex-1 min-w-0">
+          <span class="inline-flex items-center justify-center w-5 h-5 rounded bg-green-600 text-white text-xs font-semibold flex-shrink-0">2</span>
+          <span class="text-xs font-medium text-gray-700 dark:text-gray-300 flex-shrink-0">IV:</span>
+          <span 
+            v-if="secondSelection" 
+            class="text-xs text-gray-900 dark:text-gray-100 truncate"
+            :title="secondSelection.label"
+          >
+            {{ secondSelection.label }}
+          </span>
+          <span v-else class="text-xs text-gray-400 dark:text-gray-500 italic">None selected</span>
+        </div>
+        <button
+          v-if="secondSelection"
+          @click="enterReplaceMode(2)"
+          :class="replaceMode === 2 ? 'bg-green-600 text-white' : 'bg-white dark:bg-gray-700 text-green-600 dark:text-green-400 border border-green-300 dark:border-green-600'"
+          class="px-2 py-0.5 rounded text-xs font-medium hover:opacity-80 transition-all flex-shrink-0"
+        >
+          {{ replaceMode === 2 ? 'Click to Replace' : 'Change' }}
+        </button>
+      </div>
+    </div>
+    
     <!-- Search Bar -->
     <div class="p-3 border-b border-gray-200 dark:border-gray-700">
       <div class="relative">
@@ -183,56 +237,6 @@
       </div>
     </div>
   </div>
-  
-  <!-- Third Variable Selection Modal -->
-  <div v-if="showThirdVariableModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" @click.self="closeThirdVariableModal">
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4">
-      <div class="p-6">
-        <div class="flex items-start space-x-3 mb-4">
-          <div class="flex-shrink-0">
-            <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <div class="flex-1">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              Cannot Select Third Variable
-            </h3>
-            <p class="text-sm text-gray-600 dark:text-gray-300 mb-3">
-              You already have two variables selected. To change a variable:
-            </p>
-            <ol class="text-sm text-gray-600 dark:text-gray-300 space-y-2 mb-4 ml-4 list-decimal">
-              <li>Click on the variable you want to change (it will show a <span class="inline-flex items-center justify-center w-4 h-4 rounded bg-blue-500 text-white text-xs font-semibold mx-1">1</span> or <span class="inline-flex items-center justify-center w-4 h-4 rounded bg-green-600 text-white text-xs font-semibold mx-1">2</span> badge)</li>
-              <li>Then select a new question to replace it</li>
-            </ol>
-            <p class="text-xs text-gray-500 dark:text-gray-400 italic">
-              Or use "Clear Selection" to start over
-            </p>
-          </div>
-        </div>
-        
-        <div class="mb-4 flex items-center">
-          <input 
-            id="dontShowAgain" 
-            v-model="dontShowAgain" 
-            type="checkbox" 
-            class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-          />
-          <label for="dontShowAgain" class="ml-2 text-sm text-gray-600 dark:text-gray-400 cursor-pointer">
-            Don't show this message again
-          </label>
-        </div>
-        
-        <div class="flex justify-end">
-          <Button
-            @click="closeThirdVariableModal"
-          >
-            Got it
-          </Button>
-        </div>
-      </div>
-    </div>
-  </div>
 </template>
 
 <script setup>
@@ -293,6 +297,7 @@ const showVariableHelp = ref(false)
 // Crosstab selections
 const firstSelection = ref(props.initialFirstSelection)
 const secondSelection = ref(props.initialSecondSelection)
+const replaceMode = ref(null) // null, 1 (replacing DV), or 2 (replacing IV)
 
 // Watch for prop changes to update selections
 watch(() => props.initialFirstSelection, (newVal) => {
@@ -355,25 +360,10 @@ watch(() => props.questions, (newQuestions) => {
   }
 }, { deep: true, immediate: true })
 
-// Modal state
-const showThirdVariableModal = ref(false)
-const dontShowAgain = ref(false)
-const pulseInstructions = ref(false)
-
 // Single selection state
 const singleSelection = ref(null)
 
 // Computed
-const instructionText = computed(() => {
-  if (!firstSelection.value) {
-    return 'Click on a question to select the first variable for your analysis'
-  } else if (!secondSelection.value) {
-    return 'Click on another question to select the second variable'
-  } else {
-    return 'To change a variable, click it to deselect, then select a new one or clear selection'
-  }
-})
-
 const filteredQuestions = computed(() => {
   if (!searchQuery.value.trim()) {
     return questions.value
@@ -531,10 +521,24 @@ function handleQuestionClick(question) {
 }
 
 function handleCrosstabSelection(question) {
+  // If in replace mode, replace the appropriate variable
+  if (replaceMode.value === 1) {
+    firstSelection.value = question
+    replaceMode.value = null
+    emit('crosstab-selection', { first: question, second: secondSelection.value })
+    return
+  }
+  
+  if (replaceMode.value === 2) {
+    secondSelection.value = question
+    replaceMode.value = null
+    emit('crosstab-selection', { first: firstSelection.value, second: question })
+    return
+  }
+  
   // If clicking already selected question, deselect it
   if (firstSelection.value?.id === question.id) {
     firstSelection.value = null
-    // Keep second selection as-is, just clear the first
     emit('crosstab-selection', { first: null, second: secondSelection.value })
     return
   }
@@ -553,17 +557,7 @@ function handleCrosstabSelection(question) {
     secondSelection.value = question
     emit('crosstab-selection', { first: firstSelection.value, second: question })
   } else {
-    // Both already selected - show helpful modal (unless user disabled it)
-    const hideModal = localStorage.getItem('hideThirdVariableModal') === 'true'
-    if (!hideModal) {
-      showThirdVariableModal.value = true
-    } else {
-      // User dismissed modal, so pulse the instructions to remind them
-      pulseInstructions.value = true
-      setTimeout(() => {
-        pulseInstructions.value = false
-      }, 1500) // Remove after 1.5 seconds (matches animation duration)
-    }
+    // Both already selected - ignore the click (UI shows Change buttons)
     return
   }
 }
@@ -598,6 +592,21 @@ function getQuestionClasses(question) {
     const isFirst = firstSelection.value?.id === questionId
     const isSecond = secondSelection.value?.id === questionId
     
+    // If in replace mode, dim the non-selected questions
+    if (replaceMode.value !== null) {
+      if (isFirst && replaceMode.value === 1) {
+        // Replacing DV - show current DV as highlighted
+        return 'bg-blue-100 dark:bg-blue-900/40 border-blue-500 dark:border-blue-400 border-2'
+      }
+      if (isSecond && replaceMode.value === 2) {
+        // Replacing IV - show current IV as highlighted
+        return 'bg-green-100 dark:bg-green-900/40 border-green-500 dark:border-green-400 border-2'
+      }
+      // Dim other questions slightly
+      return 'hover:bg-blue-50 dark:hover:bg-blue-900/20 border-transparent opacity-80'
+    }
+    
+    // Normal mode highlighting
     if (isFirst) {
       return 'bg-blue-50 dark:bg-blue-900/30 border-blue-400/60 dark:border-blue-500/60 border'
     }
@@ -662,16 +671,13 @@ function clearSearch() {
 function clearSelections() {
   firstSelection.value = null
   secondSelection.value = null
+  replaceMode.value = null
   emit('selection-cleared')
   emit('crosstab-selection', { first: null, second: null })
 }
 
-function closeThirdVariableModal() {
-  if (dontShowAgain.value) {
-    localStorage.setItem('hideThirdVariableModal', 'true')
-  }
-  showThirdVariableModal.value = false
-  dontShowAgain.value = false
+function enterReplaceMode(variableNumber) {
+  replaceMode.value = variableNumber
 }
 
 // Sync singleSelection with selectedQuestionId prop (for single selection mode)

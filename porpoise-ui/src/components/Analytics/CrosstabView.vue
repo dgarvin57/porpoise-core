@@ -1,18 +1,5 @@
 <template>
-  <div class="h-full flex">
-    <!-- Question List Sidebar -->
-    <aside v-if="!hideSidebar" class="w-96 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-hidden flex flex-col">
-      <QuestionListSelector
-        :surveyId="surveyId"
-        selectionMode="crosstab"
-        :initialFirstSelection="firstQuestion"
-        :initialSecondSelection="secondQuestion"
-        @crosstab-selection="handleCrosstabSelection"
-      />
-    </aside>
-
-    <!-- Crosstab Results -->
-    <div class="flex-1 flex flex-col bg-gray-50 dark:bg-gray-900">
+  <div class="h-full flex flex-col bg-gray-50 dark:bg-gray-900">
       <!-- Loading State -->
       <div 
         v-if="loading"
@@ -282,7 +269,6 @@
         </div> <!-- Close max-w-6xl container -->
         </div> <!-- Close scrollable content -->
       </div> <!-- Close crosstab results -->
-    </div>
     
     <!-- Explanation Modal (Understanding Crosstab) -->
     <div v-if="showExplanation" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" @click.self="showExplanation = false">
@@ -456,7 +442,6 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
 import { API_BASE_URL } from '@/config/api'
-import QuestionListSelector from './QuestionListSelector.vue'
 import Button from '../common/Button.vue'
 import CloseButton from '../common/CloseButton.vue'
 import CrosstabStatisticsModal from '../CrosstabStatisticsModal.vue'
@@ -469,17 +454,13 @@ const props = defineProps({
     type: String,
     required: true
   },
-  initialFirstQuestion: {
+  firstQuestion: {
     type: Object,
     default: null
   },
-  initialSecondQuestion: {
+  secondQuestion: {
     type: Object,
     default: null
-  },
-  hideSidebar: {
-    type: Boolean,
-    default: false
   }
 })
 
@@ -491,8 +472,6 @@ const isFromStatSig = computed(() => route.query.fromStatSig === 'true')
 // State
 const loading = ref(false)
 const error = ref(null)
-const firstQuestion = ref(props.initialFirstQuestion)
-const secondQuestion = ref(props.initialSecondQuestion)
 const crosstabData = ref(null)
 const graphMode = ref('index') // 'index' or 'posneg'
 const showExplanation = ref(false)
@@ -501,37 +480,27 @@ const showStatistics = ref(false)
 const aiAnalysis = ref('')
 const loadingAnalysis = ref(false)
 
-// Watch for prop changes and update internal state
-watch(() => props.initialFirstQuestion, (newVal, oldVal) => {
-  firstQuestion.value = newVal
-  // Clear crosstab data if question is cleared
+// Watch for prop changes
+watch(() => props.firstQuestion, (newVal) => {
   if (!newVal) {
     crosstabData.value = null
   }
-}, { deep: true, immediate: true })
+}, { deep: true })
 
-watch(() => props.initialSecondQuestion, (newVal, oldVal) => {
-  secondQuestion.value = newVal
-  // Clear crosstab data if question is cleared
+watch(() => props.secondQuestion, (newVal) => {
   if (!newVal) {
     crosstabData.value = null
   }
-}, { deep: true, immediate: true })
+}, { deep: true })
 
 // Auto-generate crosstab when both questions are selected
-watch([firstQuestion, secondQuestion], ([first, second]) => {
+watch([() => props.firstQuestion, () => props.secondQuestion], ([first, second]) => {
   if (first && second) {
     generateCrosstab()
   } else {
-    // Clear crosstab data if either question is not selected
     crosstabData.value = null
   }
-  // Emit changes for parent component to persist
-  emit('selections-changed', { 
-    firstQuestion: first, 
-    secondQuestion: second 
-  })
-})
+}, { immediate: true })
 
 // Computed
 const tableColumns = computed(() => {
@@ -545,8 +514,8 @@ const tableColumns = computed(() => {
 const quickTipText = computed(() => {
   if (!crosstabData.value) return ''
   
-  const firstVar = firstQuestion.value?.label || 'first variable'
-  const secondVar = secondQuestion.value?.label || 'second variable'
+  const firstVar = props.firstQuestion?.label || 'first variable'
+  const secondVar = props.secondQuestion?.label || 'second variable'
   
   if (graphMode.value === 'index') {
     return `The Graph Index shows a single overall sentiment score (0-200 scale) for each category of "${secondVar}". A score of 100 is neutral, above 100 is positive, and below 100 is negative. This helps you quickly compare how different groups feel about "${firstVar}".`
@@ -589,14 +558,8 @@ const chartData = computed(() => {
 })
 
 // Methods
-function handleCrosstabSelection({ first, second }) {
-  firstQuestion.value = first
-  secondQuestion.value = second
-  crosstabData.value = null // Reset crosstab data when selection changes
-}
-
 async function generateCrosstab() {
-  if (!firstQuestion.value || !secondQuestion.value) {
+  if (!props.firstQuestion || !props.secondQuestion) {
     return
   }
 
@@ -608,8 +571,8 @@ async function generateCrosstab() {
     const response = await axios.post(
       `${API_BASE_URL}/api/survey-analysis/${props.surveyId}/crosstab`,
       {
-        firstQuestionId: firstQuestion.value.id,
-        secondQuestionId: secondQuestion.value.id
+        firstQuestionId: props.firstQuestion.id,
+        secondQuestionId: props.secondQuestion.id
       }
     )
     crosstabData.value = response.data
@@ -634,8 +597,8 @@ async function generateAIAnalysis() {
     // Prepare context for AI
     // In crosstab "X by Y": X is dependent (measured outcome), Y is independent (grouping variable)
     const context = {
-      dependentVariable: firstQuestion.value.label,  // Column variable - what we're measuring
-      independentVariable: secondQuestion.value.label,  // Row variable - how we group/segment
+      dependentVariable: props.firstQuestion.label,  // Column variable - what we're measuring
+      independentVariable: props.secondQuestion.label,  // Row variable - how we group/segment
       totalN: crosstabData.value.totalN,
       chiSquare: crosstabData.value.chiSquare,
       chiSquareSignificant: crosstabData.value.chiSquareSignificant,
@@ -671,7 +634,7 @@ function backToStatSig() {
     params: { id: props.surveyId },
     query: {
       section: 'statsig',
-      questionId: firstQuestion.value.id
+      questionId: props.firstQuestion.id
     }
   })
 }
@@ -739,10 +702,7 @@ function formatCellValue(value) {
 // Watch for surveyId changes to clear state
 watch(() => props.surveyId, (newId, oldId) => {
   if (newId && oldId && newId !== oldId) {
-    // Clear all state when survey changes
     crosstabData.value = null
-    firstQuestion.value = null
-    secondQuestion.value = null
     aiAnalysis.value = ''
     error.value = null
     loading.value = false

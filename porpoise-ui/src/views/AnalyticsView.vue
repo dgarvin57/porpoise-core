@@ -594,7 +594,7 @@ const selectedQuestionForSplit = ref(null)
 
 // Computed property to determine question list mode based on active section
 const questionListMode = computed(() => {
-  if (activeSection.value === 'crosstab') {
+  if (activeAnalysisTab.value === 'crosstab') {
     return 'crosstab'
   }
   return 'single'
