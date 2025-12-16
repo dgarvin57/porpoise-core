@@ -1106,8 +1106,10 @@ watch(() => route.params.id, (newId) => {
       selectedQuestion.value = null
       selectedQuestionWithResponses.value = null
       activeSection.value = 'results'
+      activeAnalysisTab.value = 'results'
       expandedBlocks.value = []
       columnMode.value = 'totalN'
+      promotedTab.value = null // Clear promoted tab when switching surveys
       
       // Don't load state for new survey - start fresh
       loadSurveyInfo()
