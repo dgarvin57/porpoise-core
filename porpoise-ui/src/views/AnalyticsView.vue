@@ -100,6 +100,7 @@
               <QuestionListSelector
                 :surveyId="surveyId"
                 :selectionMode="questionListMode"
+                :activeTab="activeAnalysisTab"
                 :showNotesIcons="true"
                 :wrapStandaloneQuestions="true"
                 :selectedQuestionId="questionListMode === 'single' ? selectedQuestionId : null"
@@ -282,32 +283,79 @@
               <!-- Tab Content -->
               <div class="flex-1 overflow-auto">
                 <!-- Results Tab -->
-                <div v-if="activeAnalysisTab === 'results'" class="p-6">
-                  <QuestionChart
-                    v-if="selectedQuestionWithResponses"
-                    :question="selectedQuestionWithResponses"
-                    :questionLabel="selectedQuestionWithResponses.label || selectedQuestionWithResponses.qstLabel || ''"
-                    @analyze-crosstab="handleAnalyzeCrosstab"
-                    @ai-analysis="handleAIAnalysis"
-                    @show-info="handleShowInfo"
-                  />
+                <div v-show="activeAnalysisTab === 'results'" class="h-full">
+                  <div v-if="selectedQuestionWithResponses" class="p-3 px-6">
+                    <ResultsChart
+                      :question="selectedQuestionWithResponses"
+                      :questionLabel="selectedQuestionWithResponses.label || selectedQuestionWithResponses.qstLabel || ''"
+                      @analyze-crosstab="handleAnalyzeCrosstab"
+                      @ai-analysis="handleAIAnalysis"
+                      @show-info="handleShowInfo"
+                    />
+                  </div>
                   
-                  <!-- Empty state -->
-                  <div v-else class="h-full flex items-center justify-center text-gray-400 dark:text-gray-500">
+                  <!-- Empty state for Results -->
+                  <div v-else class="h-full flex items-center justify-center">
                     <div class="text-center">
-                      <svg class="w-16 h-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                       </svg>
-                      <p class="text-lg font-medium">Select a question to view response distribution</p>
+                      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No Question Selected</h3>
+                      <p class="text-sm text-gray-500 dark:text-gray-400">Select a question from the list to view response distribution</p>
                     </div>
                   </div>
                 </div>
 
-                <!-- Other Tabs (placeholders for now) -->
-                <div v-else class="p-6 h-full flex items-center justify-center text-gray-400 dark:text-gray-500">
+                <!-- Crosstab Tab -->
+                <div v-show="activeAnalysisTab === 'crosstab'" class="h-full">
+                  <CrosstabView
+                    v-if="crosstabFirstQuestion && crosstabSecondQuestion"
+                    :surveyId="surveyId"
+                    :firstQuestion="crosstabFirstQuestion"
+                    :secondQuestion="crosstabSecondQuestion"
+                  />
+                  
+                  <!-- Empty state for Crosstab -->
+                  <div v-else class="h-full flex items-center justify-center">
+                    <div class="text-center max-w-md">
+                      <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No Variables Selected</h3>
+                      <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Select two questions from the list to create a crosstab analysis</p>
+                      <p class="text-xs text-gray-400 dark:text-gray-500 italic">Tip: Click the hamburger menu to open the question list and select your variables</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Statistical Significance Tab -->
+                <div v-show="activeAnalysisTab === 'statsig'" class="h-full">
+                  <StatSigView
+                    v-if="selectedQuestion"
+                    :surveyId="surveyId"
+                    :selectedQuestion="selectedQuestion"
+                  />
+                  
+                  <!-- Empty state for StatSig -->
+                  <div v-else class="h-full flex items-center justify-center">
+                    <div class="text-center">
+                      <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                      </svg>
+                      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No Question Selected</h3>
+                      <p class="text-sm text-gray-500 dark:text-gray-400">Select a question from the list to view statistical significance</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Coming Soon for other tabs -->
+                <div v-show="activeAnalysisTab !== 'results' && activeAnalysisTab !== 'crosstab' && activeAnalysisTab !== 'statsig'" class="h-full flex items-center justify-center">
                   <div class="text-center">
-                    <p class="text-lg font-medium">{{ analysisTabs.find(t => t.id === activeAnalysisTab)?.label }} view</p>
-                    <p class="text-sm mt-2">Coming soon...</p>
+                    <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">{{ analysisTabs.find(t => t.id === activeAnalysisTab)?.label }}</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Coming soon...</p>
                   </div>
                 </div>
               </div>
@@ -365,9 +413,11 @@ import DataView from '../components/Analytics/DataView.vue'
 import QuestionListSelector from '@/components/Analytics/QuestionListSelector.vue'
 import ResponsesTableOnly from '@/components/Analytics/ResponsesTableOnly.vue'
 import QuestionBlockText from '@/components/Analytics/QuestionBlockText.vue'
-import QuestionChart from '@/components/Analytics/QuestionChart.vue'
+import ResultsChart from '@/components/Analytics/ResultsChart.vue'
 import AIAnalysisModal from '@/components/Analytics/AIAnalysisModal.vue'
 import UnderstandingResultsModal from '@/components/Analytics/UnderstandingResultsModal.vue'
+import CrosstabView from '@/components/Analytics/CrosstabView.vue'
+import StatSigView from '@/components/Analytics/StatSigView.vue'
 
 // Click outside directive
 const vClickOutside = {

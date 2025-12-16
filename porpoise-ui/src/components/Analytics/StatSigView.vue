@@ -1,31 +1,21 @@
 <template>
   <div class="h-full flex flex-col bg-gray-50 dark:bg-gray-900">
-    <!-- Loading State -->
+    <!-- Empty State - Only show when truly no question selected -->
     <div 
-      v-if="loading"
+      v-if="!selectedQuestion"
       class="flex items-center justify-center h-full"
     >
       <div class="text-center">
-        <svg class="animate-spin h-12 w-12 mx-auto text-blue-500" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
-        <p class="mt-4 text-sm text-gray-600 dark:text-gray-400">Calculating statistical significance...</p>
-      </div>
-    </div>
-
-    <!-- Empty State -->
-    <div 
-      v-else-if="!selectedQuestion"
-      class="flex items-center justify-center h-full"
-    >
-      <div class="text-center">
-        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-        </svg>
-        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">Statistical Significance</h3>
+        <!-- Phi symbol icon -->
+        <div class="mx-auto h-16 w-16 flex items-center justify-center">
+          <svg class="w-full h-full text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="5" />
+            <line x1="12" y1="3" x2="12" y2="21" />
+          </svg>
+        </div>
+        <h3 class="mt-2 text-lg font-medium text-gray-900 dark:text-white">No Question Selected</h3>
         <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Select a question to view statistical significance
+          Select a question from the list to view statistical significance
         </p>
       </div>
     </div>
@@ -63,61 +53,123 @@
             The question <span class="font-semibold">"{{ selectedQuestion.label || selectedQuestion.qstLabel }}"</span> that you selected is an independent variable type, which cannot be used when on the Statistical Significance tab.
           </p>
           <p class="mt-3 text-sm text-gray-600 dark:text-gray-400">
-            Please choose another question that is a dependent variable type.
+            Please choose another question that is a 
+            <span class="inline-flex items-center gap-1">
+              <svg class="w-4 h-4 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
+              </svg>
+              <span class="font-semibold">dependent variable</span>
+            </span> type.
           </p>
           <p class="mt-4 text-xs text-gray-500 dark:text-gray-500 italic">
-            In the Statistical Significance tab, select a nominal DV by clicking a dependent variable question.
+            In the Statistical Significance tab, select a nominal DV by clicking a 
+            <span class="inline-flex items-center gap-1">
+              <svg class="w-3 h-3 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
+              </svg>
+              blue
+            </span> dependent variable question.
           </p>
         </div>
       </div>
 
-      <!-- Statistical Significance Results -->
-      <div v-else-if="statSigData && statSigData.length > 0" key="results" class="flex flex-col h-full">
-        <!-- Sticky Header -->
-        <div class="sticky top-0 z-10 border-b border-gray-200 dark:border-gray-700">
-          <div class="bg-white dark:bg-gray-800 py-3 px-6">
-            <div class="relative flex items-center justify-between">
-              <div class="flex items-center space-x-3 min-w-0">
-                <!-- Variable Type Icon -->
-                <svg 
-                  class="w-5 h-5 flex-shrink-0" 
-                  :class="selectedQuestion.variableType === 1 ? 'text-red-400' : selectedQuestion.variableType === 2 ? 'text-blue-400' : 'text-gray-400'"
-                  fill="currentColor" 
-                  viewBox="0 0 20 20"
-                >
-                  <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
-                </svg>
-                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-                  {{ selectedQuestion.label || selectedQuestion.qstLabel }}
-                </h2>
-              </div>
-              <!-- Fixed position STATISTICAL SIGNIFICANCE title -->
-              <div class="absolute left-[45%] transform -translate-x-1/2">
-                <span class="text-base font-semibold text-blue-600 dark:text-blue-400 text-left whitespace-nowrap uppercase tracking-wider">
-                  STATISTICAL SIGNIFICANCE
-                </span>
-              </div>
-              <div class="flex items-center space-x-3 flex-shrink-0">
-                <div class="text-sm text-gray-600 dark:text-gray-400">
-                  <span class="font-medium">{{ statSigData.length }}</span> variables
-                </div>
-              </div>
+      <!-- Skeleton Loader - Show when question selected but no data yet -->
+      <div v-else-if="selectedQuestion && (!statSigData || statSigData.length === 0)" key="skeleton" class="h-full overflow-auto">
+        <div class="pt-3 px-6 pb-6">
+          <!-- Header Skeleton -->
+          <div class="flex items-end justify-between mb-2 pb-2">
+            <div class="space-y-2">
+              <div class="h-5 bg-gray-200 dark:bg-gray-700 rounded w-48 animate-pulse"></div>
+              <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-32 animate-pulse"></div>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              <div class="h-8 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
             </div>
           </div>
-        </div>
 
-        <!-- Scrollable Content -->
-      <div class="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 p-6">
-        <div class="max-w-3xl mx-auto">
-          <!-- Table -->
+          <!-- Table Skeleton -->
           <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
             <div class="overflow-x-auto">
               <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead class="bg-gray-50 dark:bg-gray-700">
+                <thead class="bg-blue-50 dark:bg-gray-700">
+                  <tr>
+                    <th class="px-6 py-1.5 text-left">
+                      <div class="h-3 bg-gray-300 dark:bg-gray-600 rounded w-12 animate-pulse"></div>
+                    </th>
+                    <th class="px-6 py-1.5 text-left">
+                      <div class="h-3 bg-gray-300 dark:bg-gray-600 rounded w-24 animate-pulse"></div>
+                    </th>
+                    <th class="px-6 py-1.5 text-left">
+                      <div class="h-3 bg-gray-300 dark:bg-gray-600 rounded w-20 animate-pulse"></div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  <tr v-for="i in 8" :key="i">
+                    <td class="px-6 py-1">
+                      <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-12 animate-pulse"></div>
+                    </td>
+                    <td class="px-6 py-1">
+                      <div class="h-5 bg-gray-200 dark:bg-gray-700 rounded w-28 animate-pulse"></div>
+                    </td>
+                    <td class="px-6 py-1">
+                      <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-40 animate-pulse"></div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Statistical Significance Results -->
+      <div v-else-if="statSigData && statSigData.length > 0" key="results" class="h-full overflow-auto">
+        <div class="pt-3 px-6 pb-6">
+          <!-- Header with question label and buttons (matching Results tab) -->
+          <div class="flex items-end justify-between mb-2 pb-2">
+            <div>
+              <h3 class="text-base font-semibold text-gray-900 dark:text-white">
+                {{ selectedQuestion.label || selectedQuestion.qstLabel }}
+              </h3>
+              <div class="text-[10px] font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide">
+                STATISTICAL SIGNIFICANCE
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <!-- Info Button -->
+              <button 
+                @click="showExplanation = true"
+                class="inline-flex items-center gap-2 px-3 py-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                title="Understanding Statistical Significance"
+              >
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                </svg>
+              </button>
+              <!-- AI Analysis Button -->
+              <button 
+                @click="showAIModal = true"
+                class="inline-flex items-center justify-center gap-2 px-3 py-1 text-gray-700 dark:text-gray-200 bg-transparent hover:bg-gray-200/50 dark:hover:bg-gray-700/50 rounded-lg transition-colors"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
+                AI Analysis
+              </button>
+            </div>
+          </div>
+
+          <!-- Table Card -->
+          <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead class="bg-blue-50 dark:bg-gray-700">
                   <tr>
                     <th 
                       scope="col"
-                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
+                      class="px-6 py-1.5 text-left text-xs font-semibold text-gray-800 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600"
                       @click="sortBy('phi')"
                     >
                       <div class="flex items-center space-x-1">
@@ -129,7 +181,7 @@
                     </th>
                     <th 
                       scope="col"
-                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
+                      class="px-6 py-1.5 text-left text-xs font-semibold text-gray-800 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600"
                       @click="sortBy('significance')"
                     >
                       <div class="flex items-center space-x-1">
@@ -141,7 +193,7 @@
                     </th>
                     <th 
                       scope="col"
-                      class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
+                      class="px-6 py-1.5 text-left text-xs font-semibold text-gray-800 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600"
                       @click="sortBy('question')"
                     >
                       <div class="flex items-center space-x-1">
@@ -158,18 +210,18 @@
                     v-for="item in sortedStatSigData"
                     :key="item.id"
                     :class="[
-                      'hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors',
+                      'hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer transition-colors',
                       activeQuestionId === item.id ? 'bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-500' : ''
                     ]"
                     @click="navigateToQuestion(item.id)"
                   >
-                    <td class="px-6 py-2 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                    <td class="px-6 py-1 whitespace-nowrap text-xs font-medium text-gray-900 dark:text-white">
                       {{ item.phi.toFixed(3) }}
                     </td>
-                    <td class="px-6 py-2 whitespace-nowrap text-sm">
+                    <td class="px-6 py-1 whitespace-nowrap text-xs">
                       <span 
                         :class="[
-                          'inline-flex px-2 py-1 text-xs font-semibold rounded-full',
+                          'inline-flex px-2 py-0.5 text-xs font-semibold rounded-full',
                           item.significance.includes('p<0.01') || item.significance.includes('p<.01')
                             ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                             : item.significance.includes('p<0.05') || item.significance.includes('p<.05')
@@ -180,7 +232,7 @@
                         {{ item.significance }}
                       </span>
                     </td>
-                    <td class="px-6 py-2 text-sm">
+                    <td class="px-6 py-1 text-xs">
                       <div class="flex items-center gap-2">
                         <!-- Variable Type Icon -->
                         <svg 
@@ -201,37 +253,7 @@
               </table>
             </div>
           </div>
-
-          <!-- Action Buttons -->
-          <div class="mt-6 flex items-center gap-3">
-            <Button
-              @click="showAIModal = true"
-              variant="ghost"
-              size="md"
-              class="relative"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-              </svg>
-              <span class="text-base font-medium glow-intense">AI Analysis</span>
-              <span v-if="!aiAnalysis" class="absolute -top-1 -right-1 flex h-3 w-3">
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-500 shadow-lg shadow-blue-500/75"></span>
-              </span>
-            </Button>
-            <Button
-              @click="showExplanation = true"
-              variant="ghost"
-              size="md"
-            >
-              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
-              </svg>
-              <span class="text-base font-medium">Understanding Statistical Significance</span>
-            </Button>
-          </div>
         </div>
-      </div>
       </div>
 
       <!-- No Results State -->
@@ -442,6 +464,9 @@ const loadingAnalysis = ref(false)
 // Track last clicked IV question for active row highlighting
 const lastClickedIV = ref(null)
 
+// Track the last question ID we loaded data for (to prevent unnecessary reloads)
+const lastLoadedQuestionId = ref(null)
+
 // Track active question from route (when returning from crosstab)
 const activeQuestionId = computed(() => {
   // When returning from crosstab, secondQuestion will be the IV we visited
@@ -498,24 +523,21 @@ function sortBy(column) {
 }
 
 function navigateToQuestion(ivQuestionId) {
-  // Track the IV we're navigating to
-  lastClickedIV.value = ivQuestionId
-  
-  // Navigate to crosstab with DV (selected question) by IV (clicked question)
-  router.push({
-    name: 'analytics',
-    params: { id: props.surveyId },
-    query: { 
-      section: 'crosstab',
-      firstQuestion: props.selectedQuestion.id,
-      secondQuestion: ivQuestionId,
-      fromStatSig: 'true'
-    }
-  })
+  // TODO: Navigate to crosstab once the crosstab UX is improved
+  // For now, just show a message
+  const item = statSigData.value.find(d => d.id === ivQuestionId)
+  if (item) {
+    alert(`Crosstab view coming soon!\n\nYou clicked: ${item.questionLabel}\n\nThis will show a crosstab of "${props.selectedQuestion.label || props.selectedQuestion.qstLabel}" by "${item.questionLabel}".`)
+  }
 }
 
 async function loadStatSigData() {
   if (!props.selectedQuestion) return
+  
+  // If we already have data for this question, don't reload
+  if (lastLoadedQuestionId.value === props.selectedQuestion.id && statSigData.value.length > 0) {
+    return
+  }
   
   // Only show loading spinner if we don't have any data yet
   if (!statSigData.value || statSigData.value.length === 0) {
@@ -529,6 +551,7 @@ async function loadStatSigData() {
     )
     
     statSigData.value = response.data
+    lastLoadedQuestionId.value = props.selectedQuestion.id // Track that we loaded this question
   } catch (err) {
     console.error('Error loading statistical significance:', err)
     error.value = err.response?.data?.message || err.message || 'Failed to load statistical significance data'
@@ -621,14 +644,17 @@ function parseAIAnalysis(text) {
 // Watch for question changes
 watch(() => props.selectedQuestion, (newQuestion, oldQuestion) => {
   if (newQuestion) {
-    // Clear last clicked IV when question changes from external source
-    if (oldQuestion && newQuestion.id !== oldQuestion.id) {
+    // Only reload data if the question ID actually changed
+    const questionChanged = !oldQuestion || (oldQuestion.id !== newQuestion.id)
+    
+    if (questionChanged) {
       lastClickedIV.value = null
+      loadStatSigData()
+      aiAnalysis.value = '' // Reset AI analysis when question changes
     }
-    loadStatSigData()
-    aiAnalysis.value = '' // Reset AI analysis when question changes
+    // If question is the same, keep existing data and don't reload
   }
-}, { immediate: true })
+})
 
 onMounted(() => {
   if (props.selectedQuestion) {

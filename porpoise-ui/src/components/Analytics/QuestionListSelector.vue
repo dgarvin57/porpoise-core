@@ -1,43 +1,5 @@
 <template>
   <div class="h-full flex flex-col">
-    <!-- Instructions -->
-    <div v-if="selectionMode === 'crosstab'" class="p-4 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800" :class="{ 'animate-pulse-twice': pulseInstructions }">
-      <div class="flex items-start justify-between mb-2">
-        <p class="text-sm text-blue-900 dark:text-blue-100 font-medium">
-          {{ instructionText }}
-        </p>
-        <button
-          @click="showVariableHelp = !showVariableHelp"
-          class="p-1 bg-transparent text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded transition-colors flex-shrink-0 ml-2"
-          title="Learn about variable selection"
-        >
-          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
-          </svg>
-        </button>
-      </div>
-      <div v-if="showVariableHelp" class="mb-2 p-2 bg-white dark:bg-gray-800 rounded text-xs text-gray-700 dark:text-gray-300 border border-blue-200 dark:border-blue-700">
-        <p class="font-medium mb-2">Variable Selection Guide:</p>
-        <p class="mb-2"><strong>First Variable:</strong> Typically your outcome or dependent variable (e.g., satisfaction, opinion)</p>
-        <p class="mb-2"><strong>Second Variable:</strong> Typically your demographic or independent variable (e.g., age, location)</p>
-        <p class="text-gray-600 dark:text-gray-400 italic">Note: You can cross-tabulate any two variables regardless of type.</p>
-      </div>
-      <div class="flex gap-2 text-xs overflow-hidden mt-3">
-        <div class="flex items-center gap-1 min-w-0 flex-1">
-          <span class="inline-flex items-center justify-center w-5 h-5 rounded bg-blue-600 text-white font-semibold flex-shrink-0">1</span>
-          <span class="text-blue-800 dark:text-blue-200 truncate" :title="firstSelection?.label || 'First Variable'">
-            {{ firstSelection?.label || 'First Variable' }}
-          </span>
-        </div>
-        <div class="flex items-center gap-1 min-w-0 flex-1">
-          <span class="inline-flex items-center justify-center w-5 h-5 rounded bg-green-600 text-white font-semibold flex-shrink-0">2</span>
-          <span class="text-blue-800 dark:text-blue-200 truncate" :title="secondSelection?.label || 'Second Variable'">
-            {{ secondSelection?.label || 'Second Variable' }}
-          </span>
-        </div>
-      </div>
-    </div>
-
     <!-- Search Bar -->
     <div class="p-3 border-b border-gray-200 dark:border-gray-700">
       <div class="relative">
@@ -312,6 +274,10 @@ const props = defineProps({
   initialSecondSelection: {
     type: Object,
     default: null // For crosstab mode - initial second question
+  },
+  activeTab: {
+    type: String,
+    default: 'results' // Can be 'results', 'crosstab', 'statsig', etc.
   }
 })
 
@@ -548,6 +514,12 @@ async function loadQuestions() {
 }
 
 function handleQuestionClick(question) {
+  // On statsig tab, don't allow clicking independent variables (type 1)
+  // Visual blocking is handled in getQuestionClasses
+  if (props.activeTab === 'statsig' && question.variableType === 1) {
+    return // Do nothing - IV is disabled on statsig tab
+  }
+  
   if (props.selectionMode === 'single') {
     singleSelection.value = question
     emit('question-selected', question)
@@ -616,6 +588,11 @@ function getSelectionBadgeClasses(question) {
 
 function getQuestionClasses(question) {
   const questionId = question.id || question
+  
+  // On statsig tab, make IVs (type 1) appear disabled
+  if (props.activeTab === 'statsig' && question.variableType === 1) {
+    return 'opacity-40 cursor-not-allowed border-transparent'
+  }
   
   if (props.selectionMode === 'crosstab') {
     const isFirst = firstSelection.value?.id === questionId
