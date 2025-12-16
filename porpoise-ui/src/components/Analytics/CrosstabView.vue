@@ -1,8 +1,8 @@
 <template>
   <div class="h-full flex flex-col bg-gray-50 dark:bg-gray-900">
-      <!-- Loading State - Skeleton -->
+      <!-- Loading State - Skeleton (only show if no data exists yet) -->
       <div 
-        v-if="loading"
+        v-if="loading && !crosstabData"
         class="h-full overflow-auto"
       >
         <div class="pt-3 px-6 pb-6 flex justify-center">
@@ -59,12 +59,9 @@
           <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
           </svg>
-          <h3 class="mt-4 text-base font-medium text-gray-900 dark:text-white">Crosstab Analysis</h3>
+          <h3 class="mt-4 text-base font-medium text-gray-900 dark:text-white">No Variables Selected</h3>
           <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            Select two questions from the list to create a crosstab analysis
-          </p>
-          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
-            Tip: Click to select the first question (dependent variable), then click another to select the second question (independent variable)
+            Click the <span class="font-semibold text-blue-600 dark:text-blue-400">toggle button</span> to the left of a question to select a dependent variable, then click a <span class="font-semibold text-blue-600 dark:text-blue-400">question label</span> to select an independent variable
           </p>
         </div>
       </div>
@@ -91,7 +88,7 @@
             </div>
             
             <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
-              Click a question label to select an independent variable
+              Click a <span class="font-semibold text-blue-600 dark:text-blue-400">question label</span> to select an independent variable
             </p>
             
             <!-- Partial Table - DV rows only -->
@@ -150,7 +147,21 @@
       </div>
 
       <!-- Crosstab Results -->
-      <div v-else-if="crosstabData" class="h-full overflow-auto">
+      <div v-else-if="crosstabData" class="h-full overflow-auto relative">
+        <!-- Loading overlay when refreshing data -->
+        <div 
+          v-if="loading"
+          class="absolute inset-0 bg-gray-50/80 dark:bg-gray-900/80 backdrop-blur-sm z-10 flex items-center justify-center"
+        >
+          <div class="flex items-center gap-3 bg-white dark:bg-gray-800 px-4 py-3 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+            <svg class="animate-spin h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="text-sm text-gray-700 dark:text-gray-300">Updating crosstab...</span>
+          </div>
+        </div>
+        
         <div class="pt-3 px-6 pb-6 flex justify-center">
           <div class="w-full max-w-[833px] mt-[10px]">
             <!-- Header with question label and buttons -->
@@ -553,16 +564,46 @@
     
     <!-- Statistics Modal -->
     <!-- Removed: Now merged with Explanation modal above -->
+    
+    <!-- Onboarding Tooltips -->
+    <!-- DV Selection Tooltip (shown when no variables selected) -->
+    <OnboardingTooltip
+      :show="showDVTooltip"
+      position="left"
+      stepNumber="1"
+      badgeColor="blue"
+      title="Select a Dependent Variable"
+      message="To start your crosstab analysis, hover to the LEFT of any question in the list (over the left margin area). A toggle button will appear - click it to select your dependent variable (what you want to measure)."
+      :showVisualGuide="true"
+      guideType="dv"
+      visualGuideLabel="Click button to the LEFT of question"
+      @dismiss="handleDVTooltipDismiss"
+    />
+    
+    <!-- IV Selection Tooltip (shown when DV selected but no IV) -->
+    <OnboardingTooltip
+      :show="showIVTooltip"
+      position="left"
+      stepNumber="2"
+      badgeColor="green"
+      title="Now Select an Independent Variable"
+      message="Great! Now click directly on any question label in the list to select your independent variable (how you want to group your data). The crosstab will generate automatically."
+      :showVisualGuide="true"
+      guideType="iv"
+      visualGuideLabel="Click question label"
+      @dismiss="handleIVTooltipDismiss"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
 import { API_BASE_URL } from '@/config/api'
 import Button from '../common/Button.vue'
 import CloseButton from '../common/CloseButton.vue'
+import OnboardingTooltip from '../common/OnboardingTooltip.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -597,8 +638,55 @@ const showAIModal = ref(false)
 const aiAnalysis = ref('')
 const loadingAnalysis = ref(false)
 
+// Onboarding tooltips state
+const showIVTooltip = ref(false)
+const showDVTooltip = ref(false)
+
 // Track last request to prevent duplicates
 const lastRequestKey = ref('')
+
+// Check localStorage for tooltip preferences
+const hideIVTooltip = ref(localStorage.getItem('hideIVTooltip') === 'true')
+const hideDVTooltip = ref(localStorage.getItem('hideDVTooltip') === 'true')
+
+// Listen for storage changes (when Reset Tips is clicked in same window)
+const checkTooltipPreferences = () => {
+  const newHideIV = localStorage.getItem('hideIVTooltip') === 'true'
+  const newHideDV = localStorage.getItem('hideDVTooltip') === 'true'
+  
+  // If preferences changed from hidden to not hidden, update and potentially show tooltips
+  if (hideDVTooltip.value && !newHideDV) {
+    hideDVTooltip.value = false
+    // Show DV tooltip if appropriate
+    if (!props.firstQuestion && !props.secondQuestion) {
+      setTimeout(() => {
+        if (!props.firstQuestion && !props.secondQuestion) {
+          showDVTooltip.value = true
+        }
+      }, 500)
+    }
+  }
+  
+  if (hideIVTooltip.value && !newHideIV) {
+    hideIVTooltip.value = false
+    // Show IV tooltip if appropriate
+    if (props.firstQuestion && !props.secondQuestion && !crosstabData.value) {
+      setTimeout(() => {
+        if (props.firstQuestion && !props.secondQuestion) {
+          showIVTooltip.value = true
+        }
+      }, 500)
+    }
+  }
+}
+
+// Poll localStorage every second to check for changes (since storage events don't fire in same window)
+const tooltipCheckInterval = setInterval(checkTooltipPreferences, 1000)
+
+// Cleanup on unmount
+onUnmounted(() => {
+  clearInterval(tooltipCheckInterval)
+})
 
 // Watch for prop changes
 // Auto-generate crosstab when both questions are selected
@@ -615,8 +703,41 @@ watch([() => props.firstQuestion, () => props.secondQuestion], ([first, second])
   } else {
     crosstabData.value = null
     lastRequestKey.value = ''
+    
+    // Show appropriate tooltip based on state
+    if (!first && !second && !hideDVTooltip.value) {
+      // No variables selected - show DV tooltip after a short delay
+      setTimeout(() => {
+        if (!props.firstQuestion && !props.secondQuestion) {
+          showDVTooltip.value = true
+        }
+      }, 500)
+    }
   }
 }, { immediate: true })
+
+// Watch for when DV is selected but IV is not - show IV tooltip
+watch(() => props.firstQuestion, (newVal, oldVal) => {
+  if (newVal && !props.secondQuestion && !hideIVTooltip.value && !crosstabData.value) {
+    setTimeout(() => {
+      if (props.firstQuestion && !props.secondQuestion) {
+        showIVTooltip.value = true
+      }
+    }, 500)
+  }
+  
+  // Auto-dismiss DV tooltip when DV is selected
+  if (newVal && !oldVal && showDVTooltip.value) {
+    showDVTooltip.value = false
+  }
+})
+
+// Auto-dismiss IV tooltip when IV is selected
+watch(() => props.secondQuestion, (newVal, oldVal) => {
+  if (newVal && !oldVal && showIVTooltip.value) {
+    showIVTooltip.value = false
+  }
+})
 
 // Computed
 const dvResponses = computed(() => {
@@ -819,6 +940,23 @@ function formatCellValue(value) {
     return value % 1 === 0 ? value : value.toFixed(1)
   }
   return value
+}
+
+// Tooltip handlers
+function handleDVTooltipDismiss(dontShow) {
+  showDVTooltip.value = false
+  if (dontShow) {
+    localStorage.setItem('hideDVTooltip', 'true')
+    hideDVTooltip.value = true
+  }
+}
+
+function handleIVTooltipDismiss(dontShow) {
+  showIVTooltip.value = false
+  if (dontShow) {
+    localStorage.setItem('hideIVTooltip', 'true')
+    hideIVTooltip.value = true
+  }
 }
 
 // Watch for surveyId changes to clear state

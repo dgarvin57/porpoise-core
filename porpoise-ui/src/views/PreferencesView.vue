@@ -144,6 +144,29 @@
 
               <hr class="border-gray-200 dark:border-gray-700">
 
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="font-medium text-gray-900 dark:text-white">Show Question Numbers</div>
+                  <div class="text-sm text-gray-500 dark:text-gray-400">Display question identifiers (e.g., q1a) in lists</div>
+                </div>
+                <button
+                  @click="toggleQuestionNumbers"
+                  :class="[
+                    'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+                    showQuestionNumbers ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
+                  ]"
+                >
+                  <span
+                    :class="[
+                      'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+                      showQuestionNumbers ? 'translate-x-6' : 'translate-x-1'
+                    ]"
+                  />
+                </button>
+              </div>
+
+              <hr class="border-gray-200 dark:border-gray-700">
+
               <div>
                 <div class="font-medium text-gray-900 dark:text-white mb-2">Default Analytics Table Height</div>
                 <div class="text-sm text-gray-500 dark:text-gray-400 mb-3">Number of rows to show in collapsed state</div>
@@ -276,10 +299,18 @@ async function fetchApiVersion() {
 const tableRowsToShow = ref(3)
 const DEFAULT_HEIGHT_KEY = 'porpoise_table_rows_to_show'
 
+// Question numbers preference
+const showQuestionNumbers = ref(true)
+const SHOW_QUESTION_NUMBERS_KEY = 'porpoise_show_question_numbers'
+
 // Load saved preference
 onMounted(() => {
   const savedRows = parseInt(localStorage.getItem(DEFAULT_HEIGHT_KEY) || '3')
   tableRowsToShow.value = Math.max(2, Math.min(6, savedRows))
+  
+  // Load question numbers preference (default to true)
+  const savedShowQuestionNumbers = localStorage.getItem(SHOW_QUESTION_NUMBERS_KEY)
+  showQuestionNumbers.value = savedShowQuestionNumbers === null ? true : savedShowQuestionNumbers === 'true'
   
   // Fetch API version on mount
   fetchApiVersion()
@@ -287,6 +318,11 @@ onMounted(() => {
 
 function saveTableHeightPreference() {
   localStorage.setItem(DEFAULT_HEIGHT_KEY, tableRowsToShow.value.toString())
+}
+
+function toggleQuestionNumbers() {
+  showQuestionNumbers.value = !showQuestionNumbers.value
+  localStorage.setItem(SHOW_QUESTION_NUMBERS_KEY, showQuestionNumbers.value.toString())
 }
 
 const navItems = [

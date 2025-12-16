@@ -277,6 +277,19 @@
                       </button>
                     </div>
                   </div>
+                  
+                  <!-- Reset Tips Button (only for crosstab tab and if tips have been dismissed) -->
+                  <button
+                    v-if="activeAnalysisTab === 'crosstab' && hasAnyTooltipBeenDismissed"
+                    @click="resetOnboardingTips"
+                    class="ml-auto flex items-center gap-1.5 px-3 py-1 text-xs text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors rounded hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                    title="Reset onboarding tips"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Reset Tips</span>
+                  </button>
                 </div>
               </div>
 
@@ -309,23 +322,10 @@
                 <!-- Crosstab Tab -->
                 <div v-show="activeAnalysisTab === 'crosstab'" class="h-full">
                   <CrosstabView
-                    v-if="crosstabFirstQuestion"
                     :surveyId="surveyId"
                     :firstQuestion="crosstabFirstQuestion"
                     :secondQuestion="crosstabSecondQuestion"
                   />
-                  
-                  <!-- Empty state for Crosstab -->
-                  <div v-else class="h-full flex items-center justify-center">
-                    <div class="text-center max-w-md">
-                      <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">No Variables Selected</h3>
-                      <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Use the toggle button to select a dependent variable, then click a question label to select an independent variable</p>
-                      <p class="text-xs text-gray-400 dark:text-gray-500 italic">Tip: Click the hamburger menu to open the question list</p>
-                    </div>
-                  </div>
                 </div>
 
                 <!-- Statistical Significance Tab -->
@@ -1085,6 +1085,48 @@ async function saveSurveyName() {
 function toggleSidebar() {
   sidebarCollapsed.value = !sidebarCollapsed.value
   localStorage.setItem('sidebarCollapsed', sidebarCollapsed.value)
+}
+
+// Track if any onboarding tooltips have been dismissed (reactive to localStorage changes)
+const hasAnyTooltipBeenDismissed = ref(false)
+
+// Check localStorage on mount and set up polling to detect changes
+onMounted(() => {
+  // Initial check
+  const checkTooltipDismissed = () => {
+    hasAnyTooltipBeenDismissed.value = 
+      localStorage.getItem('hideDVTooltip') === 'true' || 
+      localStorage.getItem('hideIVTooltip') === 'true'
+  }
+  
+  checkTooltipDismissed()
+  
+  // Poll for changes every 500ms (same pattern as CrosstabView)
+  const pollInterval = setInterval(checkTooltipDismissed, 500)
+  
+  // Cleanup on unmount
+  onUnmounted(() => {
+    clearInterval(pollInterval)
+  })
+})
+
+function resetOnboardingTips() {
+  // Clear all onboarding tooltip preferences
+  localStorage.removeItem('hideDVTooltip')
+  localStorage.removeItem('hideIVTooltip')
+  
+  // Update the reactive flag immediately
+  hasAnyTooltipBeenDismissed.value = false
+  
+  // Show confirmation
+  alert('Onboarding tips have been reset! Clear the crosstab selection to see them again.')
+  
+  // If we're already on crosstab tab with no selections, trigger tooltips
+  if (activeAnalysisTab.value === 'crosstab' && !crosstabFirstQuestion.value && !crosstabSecondQuestion.value) {
+    // Clear the selections to trigger the tooltip watch
+    crosstabFirstQuestion.value = null
+    crosstabSecondQuestion.value = null
+  }
 }
 
 function backToProjects() {

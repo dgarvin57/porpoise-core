@@ -97,9 +97,14 @@
           </a>
         </div>
         <a
-          v-if="selectionMode === 'crosstab' && (firstSelection || secondSelection)"
+          v-if="selectionMode === 'crosstab'"
           @click="clearSelections"
-          class="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 cursor-pointer hover:underline"
+          :class="[
+            'cursor-pointer hover:underline',
+            (firstSelection || secondSelection) 
+              ? 'text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300'
+              : 'text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50'
+          ]"
         >
           Clear Selection
         </a>
@@ -172,23 +177,27 @@
                 v-for="question in item.questions"
                 :key="question.id"
                 :class="getQuestionClasses(question)"
-                class="w-full flex items-center px-2 py-0.5 rounded cursor-pointer transition-all border-l group"
+                class="w-full flex items-center px-2 py-0.5 rounded cursor-pointer transition-all border-l"
               >
-                <!-- Radio button for DV selection (crosstab radio mode only) -->
-                <input
-                  v-if="selectionMode === 'crosstab' && USE_RADIO_BUTTON_MODE"
-                  type="radio"
-                  name="dv-selection"
-                  :checked="firstSelection?.id === question.id"
-                  @click.stop="handleRadioDVClick(question)"
-                  :disabled="props.activeTab === 'statsig' && question.variableType === 1"
-                  :class="[
-                    'w-3.5 h-3.5 transition-all duration-200 ease-in-out flex-shrink-0 mr-2 cursor-pointer',
-                    'border-2 border-gray-300 dark:border-gray-600',
-                    'text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0',
-                    firstSelection?.id === question.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
-                    props.activeTab === 'statsig' && question.variableType === 1 ? 'opacity-40 cursor-not-allowed' : ''
-                  ]"
+                <!-- Left hover zone for radio button -->
+                <div class="group/radio flex items-center flex-shrink-0">
+                  <!-- Radio button for DV selection (crosstab radio mode only) -->
+                  <input
+                    v-if="selectionMode === 'crosstab' && USE_RADIO_BUTTON_MODE"
+                    type="radio"
+                    name="dv-selection"
+                    :checked="firstSelection?.id === question.id"
+                    @click.stop="handleRadioDVClick(question)"
+                    :disabled="props.activeTab === 'statsig' && question.variableType === 1"
+                    :class="[
+                      'w-3.5 h-3.5 transition-all duration-200 ease-in-out flex-shrink-0 mr-2 cursor-pointer',
+                      'border-2 border-gray-300 dark:border-gray-600',
+                      'text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0',
+                      firstSelection?.id === question.id ? 'opacity-100' : 'opacity-30 group-hover/radio:opacity-100',
+                      props.activeTab === 'statsig' && question.variableType === 1 ? 'opacity-40 cursor-not-allowed' : ''
+                    ]"
+                  />
+                </div>
                 
                 <!-- Wrapper for indentation (always indent block questions) -->
                 <div class="flex items-center space-x-2 flex-1 min-w-0 ml-6">
@@ -205,7 +214,7 @@
                   
                   <div class="flex-1 min-w-0 leading-none" @click="handleQuestionClick(question)">
                     <span class="text-xs text-gray-700 dark:text-gray-300">{{ question.label }}</span>
-                    <span class="text-xs text-gray-400 dark:text-gray-500 ml-2">{{ question.qstNumber }}</span>
+                    <span v-if="showQuestionNumbers" class="text-xs text-gray-400 dark:text-gray-500 ml-2">{{ question.qstNumber }}</span>
                   </div>
                 </div>
                 
@@ -225,24 +234,27 @@
           <div
             v-else
             :class="getQuestionClasses(item.question || item)"
-            class="w-full flex items-center space-x-2 px-2 py-0 rounded cursor-pointer transition-all border-l-2 group"
+            class="w-full flex items-center space-x-2 px-2 py-0 rounded cursor-pointer transition-all border-l-2"
           >
-            <!-- Radio button for DV selection (crosstab radio mode only) -->
-            <input
-              v-if="selectionMode === 'crosstab' && USE_RADIO_BUTTON_MODE"
-              type="radio"
-              name="dv-selection"
-              :checked="firstSelection?.id === (item.question || item).id"
-              @click.stop="handleRadioDVClick(item.question || item)"
-              :disabled="props.activeTab === 'statsig' && (item.question || item).variableType === 1"
-              :class="[
-                'w-3.5 h-3.5 transition-all duration-200 ease-in-out flex-shrink-0 cursor-pointer',
-                'border-2 border-gray-300 dark:border-gray-600',
-                'text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0',
-                firstSelection?.id === (item.question || item).id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
-                props.activeTab === 'statsig' && (item.question || item).variableType === 1 ? 'opacity-40 cursor-not-allowed' : ''
-              ]"
-            />
+            <!-- Left hover zone for radio button -->
+            <div class="group/radio flex items-center flex-shrink-0">
+              <!-- Radio button for DV selection (crosstab radio mode only) -->
+              <input
+                v-if="selectionMode === 'crosstab' && USE_RADIO_BUTTON_MODE"
+                type="radio"
+                name="dv-selection"
+                :checked="firstSelection?.id === (item.question || item).id"
+                @click.stop="handleRadioDVClick(item.question || item)"
+                :disabled="props.activeTab === 'statsig' && (item.question || item).variableType === 1"
+                :class="[
+                  'w-3.5 h-3.5 transition-all duration-200 ease-in-out flex-shrink-0 cursor-pointer',
+                  'border-2 border-gray-300 dark:border-gray-600',
+                  'text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0',
+                  firstSelection?.id === (item.question || item).id ? 'opacity-100' : 'opacity-30 group-hover/radio:opacity-100',
+                  props.activeTab === 'statsig' && (item.question || item).variableType === 1 ? 'opacity-40 cursor-not-allowed' : ''
+                ]"
+              />
+            </div>
             
             <!-- Variable Type Icon (always show) -->
             <svg 
@@ -257,7 +269,7 @@
             
             <div class="flex-1 min-w-0 leading-none" @click="handleQuestionClick(item.question || item)">
               <span class="text-xs text-gray-700 dark:text-gray-300">{{ (item.question || item).label }}</span>
-              <span class="text-xs text-gray-400 dark:text-gray-500 ml-2">{{ (item.question || item).qstNumber }}</span>
+              <span v-if="showQuestionNumbers" class="text-xs text-gray-400 dark:text-gray-500 ml-2">{{ (item.question || item).qstNumber }}</span>
             </div>
             
             <!-- Selection Badge (right side) -->
@@ -277,12 +289,15 @@
 
 <script setup>
 import { API_BASE_URL } from '@/config/api'
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
 import Button from '../common/Button.vue'
 
 // Feature flag: Set to true to use radio button DV selection mode
 const USE_RADIO_BUTTON_MODE = true
+
+// LocalStorage key for question numbers preference
+const SHOW_QUESTION_NUMBERS_KEY = 'porpoise_show_question_numbers'
 
 const props = defineProps({
   surveyId: {
@@ -401,6 +416,31 @@ watch(() => props.questions, (newQuestions) => {
 
 // Single selection state
 const singleSelection = ref(null)
+
+// Preference for showing question numbers
+const showQuestionNumbers = ref(true)
+
+// Check localStorage preference on mount and when storage changes
+onMounted(() => {
+  const savedPref = localStorage.getItem(SHOW_QUESTION_NUMBERS_KEY)
+  showQuestionNumbers.value = savedPref === null ? true : savedPref === 'true'
+  
+  // Listen for storage changes (e.g., from preferences page)
+  const handleStorageChange = () => {
+    const savedPref = localStorage.getItem(SHOW_QUESTION_NUMBERS_KEY)
+    showQuestionNumbers.value = savedPref === null ? true : savedPref === 'true'
+  }
+  window.addEventListener('storage', handleStorageChange)
+  
+  // Also poll for changes in the same tab
+  const pollInterval = setInterval(handleStorageChange, 500)
+  
+  // Cleanup
+  onUnmounted(() => {
+    window.removeEventListener('storage', handleStorageChange)
+    clearInterval(pollInterval)
+  })
+})
 
 // Computed
 const filteredQuestions = computed(() => {
