@@ -532,31 +532,23 @@ function navigateToQuestion(ivQuestionId) {
 }
 
 async function loadStatSigData() {
-  console.log('loadStatSigData called, selectedQuestion:', props.selectedQuestion?.label)
-  
   if (!props.selectedQuestion) return
-  
-  console.log('Checking cache, lastLoadedQuestionId:', lastLoadedQuestionId.value, 'current:', props.selectedQuestion.id)
   
   // If we already have data for this question, don't reload
   if (lastLoadedQuestionId.value === props.selectedQuestion.id) {
-    console.log('Using cached data')
     return
   }
   
   loading.value = true
   error.value = null
   
-  console.log('Loading fresh data for question:', props.selectedQuestion.id)
-  
   try {
     const response = await axios.get(
       `${API_BASE_URL}/api/survey-analysis/${props.surveyId}/statistical-significance/${props.selectedQuestion.id}`
     )
     
-    console.log('StatSig data loaded:', response.data?.length, 'items')
     statSigData.value = response.data
-    lastLoadedQuestionId.value = props.selectedQuestion.id // Track that we loaded this question
+    lastLoadedQuestionId.value = props.selectedQuestion.id
   } catch (err) {
     console.error('Error loading statistical significance:', err)
     error.value = err.response?.data?.message || err.message || 'Failed to load statistical significance data'
@@ -648,17 +640,9 @@ function parseAIAnalysis(text) {
 
 // Watch for question changes
 watch(() => props.selectedQuestion, (newQuestion, oldQuestion) => {
-  console.log('StatSig watcher triggered:', { 
-    newQuestion: newQuestion?.label, 
-    newId: newQuestion?.id,
-    oldId: oldQuestion?.id 
-  })
-  
   if (newQuestion) {
     // Only reload data if the question ID actually changed
     const questionChanged = !oldQuestion || (oldQuestion.id !== newQuestion.id)
-    
-    console.log('Question changed?', questionChanged)
     
     if (questionChanged) {
       lastClickedIV.value = null
@@ -670,7 +654,6 @@ watch(() => props.selectedQuestion, (newQuestion, oldQuestion) => {
 })
 
 onMounted(() => {
-  console.log('StatSig mounted, selected question:', props.selectedQuestion?.label)
   if (props.selectedQuestion) {
     loadStatSigData()
   }
