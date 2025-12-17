@@ -32,11 +32,14 @@
       </div>
     </div>
 
-    <!-- Frequency Distribution Chart Component -->
-    <FrequencyDistributionChart 
-      :question="question"
-      class="pt-5"
-    />
+    <!-- Chart Card -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm">
+      <div class="p-6">
+        <FrequencyDistributionChart 
+          :question="question"
+        />
+      </div>
+    </div>
   </div>
 </template>
 

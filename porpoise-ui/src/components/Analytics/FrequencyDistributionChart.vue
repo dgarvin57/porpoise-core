@@ -13,8 +13,8 @@
         <div class="flex-1 flex items-center gap-2">
           <div class="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-6 relative overflow-hidden">
             <div
-              class="h-full rounded-full bg-blue-600 dark:bg-blue-500 flex items-center justify-end pr-2"
-              :style="{ width: `${response.percentage}%` }"
+              class="h-full rounded-full flex items-center justify-end pr-2"
+              :style="{ width: `${response.percentage}%`, backgroundColor: '#3b82f6' }"
             >
               <span class="text-xs font-semibold text-white">
                 {{ response.percentage.toFixed(1) }}%
