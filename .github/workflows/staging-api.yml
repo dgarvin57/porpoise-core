@@ -5,6 +5,9 @@ on:
     branches:
       - develop
 
+permissions:
+  contents: write
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -26,12 +29,48 @@ jobs:
       - name: Run tests
         run: dotnet test --no-build --configuration Release --verbosity normal --filter "FullyQualifiedName!~DataAccess.Tests"
 
-  deploy:
+  bump-version:
     needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Run bump-version.sh for staging
+        run: |
+          chmod +x scripts/bump-version.sh
+          ./scripts/bump-version.sh --ci
+
+      - name: Push version bump to develop
+        run: |
+          git push origin develop || echo "No version changes to push"
+
+  deploy:
+    needs: bump-version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: develop
 
       - name: Install Railway CLI
         run: npm install -g @railway/cli@latest
