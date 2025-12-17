@@ -8,13 +8,21 @@ Porpoise uses **Semantic Versioning** (SemVer): `MAJOR.MINOR.PATCH`
 - **MINOR** (1.X.0): New features, enhancements, non-breaking changes  
 - **PATCH** (1.0.X): Bug fixes, small tweaks, performance improvements
 
-## Current Version: 1.3.2
+## Current Version: 1.4.0
 
 ### Single Source of Truth
 Version is maintained in `porpoise-ui/package.json` and auto-synced to:
 - `Porpoise.Api/Porpoise.Api.csproj` (synced by bump script)
 
 ### Version History
+
+#### 1.4.0 (2025-12-17)
+- Refactor: Extract Results tab to ResultsTabContent component
+- Cleanup: Remove 3 unused files (~1140 lines of dead code)
+- Style: Add card wrapper to Results chart for consistency
+- Style: Fix crosstab header layout to match StatSig tab
+- Style: Unified bar chart colors (#3b82f6) and rounded bars
+- Architecture: Match Results tab to CrosstabView/StatSigView pattern
 
 #### 1.3.2 (2025-12-16)
 - fix: prevent duplicate crosstab API calls on selection
