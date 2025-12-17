@@ -5,10 +5,10 @@
       <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
         <div class="relative flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 text-yellow-600 fill-yellow-600 dark:text-yellow-400 dark:fill-transparent" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
             </svg>
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">AI Analysis</h3>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ context || 'AI Analysis' }}</h3>
           </div>
           <div class="absolute left-1/2 transform -translate-x-1/2">
             <span class="text-base font-semibold text-blue-600 dark:text-blue-400 whitespace-nowrap">
@@ -63,8 +63,8 @@
 
         <!-- Empty State -->
         <div v-else class="text-center py-12">
-          <div class="mb-4">
-            <svg class="w-16 h-16 mx-auto text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 mb-4">
+            <svg class="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
@@ -105,7 +105,11 @@ const props = defineProps({
   show: Boolean,
   questionLabel: String,
   analysis: String,
-  loading: Boolean
+  loading: Boolean,
+  context: {
+    type: String,
+    default: ''
+  }
 })
 
 defineEmits(['close', 'generate', 'regenerate'])

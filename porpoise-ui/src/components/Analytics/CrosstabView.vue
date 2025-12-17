@@ -163,45 +163,71 @@
         </div>
         
         <div class="pt-3 px-6 pb-6 flex justify-center">
-          <div class="w-full max-w-[833px] mt-[10px]">
-            <!-- Header with question label and buttons -->
-            <div class="flex items-end justify-between mb-2 pb-2">
-              <div>
-                <h3 class="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                  <span>{{ crosstabData.firstQuestion.label }}</span>
-                  <span class="inline-flex items-center justify-center w-4 h-4 rounded bg-blue-600 text-white text-xs font-semibold flex-shrink-0">1</span>
-                  <span class="text-gray-500 dark:text-gray-400 font-normal">by</span>
-                  <span>{{ crosstabData.secondQuestion.label }}</span>
-                  <span class="inline-flex items-center justify-center w-4 h-4 rounded bg-green-600 text-white text-xs font-semibold flex-shrink-0">2</span>
-                </h3>
-                <div class="text-[10px] font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide">
-                  CROSSTAB
-                </div>
+          <div class="w-full max-w-[833px]">
+            <!-- Header matching Results/StatSig tabs -->
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2 flex-wrap">
+                <span>{{ crosstabData.firstQuestion.label }}</span>
+                <span class="inline-flex items-center justify-center w-4 h-4 rounded bg-blue-600 text-white text-xs font-semibold flex-shrink-0">1</span>
+                <span class="text-gray-500 dark:text-gray-400 font-normal">by</span>
+                <span>{{ crosstabData.secondQuestion.label }}</span>
+                <span class="inline-flex items-center justify-center w-4 h-4 rounded bg-green-600 text-white text-xs font-semibold flex-shrink-0">2</span>
+              </h3>
+            </div>
+            
+            <!-- Subtitle row with stats and controls -->
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <div class="uppercase tracking-wide font-medium text-xs text-blue-600 dark:text-blue-400">CROSSTAB</div>
               </div>
-              <div class="flex gap-0">
-                <!-- Total N Display -->
-                <div class="text-sm text-gray-600 dark:text-gray-400 mt-[5px]">
+              
+              <div class="flex items-center gap-3">
+                <div 
+                  class="text-xs"
+                  :class="displayMode === 'n' ? 'text-red-800 dark:text-red-400 font-semibold' : 'text-gray-600 dark:text-gray-400'"
+                  :title="displayMode === 'n' ? 'Total number of survey responses used in this crosstab analysis' : 'Total sample size for this analysis'"
+                >
                   <span class="font-medium">Total N:</span> {{ crosstabData.totalN }}
                 </div>
+                
+                <!-- Display Mode Toggle (% vs N) -->
+                <div 
+                  class="flex items-center bg-gray-100 dark:bg-gray-700 rounded-md p-0.5"
+                  title="Toggle between percentages and counts. When N is selected (red), the table shows actual response counts instead of percentages."
+                >
+                  <button
+                    @click="displayMode = 'percent'"
+                    :class="[
+                      'px-2 py-0.5 text-xs font-medium rounded transition-colors',
+                      displayMode === 'percent'
+                        ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                    ]"
+                  >
+                    %
+                  </button>
+                  <button
+                    @click="displayMode = 'n'"
+                    :class="[
+                      'px-2 py-0.5 text-xs font-medium rounded transition-colors',
+                      displayMode === 'n'
+                        ? 'bg-red-600 dark:bg-red-600 text-white shadow-sm'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                    ]"
+                  >
+                    N
+                  </button>
+                </div>
+                
                 <!-- Info Button -->
                 <button 
                   @click="showExplanation = true"
-                  class="inline-flex gap-2 pl-3 py-1 px-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                  class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
                   title="Understanding crosstabs and statistical measures"
                 >
                   <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
                   </svg>
-                </button>
-                <!-- AI Analysis Button -->
-                <button 
-                  @click="showAIModal = true"
-                  class="inline-flex justify-center gap-2 px-3 py-1 text-gray-700 dark:text-gray-200 bg-transparent hover:bg-gray-200/50 dark:hover:bg-gray-700/50 rounded-lg transition-colors"
-                >
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                  </svg>
-                  AI Analysis
                 </button>
               </div>
             </div>
@@ -215,28 +241,34 @@
                   <th 
                     v-for="(col, idx) in tableColumns"
                     :key="idx"
-                    class="px-6 py-1.5 text-left text-xs font-semibold text-gray-800 dark:text-gray-400 uppercase tracking-wider"
+                    :class="[
+                      'px-6 py-1.5 text-xs font-semibold uppercase tracking-wider',
+                      idx === 0 ? 'text-left bg-blue-100 dark:bg-gray-600 text-gray-900 dark:text-white' : 'text-center text-gray-800 dark:text-gray-400'
+                    ]"
                   >
-                    {{ col.trim() === '' ? '' : col }}
+                    {{ idx === 0 ? 'DV Response' : (col.trim() === '' ? '' : col) }}
                   </th>
                 </tr>
               </thead>
               <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 <tr
-                  v-for="(row, rowIdx) in crosstabData.table"
+                  v-for="(row, rowIdx) in displayTable"
                   :key="rowIdx"
                   :class="[
-                    'hover:bg-blue-50 dark:hover:bg-gray-700',
-                    rowIdx % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700/30'
+                    'hover:bg-blue-50 dark:hover:bg-gray-700 transition-colors',
+                    getRowBackgroundClass(row, rowIdx)
                   ]"
                 >
                   <td
                     v-for="(col, colIdx) in tableColumns"
                     :key="colIdx"
-                    class="px-6 py-1 text-xs whitespace-nowrap"
-                    :class="colIdx === 0 ? 'font-medium text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-300'"
+                    :class="[
+                      'px-6 py-1 text-xs whitespace-nowrap',
+                      colIdx === 0 ? 'font-semibold text-gray-900 dark:text-white bg-blue-50/50 dark:bg-gray-700/50' : 'text-center',
+                      getCellColorClass(row, colIdx)
+                    ]"
                   >
-                    {{ formatCellValue(row[col]) }}
+                    {{ formatCellValue(row[col], colIdx === 0 ? null : row[tableColumns[0]]) }}
                   </td>
                 </tr>
               </tbody>
@@ -246,29 +278,31 @@
 
         <!-- Chart Card -->
         <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm mt-4">
-          <div class="px-6 py-2 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-            <h3 class="text-sm font-medium text-gray-900 dark:text-white">
-              {{ crosstabData.firstQuestion.label }}
-            </h3>
-            <div class="flex items-center gap-3">
-              <label class="flex items-center cursor-pointer">
-                <input
-                  type="radio"
-                  v-model="graphMode"
-                  value="index"
-                  class="w-3 h-3 text-blue-600 border-gray-300 focus:ring-blue-500"
-                />
-                <span class="ml-1.5 text-xs text-gray-700 dark:text-gray-300">Graph Index</span>
-              </label>
-              <label class="flex items-center cursor-pointer">
-                <input
-                  type="radio"
-                  v-model="graphMode"
-                  value="posneg"
-                  class="w-3 h-3 text-blue-600 border-gray-300 focus:ring-blue-500"
-                />
-                <span class="ml-1.5 text-xs text-gray-700 dark:text-gray-300">Graph Pos/Neg Percent</span>
-              </label>
+          <!-- Graph Mode Tabs -->
+          <div class="border-b border-gray-200 dark:border-gray-700">
+            <div class="flex">
+              <button
+                @click="graphMode = 'index'"
+                :class="[
+                  'flex-1 px-4 py-1.5 text-xs font-medium transition-colors border-b-2',
+                  graphMode === 'index'
+                    ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                ]"
+              >
+                Graph Index
+              </button>
+              <button
+                @click="graphMode = 'posneg'"
+                :class="[
+                  'flex-1 px-4 py-1.5 text-xs font-medium transition-colors border-b-2',
+                  graphMode === 'posneg'
+                    ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
+                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                ]"
+              >
+                Graph Pos/Neg Percent
+              </button>
             </div>
           </div>
           <div class="p-4">
@@ -423,6 +457,26 @@
             </div>
           </div>
           
+          <!-- How to Create a Crosstab -->
+          <div>
+            <h4 class="font-semibold text-gray-900 dark:text-white mb-2">How to Create a Crosstab</h4>
+            <ul class="text-sm text-gray-700 dark:text-gray-300 space-y-1.5 ml-2">
+              <li class="flex gap-2"><span class="text-blue-600 dark:text-blue-400 font-semibold">1.</span> <span>Click the <strong>toggle button</strong> next to your first question (Dependent Variable - what you're measuring)</span></li>
+              <li class="flex gap-2"><span class="text-green-600 dark:text-green-400 font-semibold">2.</span> <span>Click the <strong>question label</strong> for your second question (Independent Variable - how you're grouping)</span></li>
+              <li class="flex gap-2"><span class="text-gray-500 dark:text-gray-400">→</span> <span>The crosstab will generate automatically showing relationships between the two variables</span></li>
+            </ul>
+          </div>
+          
+          <!-- Display Mode Toggle -->
+          <div>
+            <h4 class="font-semibold text-gray-900 dark:text-white mb-2">% / N Toggle</h4>
+            <ul class="text-sm text-gray-700 dark:text-gray-300 space-y-1.5 ml-2">
+              <li><strong>% (Percentages):</strong> Shows what percentage of each group chose each response</li>
+              <li><strong class="text-red-800 dark:text-red-400">N (Counts):</strong> Shows the actual number of respondents in each cell. When active, the N button turns red and all numbers appear in dark red.</li>
+              <li class="text-xs italic text-gray-600 dark:text-gray-400 ml-4">Note: Index and Marginal Percentage rows remain unchanged in both modes</li>
+            </ul>
+          </div>
+          
           <!-- What is Crosstab Analysis -->
           <div>
             <h4 class="font-semibold text-gray-900 dark:text-white mb-2">What is Crosstab Analysis?</h4>
@@ -472,98 +526,16 @@
     </div>
     
     <!-- AI Analysis Modal -->
-    <div v-if="showAIModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" @click.self="showAIModal = false">
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full max-h-[85vh] overflow-y-auto">
-        <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-          <div class="relative flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-              </svg>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">AI Analysis</h3>
-            </div>
-            <div class="absolute left-1/2 transform -translate-x-1/2">
-              <span class="text-base font-semibold text-blue-600 dark:text-blue-400 whitespace-nowrap">
-                {{ crosstabData.firstQuestion.label }} <span class="font-normal">by</span> {{ crosstabData.secondQuestion.label }}
-              </span>
-            </div>
-            <CloseButton @click="showAIModal = false" />
-          </div>
-        </div>
-        <div class="px-6 py-4">
-          <!-- Loading State -->
-          <div v-if="loadingAnalysis" class="flex flex-col items-center justify-center py-8">
-            <svg class="animate-spin h-10 w-10 text-blue-600 dark:text-blue-400 mb-4" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <p class="text-sm text-gray-600 dark:text-gray-400">Generating AI analysis...</p>
-          </div>
-          
-          <!-- Analysis Content -->
-          <div v-else-if="aiAnalysis" class="space-y-4">
-            <div v-for="(section, idx) in parseAIAnalysis(aiAnalysis)" :key="idx">
-              <h4 v-if="section.heading" class="font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-                <span class="w-1 h-5 bg-blue-500 rounded"></span>
-                {{ section.heading }}
-              </h4>
-              <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed" :class="section.heading ? 'ml-3' : ''">
-                {{ section.content }}
-              </p>
-            </div>
-            
-            <!-- Regenerate Option -->
-            <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
-              <Button
-                @click="generateAIAnalysis"
-                variant="ghost"
-                size="sm"
-                :loading="loadingAnalysis"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Regenerate Analysis
-              </Button>
-            </div>
-          </div>
-          
-          <!-- Generate Prompt -->
-          <div v-else class="py-8">
-            <div class="text-center mb-6">
-              <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 mb-4">
-                <svg class="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Generate AI Analysis</h4>
-              <p class="text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-                Our AI will analyze your crosstab data and provide insights including a summary, statistical interpretation, category comparisons, and actionable recommendations.
-              </p>
-            </div>
-            <div class="flex justify-center">
-              <Button
-                @click="generateAIAnalysis"
-                :loading="loadingAnalysis"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                Generate Analysis
-              </Button>
-            </div>
-          </div>
-        </div>
-        <div class="sticky bottom-0 bg-gray-50 dark:bg-gray-900 px-6 py-4 flex justify-end border-t border-gray-200 dark:border-gray-700">
-          <Button @click="showAIModal = false">
-            Close
-          </Button>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Statistics Modal -->
-    <!-- Removed: Now merged with Explanation modal above -->
+    <AIAnalysisModal
+      :show="showAIModal"
+      :questionLabel="crosstabData ? `${crosstabData.firstQuestion.label} by ${crosstabData.secondQuestion.label}` : ''"
+      :analysis="aiAnalysis"
+      :loading="loadingAnalysis"
+      context="Crosstab"
+      @close="showAIModal = false"
+      @generate="generateAIAnalysis"
+      @regenerate="generateAIAnalysis"
+    />
     
     <!-- Onboarding Tooltips -->
     <!-- DV Selection Tooltip (shown when no variables selected) -->
@@ -604,6 +576,7 @@ import { API_BASE_URL } from '@/config/api'
 import Button from '../common/Button.vue'
 import CloseButton from '../common/CloseButton.vue'
 import OnboardingTooltip from '../common/OnboardingTooltip.vue'
+import AIAnalysisModal from './AIAnalysisModal.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -620,10 +593,14 @@ const props = defineProps({
   secondQuestion: {
     type: Object,
     default: null
+  },
+  triggerAIModal: {
+    type: Boolean,
+    default: false
   }
 })
 
-const emit = defineEmits(['selections-changed'])
+const emit = defineEmits(['selections-changed', 'ai-modal-shown'])
 
 // Check if navigated from Stat Sig view
 const isFromStatSig = computed(() => route.query.fromStatSig === 'true')
@@ -633,6 +610,7 @@ const loading = ref(false)
 const error = ref(null)
 const crosstabData = ref(null)
 const graphMode = ref('index') // 'index' or 'posneg'
+const displayMode = ref('percent') // 'percent' or 'n' - for table display (always starts as percent)
 const showExplanation = ref(false)
 const showAIModal = ref(false)
 const aiAnalysis = ref('')
@@ -739,6 +717,14 @@ watch(() => props.secondQuestion, (newVal, oldVal) => {
   }
 })
 
+// Watch for parent triggering AI modal
+watch(() => props.triggerAIModal, (newVal) => {
+  if (newVal) {
+    showAIModal.value = true
+    emit('ai-modal-shown')
+  }
+})
+
 // Computed
 const dvResponses = computed(() => {
   // Get response labels from firstQuestion for partial crosstab display
@@ -752,6 +738,65 @@ const tableColumns = computed(() => {
   }
   // Include all columns, even those with space as name (first column)
   return Object.keys(crosstabData.value.table[0])
+})
+
+// Transform table data based on display mode (% or N)
+const displayTable = computed(() => {
+  if (!crosstabData.value || !crosstabData.value.table) return []
+  
+  // If showing percentages, return original table (formatted percentages)
+  if (displayMode.value === 'percent') {
+    return crosstabData.value.table
+  }
+  
+  // If showing N, calculate N from percentage strings
+  const totalN = crosstabData.value.totalN || 0
+  const firstColName = tableColumns.value[0] || ''
+  
+  // Get the marginal percentage row to calculate column totals
+  const marginalRow = crosstabData.value.table.find(r => {
+    const label = r[firstColName]
+    return label && label.trim().toLowerCase().includes('marginal')
+  })
+  
+  // Get the original table structure to know row order
+  return crosstabData.value.table.map(row => {
+    const newRow = { ...row }
+    const rowLabel = row[firstColName]
+    const trimmedLabel = rowLabel ? rowLabel.trim() : ''
+    
+    // Keep Index and Marginal Percentage rows as-is (they already have the right values)
+    if (trimmedLabel.toLowerCase().includes('index') || trimmedLabel.toLowerCase().includes('marginal')) {
+      return newRow
+    }
+    
+    // For data rows, calculate N from percentage strings
+    tableColumns.value.forEach((col, idx) => {
+      if (idx === 0) return // Skip first column (row labels)
+      
+      const cellValue = row[col]
+      
+      // Check if it's a percentage string (e.g., "55.4%")
+      if (typeof cellValue === 'string' && cellValue.includes('%')) {
+        // Parse the percentage value
+        const percentValue = parseFloat(cellValue.replace('%', ''))
+        
+        if (!isNaN(percentValue)) {
+          // Get the column total from marginal percentage
+          const colMarginalStr = marginalRow ? marginalRow[col] : '100%'
+          const colMarginal = parseFloat(colMarginalStr.replace('%', ''))
+          const columnTotal = Math.round((totalN * colMarginal) / 100)
+          
+          // Convert percentage to count: N = (percentage * columnTotal) / 100
+          const countValue = Math.round((percentValue * columnTotal) / 100)
+          
+          newRow[col] = countValue
+        }
+      }
+    })
+    
+    return newRow
+  })
 })
 
 const quickTipText = computed(() => {
@@ -882,50 +927,6 @@ function backToStatSig() {
   })
 }
 
-function parseAIAnalysis(text) {
-  if (!text) return []
-  
-  const sections = []
-  const lines = text.split('\n')
-  let currentSection = null
-  
-  for (const line of lines) {
-    const trimmedLine = line.trim()
-    
-    // Check if line is a heading (starts with ##)
-    if (trimmedLine.startsWith('## ')) {
-      // Save previous section if it exists
-      if (currentSection) {
-        sections.push(currentSection)
-      }
-      // Start new section
-      currentSection = {
-        heading: trimmedLine.substring(3).trim(),
-        content: ''
-      }
-    } else if (trimmedLine && currentSection) {
-      // Add content to current section
-      if (currentSection.content) {
-        currentSection.content += ' '
-      }
-      currentSection.content += trimmedLine
-    } else if (trimmedLine && !currentSection) {
-      // Content without a heading (shouldn't happen with new format, but handle gracefully)
-      sections.push({
-        heading: null,
-        content: trimmedLine
-      })
-    }
-  }
-  
-  // Don't forget the last section
-  if (currentSection) {
-    sections.push(currentSection)
-  }
-  
-  return sections
-}
-
 function formatPValue(value) {
   if (value == null) return '—'
   if (value < 0.001) return '<.001'
@@ -934,12 +935,54 @@ function formatPValue(value) {
   return value.toFixed(3)
 }
 
-function formatCellValue(value) {
+function formatCellValue(value, rowLabel = null) {
   if (value === null || value === undefined) return '-'
+  if (typeof value === 'string') return value
   if (typeof value === 'number') {
+    // In N mode, show whole numbers without decimals (except for Index and Marginal Percentage rows)
+    if (displayMode.value === 'n' && rowLabel !== 'Index' && rowLabel !== 'Marginal Percentage') {
+      return Math.round(value)
+    }
+    // In percent mode or for Index/Marginal Percentage, show decimals
     return value % 1 === 0 ? value : value.toFixed(1)
   }
   return value
+}
+
+// Helper function to determine row background styling
+function getRowBackgroundClass(row, rowIdx) {
+  const rowLabel = row[tableColumns.value[0]]?.toString().toLowerCase() || ''
+  
+  // Index row - subtle blue tint
+  if (rowLabel.includes('index') && !rowLabel.includes('marginal')) {
+    return 'bg-blue-50/70 dark:bg-gray-700/70'
+  }
+  
+  // Marginal Percentage row - subtle gray tint
+  if (rowLabel.includes('marginal')) {
+    return 'bg-gray-100 dark:bg-gray-700'
+  }
+  
+  // Regular rows - no alternating, just white/dark
+  return 'bg-white dark:bg-gray-800'
+}
+
+// Helper function to determine cell text color
+function getCellColorClass(row, colIdx) {
+  if (colIdx === 0) return ''
+  
+  const rowLabel = row[tableColumns.value[0]]?.toString().toLowerCase() || ''
+  const isSpecialRow = rowLabel.includes('index') || rowLabel.includes('marginal')
+  
+  // Special rows always use normal color
+  if (isSpecialRow) {
+    return 'text-gray-600 dark:text-gray-300 font-medium'
+  }
+  
+  // Data rows: red in N mode, gray in percent mode
+  return displayMode.value === 'n' 
+    ? 'text-red-800 dark:text-red-400 font-semibold' 
+    : 'text-gray-600 dark:text-gray-300'
 }
 
 // Tooltip handlers
@@ -967,6 +1010,7 @@ watch(() => props.surveyId, (newId, oldId) => {
     error.value = null
     loading.value = false
     lastRequestKey.value = ''
+    displayMode.value = 'percent' // Reset to percentages when survey changes
   }
 }, { immediate: false })
 </script>
