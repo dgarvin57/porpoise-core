@@ -278,18 +278,39 @@
                     </div>
                   </div>
                   
-                  <!-- Reset Tips Button (only for crosstab tab and if tips have been dismissed) -->
-                  <button
-                    v-if="activeAnalysisTab === 'crosstab' && hasAnyTooltipBeenDismissed"
-                    @click="resetOnboardingTips"
-                    class="ml-auto flex items-center gap-1.5 px-3 py-1 text-xs text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors rounded hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                    title="Reset onboarding tips"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>Reset Tips</span>
-                  </button>
+                  <!-- Right side buttons -->
+                  <div class="flex items-center gap-2">
+                    <!-- AI Analysis Button (appears on most tabs) -->
+                    <button
+                      @click="handleAIAnalysisClick"
+                      :disabled="!canShowAIAnalysis"
+                      :class="[
+                        'flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors',
+                        canShowAIAnalysis 
+                          ? 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer'
+                          : 'text-gray-400 dark:text-gray-600 cursor-not-allowed opacity-50'
+                      ]"
+                      :title="getAIAnalysisTooltip"
+                    >
+                      <svg class="w-5 h-5 text-yellow-600 fill-yellow-600 dark:text-yellow-400 dark:fill-transparent" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                      </svg>
+                      AI Analysis
+                    </button>
+                    
+                    <!-- Reset Tips Button (only for crosstab tab and if tips have been dismissed) -->
+                    <button
+                      v-if="activeAnalysisTab === 'crosstab' && hasAnyTooltipBeenDismissed"
+                      @click="resetOnboardingTips"
+                      class="flex items-center gap-1.5 px-3 py-1 text-xs text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors rounded hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                      title="Reset onboarding tips"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>Reset Tips</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -325,6 +346,8 @@
                     :surveyId="surveyId"
                     :firstQuestion="crosstabFirstQuestion"
                     :secondQuestion="crosstabSecondQuestion"
+                    :triggerAIModal="showCrosstabAIModal"
+                    @ai-modal-shown="showCrosstabAIModal = false"
                   />
                 </div>
 
@@ -334,6 +357,8 @@
                     <StatSigView
                       :surveyId="surveyId"
                       :selectedQuestion="selectedQuestion"
+                      :triggerAIModal="showStatSigAIModal"
+                      @ai-modal-shown="showStatSigAIModal = false"
                     />
                   </div>
                   
@@ -369,6 +394,7 @@
       :questionLabel="selectedQuestionWithResponses?.label || selectedQuestionWithResponses?.qstLabel || ''"
       :analysis="aiAnalysis"
       :loading="loadingAnalysis"
+      :context="activeAnalysisTab === 'results' ? 'Results' : activeAnalysisTab === 'statsig' ? 'Statistical Significance' : ''"
       @close="showAIModal = false"
       @generate="generateAIAnalysis"
       @regenerate="generateAIAnalysis"
@@ -1128,6 +1154,68 @@ function resetOnboardingTips() {
     crosstabSecondQuestion.value = null
   }
 }
+
+// AI Analysis - computed to determine when to show the button
+const canShowAIAnalysis = computed(() => {
+  // Show on Results tab if a question is selected and has responses
+  if (activeAnalysisTab.value === 'results') {
+    return selectedQuestionWithResponses.value && 
+           selectedQuestionWithResponses.value.responses && 
+           selectedQuestionWithResponses.value.responses.length > 0
+  }
+  
+  // Show on Crosstab tab if both questions are selected AND crosstab data exists
+  if (activeAnalysisTab.value === 'crosstab') {
+    return crosstabFirstQuestion.value && crosstabSecondQuestion.value
+  }
+  
+  // Show on Stat Sig tab if a question is selected (dependent variable)
+  if (activeAnalysisTab.value === 'statsig') {
+    return selectedQuestion.value !== null
+  }
+  
+  return false
+})
+
+// AI Analysis tooltip text
+const getAIAnalysisTooltip = computed(() => {
+  if (activeAnalysisTab.value === 'results') {
+    if (!selectedQuestionWithResponses.value || !selectedQuestionWithResponses.value.responses || selectedQuestionWithResponses.value.responses.length === 0) {
+      return 'Select a question to enable AI analysis'
+    }
+    return 'Get AI-powered insights about this question\'s response patterns'
+  } else if (activeAnalysisTab.value === 'crosstab') {
+    if (!crosstabFirstQuestion.value || !crosstabSecondQuestion.value) {
+      return 'Select two questions to enable AI analysis of their relationship'
+    }
+    return 'Get AI analysis of the relationship between these two questions'
+  } else if (activeAnalysisTab.value === 'statsig') {
+    if (!selectedQuestion.value) {
+      return 'Select a dependent variable to enable AI analysis'
+    }
+    return 'Get AI insights about statistical significance for this question'
+  }
+  return 'Get AI-powered analysis'
+})
+
+// AI Analysis click handler - delegates to appropriate child component
+function handleAIAnalysisClick() {
+  // Emit events that child components are listening for
+  // The actual modals are managed by the child components (ResultsChart, CrosstabView, StatSigView)
+  if (activeAnalysisTab.value === 'results') {
+    handleAIAnalysis()
+  } else if (activeAnalysisTab.value === 'statsig') {
+    showStatSigAIModal.value = true
+  } else if (activeAnalysisTab.value === 'crosstab') {
+    // For crosstab, we need to trigger the AI modal in CrosstabView
+    // This will be handled by setting a ref that CrosstabView watches
+    showCrosstabAIModal.value = true
+  }
+}
+
+// Refs to control AI modals from parent
+const showCrosstabAIModal = ref(false)
+const showStatSigAIModal = ref(false)
 
 function backToProjects() {
   router.push('/')

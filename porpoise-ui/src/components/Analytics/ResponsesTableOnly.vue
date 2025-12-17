@@ -29,21 +29,21 @@
     <!-- Table Content -->
     <div class="flex-1 overflow-y-auto min-h-0">
       <table class="min-w-full text-xs">
-        <thead class="bg-gray-50 dark:bg-gray-700 sticky top-0 z-10">
+        <thead class="bg-blue-50 dark:bg-gray-700 sticky top-0 z-10">
           <tr>
-            <th class="px-2 py-1 text-center text-xs font-medium text-gray-700 dark:text-gray-400 uppercase tracking-wider">
+            <th class="px-2 py-1 text-center text-xs font-semibold uppercase tracking-wider bg-blue-100 dark:bg-gray-600 text-gray-900 dark:text-white">
               #
             </th>
-            <th class="px-2 py-1 text-left text-xs font-medium text-gray-700 dark:text-gray-400 uppercase tracking-wider">
+            <th class="px-2 py-1 text-left text-xs font-semibold uppercase tracking-wider bg-blue-100 dark:bg-gray-600 text-gray-900 dark:text-white">
               Response
             </th>
-            <th class="px-2 py-1 text-right text-xs font-medium text-gray-700 dark:text-gray-400 uppercase tracking-wider">
+            <th class="px-2 py-1 text-right text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wider">
               %
             </th>
-            <th class="px-2 py-1 text-center text-xs font-medium text-gray-700 dark:text-gray-400 uppercase tracking-wider">
+            <th class="px-2 py-1 text-center text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wider">
               Index
             </th>
-            <th v-if="localColumnMode !== 'blank'" class="px-2 py-1 text-right text-xs font-medium text-gray-700 dark:text-gray-400 uppercase tracking-wider">
+            <th v-if="localColumnMode !== 'blank'" class="px-2 py-1 text-right text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wider">
               {{ columnModeLabel }}
             </th>
           </tr>
@@ -52,12 +52,12 @@
           <tr 
             v-for="(response, index) in computedResponses" 
             :key="index"
-            class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            class="bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-gray-700 transition-colors"
           >
-            <td class="px-2 py-1 text-center text-gray-500 dark:text-gray-400">
+            <td class="px-2 py-1 text-center font-semibold text-gray-900 dark:text-white bg-blue-50/50 dark:bg-gray-700/50">
               {{ index + 1 }}
             </td>
-            <td class="px-2 py-1 text-gray-900 dark:text-white">
+            <td class="px-2 py-1 font-semibold text-gray-900 dark:text-white bg-blue-50/50 dark:bg-gray-700/50">
               {{ response.label }}
             </td>
             <td class="px-2 py-1 text-right font-medium text-gray-900 dark:text-white">

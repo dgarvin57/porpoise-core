@@ -54,25 +54,10 @@
               </div>
 
               <!-- Question Chart -->
-              <QuestionChart :question="selectedQuestion" />
+              <ResultsChart :question="selectedQuestion" />
               
               <!-- Action Buttons -->
               <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex items-center gap-3">
-                <Button
-                  @click="showAIModal = true"
-                  variant="ghost"
-                  size="md"
-                  class="relative"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                  </svg>
-                  <span class="text-base font-medium glow-intense">AI Analysis</span>
-                  <span v-if="aiAnalysis === ''" class="absolute -top-1 -right-1 flex h-3 w-3">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-500 shadow-lg shadow-blue-500/75"></span>
-                  </span>
-                </Button>
                 <Button
                   @click="showUnderstanding = true"
                   variant="ghost"
@@ -93,10 +78,10 @@
               <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
                 <div class="relative flex items-center justify-between">
                   <div class="flex items-center gap-2">
-                    <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 text-yellow-600 fill-yellow-600 dark:text-yellow-400 dark:fill-transparent" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                     </svg>
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">AI Analysis</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Results</h3>
                   </div>
                   <div class="absolute left-1/2 transform -translate-x-1/2">
                     <span class="text-base font-semibold text-blue-600 dark:text-blue-400 whitespace-nowrap">
@@ -254,7 +239,7 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import axios from 'axios'
 import { API_BASE_URL } from '@/config/api'
-import QuestionChart from './QuestionChart.vue'
+import ResultsChart from './ResultsChart.vue'
 import QuestionListSelector from './QuestionListSelector.vue'
 import Button from '../common/Button.vue'
 import CloseButton from '../common/CloseButton.vue'
@@ -298,7 +283,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['question-selected', 'expanded-blocks-changed', 'column-mode-changed', 'info-expanded-changed', 'info-tab-changed', 'analyze-crosstab'])
+const emit = defineEmits(['question-selected', 'expanded-blocks-changed', 'column-mode-changed', 'info-expanded-changed', 'info-tab-changed', 'analyze-crosstab', 'ai-modal-shown'])
 
 const selectedQuestion = ref(null)
 const columnMode = ref('totalN')
@@ -320,6 +305,14 @@ const showAIModal = ref(false)
 const showUnderstanding = ref(false)
 const aiAnalysis = ref('')
 const loadingAnalysis = ref(false)
+
+// Watch for parent triggering AI modal
+watch(() => props.triggerAIModal, (newVal) => {
+  if (newVal) {
+    showAIModal.value = true
+    emit('ai-modal-shown')
+  }
+})
 
 // Get block stem from first question in the block
 const blockStemForQuestion = computed(() => {

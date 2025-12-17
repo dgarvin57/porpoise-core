@@ -149,16 +149,6 @@
                   <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
                 </svg>
               </button>
-              <!-- AI Analysis Button -->
-              <button 
-                @click="showAIModal = true"
-                class="inline-flex items-center justify-center gap-2 px-3 py-1 text-gray-700 dark:text-gray-200 bg-transparent hover:bg-gray-200/50 dark:hover:bg-gray-700/50 rounded-lg transition-colors"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                </svg>
-                AI Analysis
-              </button>
             </div>
           </div>
 
@@ -340,93 +330,16 @@
     </div>
 
     <!-- AI Analysis Modal -->
-    <div v-if="showAIModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" @click.self="showAIModal = false">
-      <div class="bg-white dark:bg-gray-800 rounded-lg max-w-3xl w-full max-h-[80vh] overflow-y-auto shadow-xl">
-        <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 z-10">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-              </svg>
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">AI Analysis</h3>
-            </div>
-            <div class="absolute left-1/2 transform -translate-x-1/2">
-              <span class="text-base font-semibold text-blue-600 dark:text-blue-400 whitespace-nowrap">
-                {{ selectedQuestion?.label || selectedQuestion?.qstLabel }}
-              </span>
-            </div>
-            <CloseButton @click="showAIModal = false" />
-          </div>
-        </div>
-        <div class="px-6 py-4">
-          <!-- Loading State -->
-          <div v-if="loadingAnalysis" class="flex flex-col items-center justify-center py-8">
-            <svg class="animate-spin h-10 w-10 text-blue-600 dark:text-blue-400 mb-4" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <p class="text-sm text-gray-600 dark:text-gray-400">Generating AI analysis...</p>
-          </div>
-          
-          <!-- Analysis Content -->
-          <div v-else-if="aiAnalysis" class="space-y-4">
-            <div v-for="(section, idx) in parseAIAnalysis(aiAnalysis)" :key="idx">
-              <h4 v-if="section.heading" class="font-semibold text-gray-900 dark:text-white mb-2 flex items-center gap-2">
-                <span class="w-1 h-5 bg-blue-500 rounded"></span>
-                {{ section.heading }}
-              </h4>
-              <div :class="section.heading ? 'ml-3' : ''">
-                <p v-if="section.content" class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
-                  {{ section.content }}
-                </p>
-                <ul v-if="section.bullets && section.bullets.length > 0" class="mt-2 space-y-1">
-                  <li v-for="(bullet, bidx) in section.bullets" :key="bidx" class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed flex items-start gap-2">
-                    <span class="text-blue-500 mt-1 flex-shrink-0">•</span>
-                    <span>{{ bullet }}</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-            
-            <!-- Regenerate Option -->
-            <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
-              <Button
-                @click="generateAIAnalysis"
-                variant="ghost"
-                size="sm"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Regenerate Analysis
-              </Button>
-            </div>
-          </div>
-          
-          <!-- Empty State (Initial) -->
-          <div v-else class="py-8">
-            <h4 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Generate AI Analysis</h4>
-            <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
-              Get AI-powered insights about which variables have the strongest relationships with your selected question and what that means for your survey data.
-            </p>
-            <Button
-              @click="generateAIAnalysis"
-              class="w-full"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-              </svg>
-              Generate AI Analysis
-            </Button>
-          </div>
-        </div>
-        <div class="sticky bottom-0 bg-gray-50 dark:bg-gray-900 px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end">
-          <Button @click="showAIModal = false">
-            Close
-          </Button>
-        </div>
-      </div>
-    </div>
+    <AIAnalysisModal
+      :show="showAIModal"
+      :questionLabel="selectedQuestion?.label || selectedQuestion?.qstLabel || ''"
+      :analysis="aiAnalysis"
+      :loading="loadingAnalysis"
+      context="Statistical Significance"
+      @close="showAIModal = false"
+      @generate="generateAIAnalysis"
+      @regenerate="generateAIAnalysis"
+    />
   </div>
 </template>
 
@@ -437,6 +350,7 @@ import axios from 'axios'
 import { API_BASE_URL } from '@/config/api'
 import Button from '../common/Button.vue'
 import CloseButton from '../common/CloseButton.vue'
+import AIAnalysisModal from './AIAnalysisModal.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -449,6 +363,10 @@ const props = defineProps({
   selectedQuestion: {
     type: Object,
     default: null
+  },
+  triggerAIModal: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -462,6 +380,14 @@ const showExplanation = ref(false)
 const showAIModal = ref(false)
 const aiAnalysis = ref('')
 const loadingAnalysis = ref(false)
+
+// Watch for parent triggering AI modal
+watch(() => props.triggerAIModal, (newVal) => {
+  if (newVal) {
+    showAIModal.value = true
+    emit('ai-modal-shown')
+  }
+})
 
 // Track last clicked IV question for active row highlighting
 const lastClickedIV = ref(null)
@@ -478,7 +404,7 @@ const activeQuestionId = computed(() => {
 })
 
 // Define emits
-const emit = defineEmits(['question-selected'])
+const emit = defineEmits(['question-selected', 'ai-modal-shown'])
 
 // Computed
 const sortedStatSigData = computed(() => {
@@ -587,57 +513,6 @@ async function generateAIAnalysis() {
   } finally {
     loadingAnalysis.value = false
   }
-}
-
-function parseAIAnalysis(text) {
-  if (!text) return []
-  
-  const sections = []
-  const lines = text.split('\n')
-  let currentSection = null
-  
-  for (const line of lines) {
-    const trimmedLine = line.trim()
-    
-    // Check if line is a heading (starts with ##)
-    if (trimmedLine.startsWith('## ')) {
-      // Save previous section if it exists
-      if (currentSection) {
-        sections.push(currentSection)
-      }
-      // Start new section
-      currentSection = {
-        heading: trimmedLine.substring(3).trim(),
-        content: '',
-        bullets: []
-      }
-    } else if (trimmedLine.startsWith('- ') || trimmedLine.startsWith('• ')) {
-      // Bullet point
-      if (currentSection) {
-        currentSection.bullets.push(trimmedLine.substring(2).trim())
-      }
-    } else if (trimmedLine && currentSection) {
-      // Regular paragraph content
-      if (currentSection.content) {
-        currentSection.content += '\n\n' // Double newline for paragraph break
-      }
-      currentSection.content += trimmedLine
-    } else if (trimmedLine && !currentSection) {
-      // Content without a heading
-      sections.push({
-        heading: null,
-        content: trimmedLine,
-        bullets: []
-      })
-    }
-  }
-  
-  // Don't forget the last section
-  if (currentSection) {
-    sections.push(currentSection)
-  }
-  
-  return sections
 }
 
 // Watch for question changes
