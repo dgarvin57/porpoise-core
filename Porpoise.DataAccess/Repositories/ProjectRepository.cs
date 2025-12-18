@@ -202,6 +202,7 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
                 s.Status as status,
                 s.CreatedDate as createdDate,
                 s.ModifiedDate as modifiedDate,
+                s.LastAccessedDate as lastAccessedDate,
                 COUNT(DISTINCT q.Id) as questionCount,
                 GREATEST(COALESCE(MAX(JSON_LENGTH(sd.DataList)), 0) - 1, 0) as caseCount
             FROM Surveys s
@@ -210,7 +211,7 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
             WHERE s.ProjectId = @ProjectId 
             AND s.TenantId = @TenantId
             AND (s.IsDeleted = 0 OR s.IsDeleted IS NULL)
-            GROUP BY s.Id, s.SurveyName, s.Status, s.CreatedDate, s.ModifiedDate
+            GROUP BY s.Id, s.SurveyName, s.Status, s.CreatedDate, s.ModifiedDate, s.LastAccessedDate
             ORDER BY s.SurveyName";
 
         using var connection = _context.CreateConnection();
@@ -236,6 +237,7 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
                 p.ModifiedDate as modifiedDate,
                 p.DefaultWeightingScheme as defaultWeightingScheme,
                 MAX(s.ModifiedDate) as lastModified,
+                MAX(s.LastAccessedDate) as lastAccessedDate,
                 COUNT(DISTINCT s.Id) as surveyCount,
                 CAST(MAX(s.Id) AS CHAR) as firstSurveyId,
                 MAX(s.SurveyName) as firstSurveyName,

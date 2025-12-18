@@ -49,41 +49,41 @@
           </div>
 
           <!-- Settings Tab -->
-          <form v-show="activeTab === 'settings'" @submit.prevent="saveChanges" class="px-6 py-5 space-y-5">
+          <form v-show="activeTab === 'settings'" @submit.prevent="saveChanges" class="px-5 py-3 space-y-2">
           <!-- Project Name -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-0.5">
               Project Name
             </label>
             <input
               v-model="formData.projectName"
               type="text"
               required
-              class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+              class="w-full px-2.5 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
               placeholder="Enter project name"
             />
           </div>
 
           <!-- Client Name -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-0.5">
               Client Name
             </label>
             <input
               v-model="formData.clientName"
               type="text"
-              class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+              class="w-full px-2.5 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
               placeholder="Enter client name"
             />
           </div>
 
           <!-- Client Logo -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-0.5">
               Client Logo
             </label>
-            <div class="flex items-start space-x-4">
-              <div class="flex items-center space-x-3">
+            <div class="flex items-start space-x-2">
+              <div class="flex items-center space-x-2">
                 <input
                   ref="fileInput"
                   type="file"
@@ -94,83 +94,83 @@
                 <button
                   type="button"
                   @click="$refs.fileInput.click()"
-                  class="px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                  class="px-2.5 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
                 >
                   Choose File
                 </button>
-                <span v-if="logoFileName" class="text-sm text-gray-600 dark:text-gray-400 truncate">
+                <span v-if="logoFileName" class="text-xs text-gray-600 dark:text-gray-400 truncate">
                   {{ logoFileName }}
                 </span>
-                <span v-else-if="formData.clientLogoFilename" class="text-sm text-gray-600 dark:text-gray-400 truncate">
+                <span v-else-if="formData.clientLogoFilename" class="text-xs text-gray-600 dark:text-gray-400 truncate">
                   {{ formData.clientLogoFilename }}
                 </span>
-                <span v-else class="text-sm text-gray-400 dark:text-gray-500">
+                <span v-else class="text-xs text-gray-400 dark:text-gray-500">
                   No file chosen
                 </span>
               </div>
               <!-- Image Preview to the right -->
               <div v-if="logoPreviewUrl" class="flex-shrink-0">
-                <img :src="logoPreviewUrl" alt="Logo preview" class="max-h-20 max-w-[120px] object-contain shadow-md rounded" />
+                <img :src="logoPreviewUrl" alt="Logo preview" class="max-h-16 max-w-[100px] object-contain shadow-sm rounded" />
               </div>
             </div>
           </div>
 
           <!-- Description -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-0.5">
               Description
             </label>
             <textarea
               v-model="formData.description"
-              rows="3"
-              class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-shadow"
+              rows="2"
+              class="w-full px-2.5 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-shadow"
               placeholder="Enter project description"
             ></textarea>
           </div>
 
           <!-- Default Weighting Scheme -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-0.5">
               Default Weighting Scheme
             </label>
             <input
               v-model="formData.defaultWeightingScheme"
               type="text"
-              class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+              class="w-full px-2.5 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
               placeholder="Enter default weighting scheme"
             />
           </div>
 
           <!-- Date Range -->
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-2 gap-2">
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-0.5">
                 Start Date
               </label>
               <input
                 v-model="formData.startDate"
                 type="date"
-                class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+                class="w-full px-2.5 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
               />
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-0.5">
                 End Date
               </label>
               <input
                 v-model="formData.endDate"
                 type="date"
-                class="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+                class="w-full px-2.5 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
               />
             </div>
           </div>
 
           <!-- Action Buttons for Settings Tab -->
-          <div v-show="activeTab === 'settings'" class="flex justify-end space-x-3 px-6 py-4 bg-gray-50/50 dark:bg-gray-800/50">
+          <div v-show="activeTab === 'settings'" class="flex justify-end space-x-2 px-5 py-2.5 bg-gray-50/50 dark:bg-gray-800/50">
             <button
               type="button"
               @click="closeModal"
-              class="px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+              class="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
             >
               Cancel
             </button>
@@ -178,7 +178,7 @@
               type="submit"
               @click="saveChanges"
               :disabled="saving || !hasChanges"
-              class="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+              class="px-4 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
             >
               {{ saving ? 'Saving...' : 'Save Changes' }}
             </button>
@@ -186,53 +186,53 @@
         </form>
 
         <!-- Info Tab -->
-        <div v-show="activeTab === 'info'" class="px-6 py-6">
-          <div class="space-y-6">
-            <div class="grid grid-cols-2 gap-6">
-              <div class="space-y-1">
-                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Project ID</label>
-                <p class="text-sm text-gray-900 dark:text-gray-100 font-mono bg-gray-100 dark:bg-gray-900 px-3 py-2 rounded border border-gray-200 dark:border-gray-700">
+        <div v-show="activeTab === 'info'" class="px-5 py-4">
+          <div class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div class="space-y-0.5">
+                <label class="block text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Project ID</label>
+                <p class="text-xs text-gray-900 dark:text-gray-100 font-mono bg-gray-100 dark:bg-gray-900 px-2 py-1.5 rounded border border-gray-200 dark:border-gray-700">
                   {{ props.project?.id || 'N/A' }}
                 </p>
               </div>
-              <div class="space-y-1">
-                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</label>
-                <p class="text-sm text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-900 px-3 py-2 rounded border border-gray-200 dark:border-gray-700">
+              <div class="space-y-0.5">
+                <label class="block text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</label>
+                <p class="text-xs text-gray-900 dark:text-gray-100 bg-gray-100 dark:bg-gray-900 px-2 py-1.5 rounded border border-gray-200 dark:border-gray-700">
                   {{ metadata.status || 'Active' }}
                 </p>
               </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-6">
-              <div class="space-y-1">
-                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Created</label>
-                <div class="bg-gray-100 dark:bg-gray-900 px-3 py-2 rounded border border-gray-200 dark:border-gray-700">
-                  <p class="text-sm text-gray-900 dark:text-gray-100">{{ formatDateTime(metadata.createdDate) }}</p>
-                  <p v-if="metadata.createdBy" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <div class="grid grid-cols-2 gap-4">
+              <div class="space-y-0.5">
+                <label class="block text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Created</label>
+                <div class="bg-gray-100 dark:bg-gray-900 px-2 py-1.5 rounded border border-gray-200 dark:border-gray-700">
+                  <p class="text-xs text-gray-900 dark:text-gray-100">{{ formatDateTime(metadata.createdDate) }}</p>
+                  <p v-if="metadata.createdBy" class="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
                     <span class="font-medium">by</span> {{ metadata.createdBy }}
                   </p>
-                  <p v-else class="text-xs text-gray-400 dark:text-gray-500 mt-1 italic">Unknown user</p>
+                  <p v-else class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 italic">Unknown user</p>
                 </div>
               </div>
-              <div class="space-y-1">
-                <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Last Modified</label>
-                <div class="bg-gray-100 dark:bg-gray-900 px-3 py-2 rounded border border-gray-200 dark:border-gray-700">
-                  <p class="text-sm text-gray-900 dark:text-gray-100">{{ formatDateTime(metadata.modifiedDate) }}</p>
-                  <p v-if="metadata.modifiedBy" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <div class="space-y-0.5">
+                <label class="block text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Last Modified</label>
+                <div class="bg-gray-100 dark:bg-gray-900 px-2 py-1.5 rounded border border-gray-200 dark:border-gray-700">
+                  <p class="text-xs text-gray-900 dark:text-gray-100">{{ formatDateTime(metadata.modifiedDate) }}</p>
+                  <p v-if="metadata.modifiedBy" class="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5">
                     <span class="font-medium">by</span> {{ metadata.modifiedBy }}
                   </p>
-                  <p v-else class="text-xs text-gray-400 dark:text-gray-500 mt-1 italic">Unknown user</p>
+                  <p v-else class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 italic">Unknown user</p>
                 </div>
               </div>
             </div>
           </div>
 
           <!-- Close Button for Info Tab -->
-          <div class="flex justify-end mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+          <div class="flex justify-end mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
             <button
               type="button"
               @click="closeModal"
-              class="px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+              class="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
             >
               Close
             </button>

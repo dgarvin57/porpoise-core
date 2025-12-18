@@ -1,15 +1,15 @@
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900 flex justify-center">
-    <div class="w-full max-w-[1600px] px-6 py-6 space-y-6">
+    <div class="w-full max-w-[1600px] px-6 pt-2 pb-0 space-y-1">
       <!-- Window Width Indicator (Debug Tool) -->
       <div class="fixed bottom-4 right-4 bg-black/80 text-white px-4 py-2 rounded-lg font-mono text-sm z-50 shadow-lg">
         Window: {{ windowWidth }}px
       </div>
 
       <!-- Header -->
-    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between max-w-6xl mx-auto">
       <div class="flex items-baseline space-x-3">
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+        <h1 class="text-xl font-bold text-gray-900 dark:text-white" style="font-size: 1.25rem !important; line-height: 1.75rem !important;">
           Projects & Surveys
         </h1>
         <p class="text-sm text-gray-600 dark:text-gray-400">
@@ -17,8 +17,161 @@
         </p>
       </div>
       
-      <!-- View Toggle and Sort -->
-      <div class="flex items-center space-x-4">
+      <!-- Trash Button (only in header) -->
+      <button 
+        @click="$router.push('/trash')"
+        class="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-md flex items-center gap-2 transition-colors"
+        title="View trash"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+        Trash
+      </button>
+    </div>
+
+    <!-- Recent Surveys Section -->
+    <div v-if="recentSurveys.length > 0" class="max-w-6xl mx-auto pb-2 mb-1 border-b border-gray-200 dark:border-gray-700">
+      <button 
+        @click="toggleRecentSurveys"
+        class="flex items-center gap-2 mb-3 hover:opacity-70 transition-opacity"
+      >
+        <svg 
+          class="w-4 h-4 text-blue-500 transition-transform"
+          :class="showRecentSurveys ? '' : '-rotate-90'"
+          fill="none" 
+          stroke="currentColor" 
+          viewBox="0 0 24 24"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+        <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300">Recent Surveys</h2>
+      </button>
+      <div v-if="showRecentSurveys" class="flex gap-3 overflow-x-auto pb-2">
+        <div
+          v-for="survey in recentSurveys"
+          :key="survey.id"
+          :class="[
+            'flex-shrink-0 w-56 p-3 rounded-lg transition-all group shadow-sm hover:shadow-md relative cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500',
+            focusedSurveyId === survey.id
+              ? 'bg-blue-50 dark:bg-blue-900/30 border-2 border-blue-500 dark:border-blue-400'
+              : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500'
+          ]"
+          role="button"
+          tabindex="0"
+          @click="navigateToSurvey(survey.id)"
+          @keydown.enter.prevent="navigateToSurvey(survey.id)"
+          @keydown.space.prevent="navigateToSurvey(survey.id)"
+        >
+          <!-- Survey Icon and Title -->
+          <div class="flex items-start gap-2 mb-2">
+            <svg class="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <div class="flex-1 min-w-0 text-left">
+              <h3 class="text-sm font-semibold text-gray-900 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 leading-tight">
+                {{ survey.name }}
+              </h3>
+            </div>
+            <svg class="w-4 h-4 text-gray-400 group-hover:text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+          
+          <!-- Project with Gear Icon -->
+          <div class="mb-2 text-left">
+            <div class="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 mb-0.5">
+              <svg class="w-3.5 h-3.5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+              </svg>
+              <span class="truncate flex-1">{{ survey.projectName || 'No project' }}</span>
+              <button
+                v-if="survey.projectId"
+                @click.stop="openProjectSettings(survey.projectId)"
+                class="p-0.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                title="Project settings"
+              >
+                <svg class="w-3.5 h-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </button>
+            </div>
+            <div v-if="survey.clientName" class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-500">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              <span class="truncate">{{ survey.clientName }}</span>
+            </div>
+          </div>
+          
+          <!-- Stats and Time on same line -->
+          <div class="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
+            <div class="flex items-center gap-3">
+              <span class="flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                {{ survey.caseCount }}
+              </span>
+              <span class="flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {{ survey.questionCount }}
+              </span>
+            </div>
+            <div class="text-gray-500 dark:text-gray-400" :title="formatExactTime(survey.lastAccessedDate)">
+              {{ formatRelativeTime(survey.lastAccessedDate) }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search Bar and Controls Row -->
+    <div class="flex items-center justify-between gap-4 max-w-6xl mx-auto pt-1">
+      <div class="flex items-center gap-4">
+        <div class="w-80">
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <input
+              v-model="searchQuery"
+              type="text"
+              placeholder="Search projects and surveys..."
+              class="block w-full pl-10 pr-10 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-xs text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <button
+              v-if="searchQuery"
+              @click="clearSearch"
+              class="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded bg-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 transition-colors"
+              title="Clear search"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <label class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 whitespace-nowrap cursor-pointer">
+          <input
+            v-model="searchInQuestions"
+            type="checkbox"
+            class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+          />
+          <span>Search in questions</span>
+        </label>
+      </div>
+      
+      <!-- Right-aligned controls group -->
+      <div class="flex items-center gap-3">
         <!-- Filter Toggle -->
         <button
           @click="showFilters = !showFilters"
@@ -26,7 +179,7 @@
           class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
           title="Toggle filters"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
           </svg>
         </button>
@@ -39,7 +192,7 @@
             class="px-3 py-1.5 rounded-md transition-all"
             title="Grid view"
           >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
             </svg>
           </button>
@@ -49,95 +202,69 @@
             class="px-3 py-1.5 rounded-md transition-all"
             title="List view"
           >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
         </div>
 
-        <!-- Sort Dropdown -->
-        <div class="flex items-center space-x-3">
-          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <!-- Sort Dropdown (PrimeVue) -->
+        <div class="flex items-center gap-2">
+          <label class="text-xs font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
             Sort by:
           </label>
-          <select
+          <Dropdown
             v-model="sortBy"
-            class="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            :options="sortOptions"
+            optionLabel="label"
+            optionValue="value"
+            appendTo="self"
+            class="w-40"
+            size="small"
+            :pt="{
+              root: { class: 'text-xs border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100' },
+              trigger: { class: 'px-2.5 py-1.5' },
+              label: { class: 'text-xs' },
+              panel: { class: 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg min-w-[10rem] py-1' },
+              item: { class: 'text-xs text-gray-800 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 px-2.5 py-1' },
+              itemLabel: { class: 'text-xs' },
+              header: { class: 'hidden' }
+            }"
           >
-            <option value="modified">Most Recent</option>
-            <option value="name">Name (A-Z)</option>
-            <option value="created">Date Created</option>
-            <option value="client">Client Name</option>
-            <option value="status">Status</option>
-          </select>
-        </div>
-
-        <!-- Trash Button -->
-        <button 
-          @click="$router.push('/trash')"
-          class="px-3 py-2 text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded-md flex items-center gap-2 transition-colors"
-          title="View trash"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-          </svg>
-          Trash
-        </button>
-      </div>
-    </div>
-
-    <!-- Search Bar -->
-    <div class="flex items-center gap-4">
-      <div class="flex-1 max-w-2xl">
-        <div class="relative">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Search projects and surveys..."
-            class="block w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-          <button
-            v-if="searchQuery"
-            @click="clearSearch"
-            class="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 rounded bg-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white dark:hover:bg-gray-700 transition-colors"
-            title="Clear search"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+            <template #value="{ value, placeholder }">
+              <div class="flex items-center gap-2">
+                <i :class="sortOptions.find(o => o.value === value)?.icon" class="text-gray-500"></i>
+                <span class="text-xs">{{ sortOptions.find(o => o.value === value)?.label || placeholder }}</span>
+              </div>
+            </template>
+            <template #option="slotProps">
+              <div class="flex items-center gap-2">
+                <i :class="slotProps.option.icon" class="text-gray-500"></i>
+                <span class="text-xs">{{ slotProps.option.label }}</span>
+              </div>
+            </template>
+          </Dropdown>
         </div>
       </div>
-      <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap cursor-pointer">
-        <input
-          v-model="searchInQuestions"
-          type="checkbox"
-          class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-        />
-        <span>Search in questions</span>
-      </label>
     </div>
 
     <!-- Filters (Collapsible) -->
-    <transition
-      enter-active-class="transition-all duration-200 ease-out"
-      enter-from-class="opacity-0 -translate-y-2"
-      enter-to-class="opacity-100 translate-y-0"
-      leave-active-class="transition-all duration-150 ease-in"
-      leave-from-class="opacity-100 translate-y-0"
-      leave-to-class="opacity-0 -translate-y-2"
-    >
-      <ProjectFilters
-        v-if="showFilters"
-        :clients="uniqueClients"
-        @filter-change="handleFilterChange"
-      />
-    </transition>
+    <div class="mt-4">
+      <transition
+        enter-active-class="transition-opacity duration-200 ease-out"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition-opacity duration-150 ease-in"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <ProjectFilters
+          v-show="showFilters"
+          :clients="uniqueClients"
+          @filter-change="handleFilterChange"
+        />
+      </transition>
+    </div>
 
     <!-- Loading State -->
     <div v-if="loading" class="flex items-center justify-center py-12">
@@ -183,20 +310,22 @@
 
     <!-- Project List (Folder Tree - Single Column, Centered) -->
     <div v-else class="max-w-6xl mx-auto overflow-x-auto">
-      <!-- Collapse All (Always visible, left-aligned) -->
-      <div class="flex justify-start mb-1 px-3">
-        <span
-          @click="expandedProjects.size > 0 && collapseAll()"
-          :class="expandedProjects.size === 0 ? 'text-gray-400 dark:text-gray-600 cursor-not-allowed' : 'text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline cursor-pointer'"
-          class="text-xs transition-colors"
-        >
-          Collapse All
-        </span>
-      </div>
       
       <!-- Column Headers -->
-      <div class="grid grid-cols-[32px_minmax(200px,1fr)_140px_80px_80px_110px_110px_90px_60px] gap-3 items-center px-3 py-2 border-b-2 border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 sticky top-0 min-w-[960px]">
-        <span class="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase"></span>
+      <div class="grid grid-cols-[32px_minmax(200px,1fr)_140px_80px_80px_110px_110px_90px_60px] gap-3 items-center px-3 py-1 mt-2 border-b-2 border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 sticky top-0 min-w-[960px]">
+        <button
+          class="flex items-center justify-center w-6 h-6 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+          :class="expandedProjects.size === 0 ? 'text-gray-400 dark:text-gray-600 cursor-not-allowed' : 'text-gray-600 dark:text-gray-300'"
+          :disabled="expandedProjects.size === 0"
+          @click="collapseAll()"
+          title="Collapse all"
+          aria-label="Collapse all"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 14l5-5 5 5" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 19l5-5 5 5" />
+          </svg>
+        </button>
         
         <SortableColumnHeader
           label="Name"
@@ -229,8 +358,8 @@
         </div>
         
         <SortableColumnHeader
-          label="Created"
-          sort-key="created"
+          label="Accessed"
+          sort-key="accessed"
           :current-sort="sortBy"
           :direction="sortDirection"
           text-align="right"
@@ -264,7 +393,12 @@
           <!-- Project Row (All Expandable) -->
           <div>
             <div
-              class="grid grid-cols-[32px_minmax(200px,1fr)_140px_80px_80px_110px_110px_90px_60px] gap-3 items-center px-3 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 group border-b border-gray-100 dark:border-gray-800 min-w-[960px]"
+              :class="[
+                'grid grid-cols-[32px_minmax(200px,1fr)_24px_140px_80px_80px_110px_110px_90px_60px] gap-3 items-center px-3 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 group border-b border-gray-100 dark:border-gray-800 min-w-[930px]',
+                focusedProjectId === project.id && expandedProjects.has(project.id)
+                  ? 'bg-blue-50 dark:bg-blue-900/20'
+                  : ''
+              ]"
             >
               <div @click="toggleProjectExpand(project.id)" class="cursor-pointer contents">
               <div class="flex items-center justify-center space-x-0.5">
@@ -281,20 +415,39 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                 </svg>
               </div>
-              <span class="text-sm font-medium text-gray-700 dark:text-gray-300 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400">
-                {{ project.name }}
-              </span>
+              <div class="flex items-center gap-1.5 min-w-0">
+                <span class="text-xs font-medium text-gray-700 dark:text-gray-300 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400">
+                  {{ project.name }}
+                </span>
+                <button
+                  @click.stop="openProjectSettings(project.id)"
+                  class="opacity-50 hover:opacity-100 transition-opacity flex-shrink-0"
+                  title="Project Settings"
+                >
+                  <svg class="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </button>
+                <span class="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0 italic">
+                  {{ project.surveyCount }} {{ project.surveyCount === 1 ? 'survey' : 'surveys' }}
+                </span>
+              </div>
+              <!-- Client Logo (if exists) -->
+              <div class="flex items-center justify-center">
+                <img v-if="projectLogos.get(project.id)" :src="projectLogos.get(project.id)" :alt="project.clientName" class="max-h-4 max-w-[24px] object-contain" />
+              </div>
               <span class="text-xs text-gray-500 dark:text-gray-400 truncate">
-                {{ project.clientName || '—' }}
+                {{ project.clientName || '' }}
               </span>
               <span class="text-xs text-gray-500 dark:text-gray-400 text-right tabular-nums italic">
-                {{ project.surveyCount }}
+                
               </span>
-              <span class="text-xs text-gray-500 dark:text-gray-400 text-right">—</span>
+              <span class="text-xs text-gray-500 dark:text-gray-400 text-right"></span>
               <span
                 class="text-xs text-gray-500 dark:text-gray-400 text-right tabular-nums"
               >
-                {{ formatDateShort(project.createdAt) }}
+                —
               </span>
               <span
                 class="text-xs text-gray-500 dark:text-gray-400 text-right tabular-nums"
@@ -305,7 +458,7 @@
                 <span v-if="project.status" :class="getStatusClass(project.status)" class="text-xs px-2 py-0.5 rounded-full whitespace-nowrap">
                   {{ project.status }}
                 </span>
-                <span v-else class="text-xs text-gray-400">—</span>
+                <span v-else class="text-xs text-gray-400"></span>
               </div>
               </div>
               
@@ -325,7 +478,7 @@
 
             <!-- Expanded Surveys -->
             <div v-if="expandedProjects.has(project.id)" class="bg-gray-50 dark:bg-gray-900/30">
-              <div v-if="loadingSurveys.has(project.id)" class="flex items-center space-x-2 px-3 py-1.5 ml-8">
+              <div v-if="loadingSurveys.has(project.id)" class="flex items-center space-x-2 px-3 py-1 ml-8">
                 <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-500"></div>
                 <span class="text-xs text-gray-500 dark:text-gray-400">Loading...</span>
               </div>
@@ -333,8 +486,9 @@
                 <div
                   v-for="survey in projectSurveys.get(project.id)"
                   :key="survey.id"
+                  :ref="el => { if (focusedSurveyId === survey.id) surveyRowRef = el }"
                   :class="[
-                    'grid grid-cols-[32px_minmax(200px,1fr)_140px_80px_80px_110px_110px_90px_60px] gap-3 items-center px-3 py-1.5 group border-b border-gray-100 dark:border-gray-800 min-w-[960px]',
+                    'grid grid-cols-[32px_minmax(200px,1fr)_24px_140px_80px_80px_110px_110px_90px_60px] gap-3 items-center px-3 py-0.5 group border-b border-gray-100 dark:border-gray-800 min-w-[960px]',
                     focusedSurveyId === survey.id
                       ? 'bg-blue-50 dark:bg-blue-900/30'
                       : 'hover:bg-gray-100 dark:hover:bg-gray-800'
@@ -349,13 +503,14 @@
                       </svg>
                     </div>
                     <span 
-                      @click="navigateToSurvey(survey.id); handleSurveyClick(survey.id)"
-                      class="text-sm text-gray-600 dark:text-gray-400 truncate hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
+                      @click="navigateToSurvey(survey.id, false); handleSurveyClick(survey.id)"
+                      class="text-xs text-gray-600 dark:text-gray-400 truncate hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
                     >
                       {{ survey.name }}
                     </span>
                   </div>
-                  <span class="text-xs text-gray-500 dark:text-gray-400">—</span>
+                  <span class="text-xs text-gray-500 dark:text-gray-400"></span>
+                  <span class="text-xs text-gray-500 dark:text-gray-400"></span>
                   <span class="text-xs text-gray-500 dark:text-gray-400 text-right tabular-nums">
                     {{ survey.caseCount || 0 }}
                   </span>
@@ -365,14 +520,14 @@
                   <span
                     class="text-xs text-gray-500 dark:text-gray-400 text-right tabular-nums"
                   >
-                    {{ formatDateShort(survey.createdDate) }}
+                    {{ formatDateShort(survey.lastAccessedDate) }}
                   </span>
                   <span
                     class="text-xs text-gray-500 dark:text-gray-400 text-right tabular-nums"
                   >
                     {{ formatDateShort(survey.modifiedDate) }}
                   </span>
-                  <span class="text-xs text-gray-500 dark:text-gray-400 text-center">—</span>
+                  <span class="text-xs text-gray-500 dark:text-gray-400 text-center"></span>
                   
                   <div class="flex justify-center" @click.stop>
                     <svg
@@ -397,27 +552,51 @@
       </div>
     </div>
     </div>
+
+    <ProjectSettingsModal
+      :is-open="showSettingsModal"
+      :project="selectedProject"
+      @close="showSettingsModal = false"
+      @saved="handleProjectSettingsSaved"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onActivated, watch } from 'vue'
+import { ref, computed, onMounted, onActivated, watch, nextTick } from 'vue'
 import axios from 'axios'
 import { useRouter, useRoute } from 'vue-router'
 import { API_BASE_URL } from '@/config/api'
 import ProjectCard from './ProjectCard.vue'
 import ProjectFilters from './ProjectFilters.vue'
 import SortableColumnHeader from '../UI/SortableColumnHeader.vue'
+import Dropdown from 'primevue/dropdown'
+import ProjectSettingsModal from './ProjectSettingsModal.vue'
+
+const surveyRowRef = ref(null)
 
 const router = useRouter()
 const route = useRoute()
 const projects = ref([])
+const recentSurveys = ref([])
+const showRecentSurveys = ref(localStorage.getItem('showRecentSurveys') !== 'false')
 const loading = ref(true)
 const error = ref(null)
 const sortBy = ref('modified')
 const sortDirection = ref('desc') // 'asc' or 'desc'
 const viewMode = ref(localStorage.getItem('projectViewMode') || 'grid') // 'grid' or 'list', persisted
 const showFilters = ref(false)
+const showSettingsModal = ref(false)
+const selectedProject = ref(null)
+// Options for PrimeVue Dropdown (Sort by)
+const sortOptions = [
+  { label: 'Most Recent', value: 'modified', icon: 'pi pi-clock' },
+  { label: 'Last Accessed', value: 'accessed', icon: 'pi pi-history' },
+  { label: 'Name (A-Z)', value: 'name', icon: 'pi pi-sort-alpha-up' },
+  { label: 'Date Created', value: 'created', icon: 'pi pi-calendar' },
+  { label: 'Client Name', value: 'client', icon: 'pi pi-user' },
+  { label: 'Status', value: 'status', icon: 'pi pi-tag' }
+]
 // Load expansion state based on current view mode
 const storageKey = viewMode.value === 'grid' ? 'expandedProjectsGrid' : 'expandedProjectsList'
 const expandedProjects = ref(new Set(JSON.parse(localStorage.getItem(storageKey) || '[]')))
@@ -435,6 +614,7 @@ const activeFilters = ref({
 const searchQuery = ref('')
 const searchInQuestions = ref(false)
 const allSurveysForSearch = ref(new Map()) // Cache all surveys for search
+const projectLogos = ref(new Map()) // Cache project logos for list view
 
 // Fetch projects from API
 async function fetchProjects() {
@@ -456,6 +636,7 @@ async function fetchProjects() {
       questionCount: p.questionCount,
       createdAt: p.createdAt,
       lastModified: p.modifiedDate || p.lastModified || p.createdAt,
+      lastAccessedDate: p.lastAccessedDate,
       startDate: p.startDate,
       endDate: p.endDate,
       status: p.status || getStatusFromDates(p.startDate, p.endDate),
@@ -468,6 +649,17 @@ async function fetchProjects() {
     console.error('Error fetching projects:', err)
   } finally {
     loading.value = false
+  }
+}
+
+// Fetch recently accessed surveys
+async function fetchRecentSurveys() {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/surveys/recent?limit=4`)
+    recentSurveys.value = response.data
+  } catch (err) {
+    console.error('Error fetching recent surveys:', err)
+    recentSurveys.value = []
   }
 }
 
@@ -574,6 +766,9 @@ const filteredProjects = computed(() => {
       case 'created':
         comparison = new Date(a.createdAt || 0) - new Date(b.createdAt || 0)
         break
+      case 'accessed':
+        comparison = new Date(a.lastAccessedDate || 0) - new Date(b.lastAccessedDate || 0)
+        break
       case 'client':
         comparison = (a.clientName || '').localeCompare(b.clientName || '')
         break
@@ -627,6 +822,11 @@ watch(viewMode, (newVal, oldVal) => {
   localStorage.setItem(oldStorageKey, JSON.stringify([...expandedProjects.value]))
   const newStorageKey = newVal === 'grid' ? 'expandedProjectsGrid' : 'expandedProjectsList'
   expandedProjects.value = new Set(JSON.parse(localStorage.getItem(newStorageKey) || '[]'))
+  
+  // Load logos for list view
+  if (newVal === 'list') {
+    loadProjectLogos()
+  }
 })
 
 // Load question data when "search in questions" is enabled
@@ -653,6 +853,7 @@ watch([searchInQuestions, searchQuery], async ([questionsEnabled, query]) => {
               questionCount: s.questionCount,
               createdDate: s.createdDate,
               modifiedDate: s.modifiedDate,
+              lastAccessedDate: s.lastAccessedDate,
               createdBy: s.createdBy,
               modifiedBy: s.modifiedBy
             })))
@@ -747,17 +948,61 @@ function handleSurveyClick(surveyId) {
   localStorage.setItem('focusedSurveyId', surveyId)
 }
 
+function toggleRecentSurveys() {
+  showRecentSurveys.value = !showRecentSurveys.value
+  localStorage.setItem('showRecentSurveys', showRecentSurveys.value.toString())
+}
+
+function openProjectSettings(projectId) {
+  const project = projects.value.find(p => p.id === projectId)
+  if (!project) return
+  selectedProject.value = project
+  showSettingsModal.value = true
+}
+
 function formatDateShort(dateString) {
   if (!dateString) return '—'
   const date = new Date(dateString)
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })
 }
 
+function formatExactTime(dateString) {
+  if (!dateString) return 'Never'
+  const date = new Date(dateString)
+  return date.toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true
+  })
+}
+
+function formatRelativeTime(dateString) {
+  if (!dateString) return 'Never'
+  
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffMs = now - date
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
+  
+  if (diffMins < 1) return 'Just now'
+  if (diffMins < 60) return `${diffMins}m ago`
+  if (diffHours < 24) return `${diffHours}h ago`
+  if (diffDays === 1) return 'Yesterday'
+  if (diffDays < 7) return `${diffDays}d ago`
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`
+  return formatDateShort(dateString)
+}
+
 function handleFilterChange(filters) {
   activeFilters.value = filters
 }
 
-async function toggleProjectExpand(projectId) {
+async function toggleProjectExpand(projectId, shouldClearFocus = true) {
   if (expandedProjects.value.has(projectId)) {
     expandedProjects.value.delete(projectId)
   } else {
@@ -777,6 +1022,7 @@ async function toggleProjectExpand(projectId) {
           questionCount: s.questionCount,
           createdDate: s.createdDate,
           modifiedDate: s.modifiedDate,
+          lastAccessedDate: s.lastAccessedDate,
           createdBy: s.createdBy,
           modifiedBy: s.modifiedBy
         })))
@@ -787,9 +1033,11 @@ async function toggleProjectExpand(projectId) {
       }
     }
   }
-  // Clear focused survey when toggling expansion
-  focusedSurveyId.value = null
-  localStorage.removeItem('focusedSurveyId')
+  // Only clear focused survey when explicitly toggling (not when auto-expanding)
+  if (shouldClearFocus) {
+    focusedSurveyId.value = null
+    localStorage.removeItem('focusedSurveyId')
+  }
   // Persist to localStorage using list-specific key
   localStorage.setItem('expandedProjectsList', JSON.stringify([...expandedProjects.value]))
   // Trigger reactivity
@@ -825,8 +1073,71 @@ async function handleSingleProjectClick(project) {
   }
 }
 
-function navigateToSurvey(surveyId) {
+async function navigateToSurvey(surveyId, autoExpandAndScroll = true) {
+  // Set focused survey for highlighting when returning
+  focusedSurveyId.value = surveyId
+  localStorage.setItem('focusedSurveyId', surveyId)
+  
+  // Find which project contains this survey
+  let parentProjectId = null
+  for (const project of projects.value) {
+    const surveys = projectSurveys.value.get(project.id) || await loadSurveysForProject(project.id)
+    if (surveys && surveys.some(s => s.id === surveyId)) {
+      parentProjectId = project.id
+      break
+    }
+  }
+  
+  // If we found the parent project and auto-expand is enabled
+  if (parentProjectId && autoExpandAndScroll && viewMode.value === 'list') {
+    focusedProjectId.value = parentProjectId
+    localStorage.setItem('focusedProjectId', parentProjectId)
+    
+    // Expand the project if not already expanded (don't clear focused survey)
+    if (!expandedProjects.value.has(parentProjectId)) {
+      await toggleProjectExpand(parentProjectId, false)
+    }
+    
+    // Scroll to the survey row after the DOM updates
+    await nextTick()
+    if (surveyRowRef.value) {
+      surveyRowRef.value.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  }
+  
+  // Record survey access before navigating
+  try {
+    await axios.post(`${API_BASE_URL}/api/surveys/${surveyId}/access`)
+    // Refresh recent surveys after recording access
+    fetchRecentSurveys()
+  } catch (error) {
+    console.error('Error recording survey access:', error)
+    // Continue navigation even if recording fails
+  }
   router.push(`/analytics/${surveyId}`)
+}
+
+async function loadSurveysForProject(projectId) {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/projects/${projectId}/surveys`)
+    const surveys = response.data.map(s => ({
+      id: s.id,
+      name: s.name,
+      status: s.status,
+      caseCount: s.caseCount,
+      questionCount: s.questionCount,
+      createdDate: s.createdDate,
+      modifiedDate: s.modifiedDate,
+      lastAccessedDate: s.lastAccessedDate,
+      createdBy: s.createdBy,
+      modifiedBy: s.modifiedBy
+    }))
+    projectSurveys.value.set(projectId, surveys)
+    return surveys
+  } catch (error) {
+    console.error('Error loading surveys:', error)
+    return []
+  }
 }
 
 function getStatusClass(status) {
@@ -842,6 +1153,38 @@ function getStatusClass(status) {
 function clearSearch() {
   searchQuery.value = ''
   searchInQuestions.value = false
+}
+
+async function loadProjectLogos() {
+  // Load logos for projects that don't have them yet
+  const projectsNeedingLogos = filteredProjects.value.filter(p => 
+    !projectLogos.value.has(p.id) && !p.clientLogoBase64
+  )
+  
+  if (projectsNeedingLogos.length === 0) return
+  
+  // Load in batches of 10 to avoid overwhelming the server
+  const batchSize = 10
+  for (let i = 0; i < projectsNeedingLogos.length; i += batchSize) {
+    const batch = projectsNeedingLogos.slice(i, i + batchSize)
+    await Promise.all(batch.map(async (project) => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/projects/${project.id}`)
+        if (response.data.clientLogoBase64) {
+          const base64Data = response.data.clientLogoBase64
+          let mimeType = 'image/png'
+          if (base64Data.startsWith('/9j/')) mimeType = 'image/jpeg'
+          else if (base64Data.startsWith('R0lGOD')) mimeType = 'image/gif'
+          else if (base64Data.startsWith('UklGR')) mimeType = 'image/webp'
+          
+          const logoUrl = base64Data.startsWith('data:') ? base64Data : `data:${mimeType};base64,${base64Data}`
+          projectLogos.value.set(project.id, logoUrl)
+        }
+      } catch (error) {
+        console.debug('No logo for project:', project.id)
+      }
+    }))
+  }
 }
 
 async function deleteProject(projectId, projectName) {
@@ -886,6 +1229,7 @@ async function deleteSurvey(surveyId, surveyName) {
           questionCount: s.questionCount,
           createdDate: s.createdDate,
           modifiedDate: s.modifiedDate,
+          lastAccessedDate: s.lastAccessedDate,
           createdBy: s.createdBy,
           modifiedBy: s.modifiedBy
         })))
@@ -920,8 +1264,18 @@ async function handleProjectUpdated(projectId, updatedData) {
   }
 }
 
+function handleProjectSettingsSaved(updatedData) {
+  if (selectedProject.value) {
+    handleProjectUpdated(selectedProject.value.id, updatedData)
+  }
+  showSettingsModal.value = false
+  // Refresh recent surveys in case project/client name changed
+  fetchRecentSurveys()
+}
+
 onMounted(async () => {
   await fetchProjects()
+  await fetchRecentSurveys()
   
   // Pre-load surveys for any expanded projects (from localStorage)
   const surveysToLoad = []
@@ -945,6 +1299,7 @@ onMounted(async () => {
           questionCount: s.questionCount,
           createdDate: s.createdDate,
           modifiedDate: s.modifiedDate,
+          lastAccessedDate: s.lastAccessedDate,
           createdBy: s.createdBy,
           modifiedBy: s.modifiedBy
         })))
@@ -960,6 +1315,11 @@ onMounted(async () => {
   }
   window.addEventListener('resize', handleResize)
   
+  // Load logos if starting in list view
+  if (viewMode.value === 'list') {
+    loadProjectLogos()
+  }
+  
   // Cleanup
   return () => window.removeEventListener('resize', handleResize)
 })
@@ -967,9 +1327,26 @@ onMounted(async () => {
 // Refetch projects when navigating back to the gallery (e.g., from a survey)
 // Only refetch if projects are empty or stale
 onActivated(async () => {
+  // Refresh recent surveys when returning to this page
+  await fetchRecentSurveys()
+  
   // Only refetch if we don't have projects loaded
   if (projects.value.length === 0) {
     await fetchProjects()
+  }
+  
+  // Restore focus in list view if we have a focused survey and are in list mode
+  if (focusedSurveyId.value && viewMode.value === 'list' && focusedProjectId.value) {
+    // Auto-expand the project containing the focused survey
+    if (!expandedProjects.value.has(focusedProjectId.value)) {
+      await toggleProjectExpand(focusedProjectId.value, false)
+    }
+    
+    // Scroll to the focused survey after DOM updates
+    await nextTick()
+    if (surveyRowRef.value) {
+      surveyRowRef.value.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
   }
   
   // Re-load surveys for expanded projects if needed
@@ -992,6 +1369,7 @@ onActivated(async () => {
           questionCount: s.questionCount,
           createdDate: s.createdDate,
           modifiedDate: s.modifiedDate,
+          lastAccessedDate: s.lastAccessedDate,
           createdBy: s.createdBy,
           modifiedBy: s.modifiedBy
         })))

@@ -1,9 +1,9 @@
 <template>
-  <div class="px-10 py-8">
-    <ProjectGallery />
+  <div class="px-10 pt-2 pb-8">
+    <ProjectStart />
   </div>
 </template>
 
 <script setup>
-import ProjectGallery from '../components/Projects/ProjectGallery.vue'
+import ProjectStart from '../components/Projects/ProjectStart.vue'
 </script>

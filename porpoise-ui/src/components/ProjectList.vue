@@ -27,7 +27,16 @@
             <div class="folder-header" @click="toggleProject(project.Id)">
               <span class="folder-icon">{{ expandedProjects.has(project.Id) ? '📂' : '📁' }}</span>
               <div class="folder-content">
-                <h3>{{ project.ProjectName }}</h3>
+                <div class="project-header-row">
+                  <h3>{{ project.ProjectName }}</h3>
+                  <button 
+                    class="settings-icon-btn" 
+                    @click.stop="openProjectSettings(project)"
+                    title="Project Settings"
+                  >
+                    ⚙️
+                  </button>
+                </div>
                 <p class="client-name">{{ project.ClientName }}</p>
                 <span class="survey-count">{{ project.SurveyCount }} {{ project.SurveyCount === 1 ? 'survey' : 'surveys' }}</span>
               </div>
@@ -106,6 +115,13 @@ async function loadProjects() {
     })
 
     allProjects.value = response.data
+    
+    // Auto-expand single-survey projects
+    for (const project of allProjects.value) {
+      if (project.SurveyCount === 1) {
+        expandedProjects.value.add(project.Id)
+      }
+    }
   } catch (err) {
     console.error('Error loading projects:', err)
     error.value = 'Failed to load projects. Please try again.'
@@ -193,20 +209,28 @@ onMounted(async () => {
 
   await loadProjects()
   
-  // Reload surveys for any expanded projects
+  // Load surveys for any expanded projects (including auto-expanded single-survey projects)
   for (const projectId of expandedProjects.value) {
     if (!projectSurveys.value.has(projectId)) {
       await loadProjectSurveys(projectId)
     }
   }
 })
+
+// Open project settings
+function openProjectSettings(project) {
+  // TODO: Navigate to project settings page or open modal
+  console.log('Open settings for project:', project.ProjectName)
+  alert(`Project Settings for: ${project.ProjectName}\n\nThis will open the project settings page/modal.`)
+}
 </script>
 
 <style scoped>
 .project-list-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
+  padding-left: 2rem;
+  padding-right: 2rem;
 }
 
 .page-header {
@@ -214,7 +238,7 @@ onMounted(async () => {
 }
 
 .page-header h1 {
-  font-size: 2rem;
+  font-size: 1.25rem;
   font-weight: 600;
   color: #1a202c;
   margin: 0 0 0.5rem 0;
@@ -222,7 +246,7 @@ onMounted(async () => {
 
 .subtitle {
   color: #64748b;
-  font-size: 0.95rem;
+  font-size: 0.875rem;
 }
 
 .loading,
@@ -271,7 +295,7 @@ onMounted(async () => {
 .folder-header {
   display: flex;
   align-items: center;
-  padding: 1.25rem;
+  padding: 0.875rem 1rem;
   cursor: pointer;
   transition: background 0.2s;
 }
@@ -281,35 +305,58 @@ onMounted(async () => {
 }
 
 .folder-icon {
-  font-size: 1.75rem;
-  margin-right: 1rem;
+  font-size: 1.5rem;
+  margin-right: 0.75rem;
 }
 
 .folder-content {
   flex: 1;
 }
 
+.project-header-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .folder-content h3 {
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   font-weight: 600;
   color: #1a202c;
-  margin: 0 0 0.25rem 0;
+  margin: 0;
+}
+
+.settings-icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.125rem 0.25rem;
+  font-size: 0.875rem;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+  display: flex;
+  align-items: center;
+}
+
+.settings-icon-btn:hover {
+  opacity: 1;
 }
 
 .client-name {
   color: #64748b;
-  font-size: 0.9rem;
+  font-size: 0.813rem;
   display: block;
+  margin-top: 0.125rem;
 }
 
 .survey-count {
   display: inline-block;
-  margin-top: 0.5rem;
-  padding: 0.25rem 0.75rem;
+  margin-top: 0.375rem;
+  padding: 0.188rem 0.625rem;
   background: #eff6ff;
   color: #3b82f6;
   border-radius: 9999px;
-  font-size: 0.813rem;
+  font-size: 0.75rem;
   font-weight: 500;
 }
 
@@ -348,7 +395,7 @@ onMounted(async () => {
 .survey-item {
   display: flex;
   align-items: center;
-  padding: 0.75rem 1rem;
+  padding: 0.625rem 0.875rem;
   background: white;
   border: 1px solid #e2e8f0;
   border-radius: 0.375rem;
@@ -362,27 +409,27 @@ onMounted(async () => {
 }
 
 .survey-icon {
-  font-size: 1.25rem;
-  margin-right: 0.75rem;
+  font-size: 1.125rem;
+  margin-right: 0.625rem;
 }
 
 .survey-info {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.375rem;
 }
 
 .survey-name {
   font-weight: 500;
   color: #1a202c;
-  font-size: 0.938rem;
+  font-size: 0.875rem;
 }
 
 .survey-meta {
   display: flex;
   gap: 1rem;
-  font-size: 0.813rem;
+  font-size: 0.75rem;
   color: #64748b;
 }
 

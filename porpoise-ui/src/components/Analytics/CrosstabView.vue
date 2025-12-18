@@ -282,7 +282,7 @@
               <button
                 @click="graphMode = 'index'"
                 :class="[
-                  'flex-1 px-4 py-1.5 text-xs font-medium transition-colors border-b-2',
+                  'px-4 py-1.5 text-xs font-medium transition-colors border-b-2',
                   graphMode === 'index'
                     ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
                     : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50'
@@ -293,7 +293,7 @@
               <button
                 @click="graphMode = 'posneg'"
                 :class="[
-                  'flex-1 px-4 py-1.5 text-xs font-medium transition-colors border-b-2',
+                  'px-4 py-1.5 text-xs font-medium transition-colors border-b-2',
                   graphMode === 'posneg'
                     ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
                     : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50'
@@ -301,6 +301,7 @@
               >
                 Graph Pos/Neg Percent
               </button>
+              <div class="flex-1 border-b-2 border-transparent"></div>
             </div>
           </div>
           <div class="p-4">

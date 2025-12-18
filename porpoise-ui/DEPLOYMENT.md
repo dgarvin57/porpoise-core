@@ -18,8 +18,8 @@ All hardcoded API URLs have been replaced with environment-based configuration t
 
 ## Changes Made
 
-### Files Updated (17 total)
-- ✅ ProjectGallery.vue (10 URLs replaced)
+### Files Updated (16 total)
+<!-- ProjectGallery.vue removed as unused -->
 - ✅ ResultsView.vue (2 URLs replaced)
 - ✅ CrosstabView.vue (2 URLs replaced)
 - ✅ AnalyticsView.vue (4 URLs replaced)

@@ -46,6 +46,23 @@ public class SurveysController : ControllerBase
     }
 
     /// <summary>
+    /// Get recently accessed surveys with metadata
+    /// </summary>
+    [HttpGet("recent")]
+    public async Task<IActionResult> GetRecentSurveys([FromQuery] int limit = 4)
+    {
+        try
+        {
+            var surveys = await _surveyRepository.GetRecentlyAccessedAsync(limit);
+            return Ok(surveys);
+        }
+        catch (Exception ex)
+        {
+            return Problem($"Error retrieving recent surveys: {ex.Message}");
+        }
+    }
+
+    /// <summary>
     /// Get survey by ID
     /// </summary>
     [HttpGet("{id:guid}")]
@@ -305,6 +322,31 @@ public class SurveysController : ControllerBase
         catch (Exception ex)
         {
             return Problem($"Error deleting survey: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Update last accessed date for a survey
+    /// </summary>
+    [HttpPost("{id:guid}/access")]
+    public async Task<IActionResult> RecordSurveyAccess(Guid id)
+    {
+        try
+        {
+            var survey = await _surveyRepository.GetByIdAsync(id);
+            if (survey == null)
+            {
+                return NotFound($"Survey with ID {id} not found");
+            }
+
+            survey.LastAccessedDate = DateTime.UtcNow;
+            await _surveyRepository.UpdateAsync(survey);
+            
+            return Ok(new { lastAccessedDate = survey.LastAccessedDate });
+        }
+        catch (Exception ex)
+        {
+            return Problem($"Error recording survey access: {ex.Message}");
         }
     }
 
