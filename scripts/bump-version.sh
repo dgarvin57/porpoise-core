@@ -194,8 +194,12 @@ $BUMP_TYPE version bump: $CURRENT_VERSION → $NEW_VERSION
 Source: porpoise-ui/package.json
 Auto-synced to: API csproj"
 
-# Create tag
+# Create tag (force recreate if exists)
 echo "Creating tag v$NEW_VERSION..."
+if git rev-parse "v$NEW_VERSION" >/dev/null 2>&1; then
+    echo "⚠️  Tag v$NEW_VERSION already exists, recreating..."
+    git tag -d "v$NEW_VERSION"
+fi
 git tag -a "v$NEW_VERSION" -m "Release v$NEW_VERSION"
 
 echo

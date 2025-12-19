@@ -59,9 +59,10 @@ jobs:
           chmod +x scripts/bump-version.sh
           ./scripts/bump-version.sh --ci
 
-      - name: Push version bump to develop
+      - name: Push version bump and tags to develop
         run: |
           git push origin develop || echo "No version changes to push"
+          git push origin --tags --force || echo "No tags to push"
 
   deploy:
     needs: bump-version
