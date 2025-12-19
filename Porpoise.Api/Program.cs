@@ -1,6 +1,7 @@
 // Porpoise.Api/Program.cs — NO SWAGGER, JUST PURE API
 using System.Reflection;
 using Porpoise.Api.Configuration;
+using Porpoise.Api.Database;
 using Porpoise.Api.Middleware;
 using Porpoise.Api.Mocks;
 using Porpoise.Api.Services;
@@ -79,6 +80,19 @@ else
     // Use real Dapper + MySQL
     var connectionString = builder.Configuration.GetConnectionString("PorpoiseDb") 
         ?? throw new InvalidOperationException("Connection string 'PorpoiseDb' not found");
+    
+    // Run database migrations BEFORE setting up repositories
+    try
+    {
+        DatabaseMigrationRunner.RunMigrations(connectionString);
+    }
+    catch (Exception ex)
+    {
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.WriteLine($"❌ Failed to run database migrations: {ex.Message}");
+        Console.ResetColor();
+        // Continue anyway - migrations might have already run
+    }
     
     builder.Services.AddSingleton(new DapperContext(connectionString));
     

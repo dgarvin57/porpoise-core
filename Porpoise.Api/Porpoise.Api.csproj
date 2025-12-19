@@ -14,4 +14,8 @@
     <ProjectReference Include="..\Porpoise.DataAccess\Porpoise.DataAccess.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="dbup" Version="5.0.41" />
+  </ItemGroup>
+
 </Project>
