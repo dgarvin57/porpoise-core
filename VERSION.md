@@ -8,7 +8,19 @@ Porpoise uses **Semantic Versioning** (SemVer): `MAJOR.MINOR.PATCH`
 - **MINOR** (1.X.0): New features, enhancements, non-breaking changes  
 - **PATCH** (1.0.X): Bug fixes, small tweaks, performance improvements
 
-## Current Version: 1.10.0
+## Current Version: 1.11.0
+
+### Single Source of Truth
+Version is maintained in `porpoise-ui/package.json` and auto-synced to:
+- `Porpoise.Api/Porpoise.Api.csproj` (synced by bump script)
+
+### Version History
+
+#### 1.11.0 (2025-12-19)
+- feat: Smart selection detection for tour spotlight
+- chore: bump version to 1.10.0
+- docs: Add merge conflict resolution guidance to .copilot-instructions.md
+- chore: bump version to 1.9.0
 
 ### Single Source of Truth
 Version is maintained in `porpoise-ui/package.json` and auto-synced to:
