@@ -26,10 +26,11 @@ namespace Porpoise.Api.Database
             
             Console.WriteLine($"📦 Loading migrations from embedded resources...");
             
-            // Configure DbUp to run scripts from embedded resources
+            // Configure DbUp to run scripts from embedded resources (MySQL-specific only)
             var upgrader = DeployChanges.To
                 .MySqlDatabase(connectionString)
-                .WithScriptsEmbeddedInAssembly(dataAccessAssembly, script => script.EndsWith(".sql"))
+                .WithScriptsEmbeddedInAssembly(dataAccessAssembly, script => 
+                    script.EndsWith("_MySQL.sql", StringComparison.OrdinalIgnoreCase))
                 .WithTransactionPerScript()
                 .LogToConsole()
                 .Build();

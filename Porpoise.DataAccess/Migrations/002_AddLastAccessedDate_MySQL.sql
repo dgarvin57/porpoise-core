@@ -4,4 +4,4 @@
 
 -- MySQL version
 ALTER TABLE Surveys 
-ADD COLUMN LastAccessedDate DATETIME NULL;
+ADD COLUMN IF NOT EXISTS LastAccessedDate DATETIME NULL;
