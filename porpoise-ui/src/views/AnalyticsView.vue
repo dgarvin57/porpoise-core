@@ -1120,6 +1120,9 @@ function toggleSidebar() {
   localStorage.setItem('sidebarCollapsed', sidebarCollapsed.value)
 }
 
+// Track if any onboarding tooltips have been dismissed (reactive to localStorage changes)
+const hasAnyTooltipBeenDismissed = ref(false)
+
 // Watch for crosstab section activation and start tour if not completed
 watch(activeSection, async (newSection, oldSection) => {
   if (newSection === 'crosstab' && !hasTourBeenCompleted()) {

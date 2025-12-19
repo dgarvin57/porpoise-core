@@ -7,7 +7,7 @@
 
 .shepherd-element {
   z-index: 9999;
-  max-width: 480px;
+  max-width: 420px;
   /* Keep dialog centered and prevent movement */
   position: fixed !important;
   top: 50% !important;
@@ -16,26 +16,28 @@
 }
 
 .shepherd-content {
-  border-radius: 12px;
+  border-radius: 4px !important;
   padding: 0;
-  overflow: hidden;
+  overflow: hidden !important;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 .shepherd-content-wrapper {
   padding: 0;
+  border-radius: 4px !important;
+  overflow: hidden !important;
 }
 
 .shepherd-header {
   background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  padding: 20px 24px;
+  padding: 20px 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px 12px 0 0;
+  border-radius: 4px 4px 0 0 !important;
   position: relative;
 }
 
 .shepherd-title {
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 700;
   color: white;
   margin: 0;
@@ -58,7 +60,7 @@ html.dark .shepherd-text {
 html.dark .shepherd-content {
   background-color: #1f2937;
   border: 1px solid #374151;
-  border-radius: 12px;
+  border-radius: 6px;
 }
 
 .shepherd-text p {
@@ -162,11 +164,11 @@ html.dark .shepherd-button-secondary:hover {
 /* Cancel icon */
 .shepherd-cancel-icon {
   position: absolute;
-  top: 50%;
+  top: 20%;
   right: 22px;
   transform: translateY(-50%);
-  width: 20px;
-  height: 20px;
+  width: 12px;
+  height: 12px;
   opacity: 0.85;
   transition: opacity 0.2s;
   color: white;
@@ -178,10 +180,10 @@ html.dark .shepherd-button-secondary:hover {
 }
 
 .shepherd-cancel-icon svg {
-  width: 100%;
-  height: 100%;
+  width: 70%;
+  height: 70%;
   stroke: white;
-  stroke-width: 2;
+  stroke-width: 1;
   fill: none;
 }
 

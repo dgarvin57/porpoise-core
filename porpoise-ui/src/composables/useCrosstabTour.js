@@ -98,7 +98,7 @@ export function useCrosstabTour() {
         <div class="shepherd-content-wrapper">
           <div class="shepherd-header">
             <h3 class="shepherd-title">
-              <span class="inline-flex items-center justify-center w-5 h-5 rounded bg-blue-600 text-white text-xs font-semibold mr-2">1</span>
+              <span class="inline-flex items-center justify-center w-5 h-5 rounded bg-blue-600 text-white text-sm font-semibold mr-2">1</span>
               Select Your First Variable (DV)
             </h3>
           </div>
@@ -178,7 +178,7 @@ export function useCrosstabTour() {
         <div class="shepherd-content-wrapper">
           <div class="shepherd-header">
             <h3 class="shepherd-title">
-              <span class="inline-flex items-center justify-center w-5 h-5 rounded bg-green-600 text-white text-xs font-semibold mr-2">2</span>
+              <span class="inline-flex items-center justify-center w-5 h-5 rounded bg-green-600 text-white text-sm font-semibold mr-2">2</span>
               Select Your Second Variable (IV)
             </h3>
           </div>
@@ -261,7 +261,7 @@ export function useCrosstabTour() {
           <div class="shepherd-text">
             <p><strong>Your crosstab will generate automatically</strong> as soon as you select both variables!</p>
             <p class="mt-3"><strong>Quick Summary:</strong></p>
-            <div class="mt-2 space-y-2 text-sm">
+            <div class="mt-2 space-y-2 text-xs">
               <div class="flex items-start space-x-2">
                 <span class="text-blue-600 font-bold">○</span>
                 <span>Toggle button = Dependent Variable (What to measure)</span>
