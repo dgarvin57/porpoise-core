@@ -8,7 +8,20 @@ Porpoise uses **Semantic Versioning** (SemVer): `MAJOR.MINOR.PATCH`
 - **MINOR** (1.X.0): New features, enhancements, non-breaking changes  
 - **PATCH** (1.0.X): Bug fixes, small tweaks, performance improvements
 
-## Current Version: 1.9.0
+## Current Version: 1.10.0
+
+### Single Source of Truth
+Version is maintained in `porpoise-ui/package.json` and auto-synced to:
+- `Porpoise.Api/Porpoise.Api.csproj` (synced by bump script)
+
+### Version History
+
+#### 1.10.0 (2025-12-19)
+- docs: Add merge conflict resolution guidance to .copilot-instructions.md
+- chore: bump version to 1.9.0
+- feat: Implement Shepherd.js guided tour for crosstab interface
+- chore: bump version to 1.8.0
+- feat: change default view to list view on project start screen
 
 ### Single Source of Truth
 Version is maintained in `porpoise-ui/package.json` and auto-synced to:
