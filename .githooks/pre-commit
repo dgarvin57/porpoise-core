@@ -1,0 +1,48 @@
+#!/bin/sh
+# Pre-commit hook to warn about version file changes
+# Version files are managed by CI/CD and should not be manually modified
+
+VERSION_FILES="package.json
+Porpoise.Api/Porpoise.Api.csproj
+VERSION.md"
+
+# Check if any version files are staged
+CHANGED_VERSION_FILES=""
+for file in $VERSION_FILES; do
+  if git diff --cached --name-only | grep -q "$file"; then
+    CHANGED_VERSION_FILES="$CHANGED_VERSION_FILES\n  - $file"
+  fi
+done
+
+if [ -n "$CHANGED_VERSION_FILES" ]; then
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "⚠️  WARNING: Version files detected in commit"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo ""
+  echo "The following version-controlled files are staged:"
+  echo -e "$CHANGED_VERSION_FILES"
+  echo ""
+  echo "🤖 CI/CD automatically handles version bumping."
+  echo "   Manual version changes often create merge conflicts."
+  echo ""
+  echo "Options:"
+  echo "  1. Remove these files from staging: git restore --staged <file>"
+  echo "  2. Proceed anyway (use only if you know what you're doing)"
+  echo ""
+  printf "Continue with commit? (y/N): "
+  read -r answer
+  
+  if [ "$answer" != "y" ] && [ "$answer" != "Y" ]; then
+    echo ""
+    echo "❌ Commit aborted."
+    echo "   Run: git status"
+    echo "   Then: git restore --staged package.json VERSION.md Porpoise.Api/Porpoise.Api.csproj"
+    exit 1
+  fi
+  
+  echo ""
+  echo "⚠️  Proceeding with version file changes..."
+  echo ""
+fi
+
+exit 0

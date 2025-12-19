@@ -15,4 +15,8 @@
     <ProjectReference Include="..\Porpoise.Core\Porpoise.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations\*.sql" />
+  </ItemGroup>
+
 </Project>

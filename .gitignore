@@ -17,3 +17,8 @@ obj/
 appsettings.json
 !appsettings.json.template
 *.user
+
+# Database backups and ad-hoc scripts in root
+/*.sql
+!/**/Migrations/*.sql
+!/**/Scripts/*.sql
