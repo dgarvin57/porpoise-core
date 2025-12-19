@@ -566,35 +566,6 @@
       @generate="generateAIAnalysis"
       @regenerate="generateAIAnalysis"
     />
-    
-    <!-- Onboarding Tooltips -->
-    <!-- DV Selection Tooltip (shown when no variables selected) -->
-    <OnboardingTooltip
-      :show="showDVTooltip"
-      position="left"
-      stepNumber="1"
-      badgeColor="blue"
-      title="Select a Dependent Variable"
-      message="To start your crosstab analysis, hover to the LEFT of any question in the list (over the left margin area). A toggle button will appear - click it to select your dependent variable (what you want to measure)."
-      :showVisualGuide="true"
-      guideType="dv"
-      visualGuideLabel="Click button to the LEFT of question"
-      @dismiss="handleDVTooltipDismiss"
-    />
-    
-    <!-- IV Selection Tooltip (shown when DV selected but no IV) -->
-    <OnboardingTooltip
-      :show="showIVTooltip"
-      position="left"
-      stepNumber="2"
-      badgeColor="green"
-      title="Now Select an Independent Variable"
-      message="Great! Now click directly on any question label in the list to select your independent variable (how you want to group your data). The crosstab will generate automatically."
-      :showVisualGuide="true"
-      guideType="iv"
-      visualGuideLabel="Click question label"
-      @dismiss="handleIVTooltipDismiss"
-    />
   </div>
 </template>
 
@@ -605,7 +576,6 @@ import axios from 'axios'
 import { API_BASE_URL } from '@/config/api'
 import Button from '../common/Button.vue'
 import CloseButton from '../common/CloseButton.vue'
-import OnboardingTooltip from '../common/OnboardingTooltip.vue'
 import AIAnalysisModal from './AIAnalysisModal.vue'
 
 const router = useRouter()
@@ -646,55 +616,8 @@ const showAIModal = ref(false)
 const aiAnalysis = ref('')
 const loadingAnalysis = ref(false)
 
-// Onboarding tooltips state
-const showIVTooltip = ref(false)
-const showDVTooltip = ref(false)
-
 // Track last request to prevent duplicates
 const lastRequestKey = ref('')
-
-// Check localStorage for tooltip preferences
-const hideIVTooltip = ref(localStorage.getItem('hideIVTooltip') === 'true')
-const hideDVTooltip = ref(localStorage.getItem('hideDVTooltip') === 'true')
-
-// Listen for storage changes (when Reset Tips is clicked in same window)
-const checkTooltipPreferences = () => {
-  const newHideIV = localStorage.getItem('hideIVTooltip') === 'true'
-  const newHideDV = localStorage.getItem('hideDVTooltip') === 'true'
-  
-  // If preferences changed from hidden to not hidden, update and potentially show tooltips
-  if (hideDVTooltip.value && !newHideDV) {
-    hideDVTooltip.value = false
-    // Show DV tooltip if appropriate
-    if (!props.firstQuestion && !props.secondQuestion) {
-      setTimeout(() => {
-        if (!props.firstQuestion && !props.secondQuestion) {
-          showDVTooltip.value = true
-        }
-      }, 500)
-    }
-  }
-  
-  if (hideIVTooltip.value && !newHideIV) {
-    hideIVTooltip.value = false
-    // Show IV tooltip if appropriate
-    if (props.firstQuestion && !props.secondQuestion && !crosstabData.value) {
-      setTimeout(() => {
-        if (props.firstQuestion && !props.secondQuestion) {
-          showIVTooltip.value = true
-        }
-      }, 500)
-    }
-  }
-}
-
-// Poll localStorage every second to check for changes (since storage events don't fire in same window)
-const tooltipCheckInterval = setInterval(checkTooltipPreferences, 1000)
-
-// Cleanup on unmount
-onUnmounted(() => {
-  clearInterval(tooltipCheckInterval)
-})
 
 // Watch for prop changes
 // Auto-generate crosstab when both questions are selected
@@ -711,41 +634,8 @@ watch([() => props.firstQuestion, () => props.secondQuestion], ([first, second])
   } else {
     crosstabData.value = null
     lastRequestKey.value = ''
-    
-    // Show appropriate tooltip based on state
-    if (!first && !second && !hideDVTooltip.value) {
-      // No variables selected - show DV tooltip after a short delay
-      setTimeout(() => {
-        if (!props.firstQuestion && !props.secondQuestion) {
-          showDVTooltip.value = true
-        }
-      }, 500)
-    }
   }
 }, { immediate: true })
-
-// Watch for when DV is selected but IV is not - show IV tooltip
-watch(() => props.firstQuestion, (newVal, oldVal) => {
-  if (newVal && !props.secondQuestion && !hideIVTooltip.value && !crosstabData.value) {
-    setTimeout(() => {
-      if (props.firstQuestion && !props.secondQuestion) {
-        showIVTooltip.value = true
-      }
-    }, 500)
-  }
-  
-  // Auto-dismiss DV tooltip when DV is selected
-  if (newVal && !oldVal && showDVTooltip.value) {
-    showDVTooltip.value = false
-  }
-})
-
-// Auto-dismiss IV tooltip when IV is selected
-watch(() => props.secondQuestion, (newVal, oldVal) => {
-  if (newVal && !oldVal && showIVTooltip.value) {
-    showIVTooltip.value = false
-  }
-})
 
 // Watch for parent triggering AI modal
 watch(() => props.triggerAIModal, (newVal) => {
@@ -1014,23 +904,6 @@ function getCellColorClass(row, colIdx) {
   return displayMode.value === 'n' 
     ? 'text-red-800 dark:text-red-400 font-semibold' 
     : 'text-gray-600 dark:text-gray-300'
-}
-
-// Tooltip handlers
-function handleDVTooltipDismiss(dontShow) {
-  showDVTooltip.value = false
-  if (dontShow) {
-    localStorage.setItem('hideDVTooltip', 'true')
-    hideDVTooltip.value = true
-  }
-}
-
-function handleIVTooltipDismiss(dontShow) {
-  showIVTooltip.value = false
-  if (dontShow) {
-    localStorage.setItem('hideIVTooltip', 'true')
-    hideIVTooltip.value = true
-  }
 }
 
 // Watch for surveyId changes to clear state

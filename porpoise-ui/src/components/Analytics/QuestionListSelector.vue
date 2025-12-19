@@ -181,6 +181,22 @@
               >
                 <!-- Left hover zone for radio button -->
                 <div class="group/radio flex items-center flex-shrink-0">
+                  <!-- Radio button for single selection mode (Results/StatSig) -->
+                  <input
+                    v-if="selectionMode === 'single'"
+                    type="radio"
+                    name="single-selection"
+                    :checked="singleSelection?.id === question.id || selectedQuestionId === question.id"
+                    @click.stop="handleRadioSingleClick(question)"
+                    :disabled="props.activeTab === 'statsig' && question.variableType === 1"
+                    :class="[
+                      'w-5 h-5 transition-all duration-200 ease-in-out flex-shrink-0 mr-2 cursor-pointer',
+                      'border-2 rounded-full',
+                      'accent-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0',
+                      (singleSelection?.id === question.id || selectedQuestionId === question.id) ? 'opacity-100 scale-110' : 'opacity-40 group-hover/radio:opacity-100 group-hover/radio:scale-105',
+                      props.activeTab === 'statsig' && question.variableType === 1 ? 'opacity-20 cursor-not-allowed' : ''
+                    ]"
+                  />
                   <!-- Radio button for DV selection (crosstab radio mode only) -->
                   <input
                     v-if="selectionMode === 'crosstab' && USE_RADIO_BUTTON_MODE"
@@ -190,11 +206,11 @@
                     @click.stop="handleRadioDVClick(question)"
                     :disabled="props.activeTab === 'statsig' && question.variableType === 1"
                     :class="[
-                      'w-3.5 h-3.5 transition-all duration-200 ease-in-out flex-shrink-0 mr-2 cursor-pointer',
-                      'border-2 border-gray-300 dark:border-gray-600',
-                      'text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0',
-                      firstSelection?.id === question.id ? 'opacity-100' : 'opacity-30 group-hover/radio:opacity-100',
-                      props.activeTab === 'statsig' && question.variableType === 1 ? 'opacity-40 cursor-not-allowed' : ''
+                      'w-5 h-5 transition-all duration-200 ease-in-out flex-shrink-0 mr-2 cursor-pointer',
+                      'border-2 rounded-full',
+                      'accent-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0',
+                      firstSelection?.id === question.id ? 'opacity-100 scale-110' : 'opacity-40 group-hover/radio:opacity-100 group-hover/radio:scale-105',
+                      props.activeTab === 'statsig' && question.variableType === 1 ? 'opacity-20 cursor-not-allowed' : ''
                     ]"
                   />
                 </div>
@@ -238,6 +254,22 @@
           >
             <!-- Left hover zone for radio button -->
             <div class="group/radio flex items-center flex-shrink-0">
+              <!-- Radio button for single selection mode (Results/StatSig) -->
+              <input
+                v-if="selectionMode === 'single'"
+                type="radio"
+                name="single-selection"
+                :checked="singleSelection?.id === (item.question || item).id || selectedQuestionId === (item.question || item).id"
+                @click.stop="handleRadioSingleClick(item.question || item)"
+                :disabled="props.activeTab === 'statsig' && (item.question || item).variableType === 1"
+                :class="[
+                  'w-5 h-5 transition-all duration-200 ease-in-out flex-shrink-0 cursor-pointer',
+                  'border-2 rounded-full',
+                  'accent-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0',
+                  (singleSelection?.id === (item.question || item).id || selectedQuestionId === (item.question || item).id) ? 'opacity-100 scale-110' : 'opacity-40 group-hover/radio:opacity-100 group-hover/radio:scale-105',
+                  props.activeTab === 'statsig' && (item.question || item).variableType === 1 ? 'opacity-20 cursor-not-allowed' : ''
+                ]"
+              />
               <!-- Radio button for DV selection (crosstab radio mode only) -->
               <input
                 v-if="selectionMode === 'crosstab' && USE_RADIO_BUTTON_MODE"
@@ -247,29 +279,31 @@
                 @click.stop="handleRadioDVClick(item.question || item)"
                 :disabled="props.activeTab === 'statsig' && (item.question || item).variableType === 1"
                 :class="[
-                  'w-3.5 h-3.5 transition-all duration-200 ease-in-out flex-shrink-0 cursor-pointer',
-                  'border-2 border-gray-300 dark:border-gray-600',
-                  'text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0',
-                  firstSelection?.id === (item.question || item).id ? 'opacity-100' : 'opacity-30 group-hover/radio:opacity-100',
-                  props.activeTab === 'statsig' && (item.question || item).variableType === 1 ? 'opacity-40 cursor-not-allowed' : ''
+                  'w-5 h-5 transition-all duration-200 ease-in-out flex-shrink-0 cursor-pointer',
+                  'border-2 rounded-full',
+                  'accent-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0',
+                  firstSelection?.id === (item.question || item).id ? 'opacity-100 scale-110' : 'opacity-40 group-hover/radio:opacity-100 group-hover/radio:scale-105',
+                  props.activeTab === 'statsig' && (item.question || item).variableType === 1 ? 'opacity-20 cursor-not-allowed' : ''
                 ]"
               />
             </div>
             
-            <!-- Variable Type Icon (always show) -->
-            <svg 
-              class="w-3.5 h-3.5 flex-shrink-0" 
-              :class="(item.question || item).variableType === 1 ? 'text-red-400' : (item.question || item).variableType === 2 ? 'text-blue-400' : 'text-gray-400'"
-              fill="currentColor" 
-              viewBox="0 0 20 20"
-              @click="handleQuestionClick(item.question || item)"
-            >
-              <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
-            </svg>
-            
-            <div class="flex-1 min-w-0 leading-none" @click="handleQuestionClick(item.question || item)">
-              <span class="text-xs text-gray-700 dark:text-gray-300">{{ (item.question || item).label }}</span>
-              <span v-if="showQuestionNumbers" class="text-xs text-gray-400 dark:text-gray-500 ml-2">{{ (item.question || item).qstNumber }}</span>
+            <!-- Icon + Label Container (for tour spotlight targeting) -->
+            <div class="flex items-center space-x-2 flex-1 min-w-0" @click="handleQuestionClick(item.question || item)">
+              <!-- Variable Type Icon (always show) -->
+              <svg 
+                class="w-3.5 h-3.5 flex-shrink-0" 
+                :class="(item.question || item).variableType === 1 ? 'text-red-400' : (item.question || item).variableType === 2 ? 'text-blue-400' : 'text-gray-400'"
+                fill="currentColor" 
+                viewBox="0 0 20 20"
+              >
+                <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
+              </svg>
+              
+              <div class="flex-1 min-w-0 leading-none">
+                <span class="text-xs text-gray-700 dark:text-gray-300">{{ (item.question || item).label }}</span>
+                <span v-if="showQuestionNumbers" class="text-xs text-gray-400 dark:text-gray-500 ml-2">{{ (item.question || item).qstNumber }}</span>
+              </div>
             </div>
             
             <!-- Selection Badge (right side) -->
@@ -616,6 +650,17 @@ function handleRadioDVClick(question) {
     secondSelection.value = null
   }
   emit('crosstab-selection', { first: question, second: secondSelection.value })
+}
+
+function handleRadioSingleClick(question) {
+  // On statsig tab, don't allow selecting IVs
+  if (props.activeTab === 'statsig' && question.variableType === 1) {
+    return
+  }
+  
+  // Radio button clicked in single selection mode
+  singleSelection.value = question
+  emit('question-selected', question)
 }
 
 function handleRadioModeCrosstabSelection(question) {

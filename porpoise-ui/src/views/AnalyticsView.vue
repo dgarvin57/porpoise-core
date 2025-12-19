@@ -298,17 +298,17 @@
                       AI Analysis
                     </button>
                     
-                    <!-- Reset Tips Button (only for crosstab tab and if tips have been dismissed) -->
+                    <!-- Reset Tour Button (only for crosstab tab and if tour has been completed) -->
                     <button
-                      v-if="activeAnalysisTab === 'crosstab' && hasAnyTooltipBeenDismissed"
-                      @click="resetOnboardingTips"
+                      v-if="activeAnalysisTab === 'crosstab' && hasTourBeenCompleted()"
+                      @click="resetCrosstabTour"
                       class="flex items-center gap-1.5 px-3 py-1 text-xs text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors rounded hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                      title="Reset onboarding tips"
+                      title="Restart the variable selection tour"
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <span>Reset Tips</span>
+                      <span>Restart Tour</span>
                     </button>
                   </div>
                 </div>
@@ -432,6 +432,8 @@ import AIAnalysisModal from '@/components/Analytics/AIAnalysisModal.vue'
 import UnderstandingResultsModal from '@/components/Analytics/UnderstandingResultsModal.vue'
 import CrosstabView from '@/components/Analytics/CrosstabView.vue'
 import StatSigView from '@/components/Analytics/StatSigView.vue'
+import { useCrosstabTour } from '@/composables/useCrosstabTour'
+import '@/assets/shepherd-theme.css'
 
 // Click outside directive
 const vClickOutside = {
@@ -460,6 +462,9 @@ const projectName = ref('')
 const totalCases = ref(0)
 const questionCount = ref(0)
 const activeSection = ref('results')
+
+// Initialize Crosstab Tour
+const { hasTourBeenCompleted, startTour } = useCrosstabTour()
 
 // Sidebar collapse state
 const sidebarCollapsed = ref(true) // Default to collapsed (closed) when survey first opens
@@ -1115,46 +1120,26 @@ function toggleSidebar() {
   localStorage.setItem('sidebarCollapsed', sidebarCollapsed.value)
 }
 
-// Track if any onboarding tooltips have been dismissed (reactive to localStorage changes)
-const hasAnyTooltipBeenDismissed = ref(false)
-
-// Check localStorage on mount and set up polling to detect changes
-onMounted(() => {
-  // Initial check
-  const checkTooltipDismissed = () => {
-    hasAnyTooltipBeenDismissed.value = 
-      localStorage.getItem('hideDVTooltip') === 'true' || 
-      localStorage.getItem('hideIVTooltip') === 'true'
+// Watch for crosstab section activation and start tour if not completed
+watch(activeSection, async (newSection, oldSection) => {
+  if (newSection === 'crosstab' && !hasTourBeenCompleted()) {
+    // Wait a bit for the UI to render and question list to load
+    await nextTick()
+    setTimeout(() => {
+      startTour()
+    }, 800)
   }
-  
-  checkTooltipDismissed()
-  
-  // Poll for changes every 500ms (same pattern as CrosstabView)
-  const pollInterval = setInterval(checkTooltipDismissed, 500)
-  
-  // Cleanup on unmount
-  onUnmounted(() => {
-    clearInterval(pollInterval)
-  })
 })
 
-function resetOnboardingTips() {
-  // Clear all onboarding tooltip preferences
-  localStorage.removeItem('hideDVTooltip')
-  localStorage.removeItem('hideIVTooltip')
+function resetCrosstabTour() {
+  // Reset the Shepherd tour completion flag
+  const { resetTour, startTour } = useCrosstabTour()
+  resetTour()
   
-  // Update the reactive flag immediately
-  hasAnyTooltipBeenDismissed.value = false
-  
-  // Show confirmation
-  alert('Onboarding tips have been reset! Clear the crosstab selection to see them again.')
-  
-  // If we're already on crosstab tab with no selections, trigger tooltips
-  if (activeAnalysisTab.value === 'crosstab' && !crosstabFirstQuestion.value && !crosstabSecondQuestion.value) {
-    // Clear the selections to trigger the tooltip watch
-    crosstabFirstQuestion.value = null
-    crosstabSecondQuestion.value = null
-  }
+  // Start the tour immediately
+  setTimeout(() => {
+    startTour()
+  }, 300)
 }
 
 // AI Analysis - computed to determine when to show the button
