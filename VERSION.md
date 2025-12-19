@@ -8,7 +8,20 @@ Porpoise uses **Semantic Versioning** (SemVer): `MAJOR.MINOR.PATCH`
 - **MINOR** (1.X.0): New features, enhancements, non-breaking changes  
 - **PATCH** (1.0.X): Bug fixes, small tweaks, performance improvements
 
-## Current Version: 1.7.6
+## Current Version: 1.8.0
+
+### Single Source of Truth
+Version is maintained in `porpoise-ui/package.json` and auto-synced to:
+- `Porpoise.Api/Porpoise.Api.csproj` (synced by bump script)
+
+### Version History
+
+#### 1.8.0 (2025-12-19)
+- feat: change default view to list view on project start screen
+- chore: bump version to 1.7.0
+- chore: bump version to 1.5.0
+- Refactor: Consolidate AI Analysis modals into single reusable component
+- chore: bump version to 1.4.0
 
 ### Single Source of Truth
 Version is maintained in `porpoise-ui/package.json` and auto-synced to:
