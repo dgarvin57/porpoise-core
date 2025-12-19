@@ -13,26 +13,23 @@ namespace Porpoise.Api.Database
         {
             Console.WriteLine("🔄 Checking for database migrations...");
             
-            // Get the path to the migrations folder
-            var migrationsPath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", 
-                "Porpoise.DataAccess", "Migrations");
+            // Load migrations from embedded resources in Porpoise.DataAccess assembly
+            var dataAccessAssembly = AppDomain.CurrentDomain.GetAssemblies()
+                .FirstOrDefault(a => a.GetName().Name == "Porpoise.DataAccess");
             
-            // Normalize the path
-            migrationsPath = Path.GetFullPath(migrationsPath);
-            
-            if (!Directory.Exists(migrationsPath))
+            if (dataAccessAssembly == null)
             {
-                Console.WriteLine($"⚠️  Migrations folder not found at: {migrationsPath}");
+                Console.WriteLine("⚠️  Porpoise.DataAccess assembly not found");
                 Console.WriteLine("   Skipping migrations.");
                 return;
             }
             
-            Console.WriteLine($"📁 Migrations folder: {migrationsPath}");
+            Console.WriteLine($"📦 Loading migrations from embedded resources...");
             
-            // Configure DbUp to run scripts from the file system
+            // Configure DbUp to run scripts from embedded resources
             var upgrader = DeployChanges.To
                 .MySqlDatabase(connectionString)
-                .WithScriptsFromFileSystem(migrationsPath)
+                .WithScriptsEmbeddedInAssembly(dataAccessAssembly, script => script.EndsWith(".sql"))
                 .WithTransactionPerScript()
                 .LogToConsole()
                 .Build();
