@@ -102,7 +102,34 @@ export function useCrosstabTour() {
         </div>
       `,
       attachTo: {
-        element: '.group\\/radio input[type="radio"]',
+        element: () => {
+          // Priority 1: Find currently selected DV (has blue badge #1)
+          const selectedBadge = Array.from(document.querySelectorAll('span[class*="bg-blue-600"]'))
+            .find(badge => badge.textContent.trim() === '1')
+          if (selectedBadge) {
+            const radio = selectedBadge.closest('[class*="flex items-center"]')?.querySelector('input[type="radio"]')
+            if (radio) return radio
+          }
+          
+          // Priority 2: Find checked radio button
+          let radio = document.querySelector('.group\\/radio input[type="radio"]:checked')
+          if (radio && !radio.disabled) return radio
+          
+          // Priority 3: Find first enabled radio button
+          const allRadios = Array.from(document.querySelectorAll('.group\\/radio input[type="radio"]'))
+          radio = allRadios.find(r => !r.disabled)
+          
+          if (radio) {
+            const collapsedParent = radio.closest('[class*="group/block"]')?.previousElementSibling
+            if (collapsedParent && collapsedParent.querySelector('svg[class*="rotate"]')) {
+              collapsedParent.click()
+            }
+            return radio
+          }
+          
+          // Priority 4: Fallback
+          return allRadios[0] || null
+        },
         on: 'right'
       },
       buttons: [
@@ -147,13 +174,42 @@ export function useCrosstabTour() {
       `,
       attachTo: {
         element: () => {
-          // Find first red icon, then get its parent wrapper (icon + label container)
-          const redIcon = document.querySelector('svg.text-red-400')
-          if (redIcon) {
-            // The new structure has icon+label wrapped in a flex container
-            return redIcon.closest('div.flex.items-center.space-x-2.flex-1')
+          // Priority 1: Find currently selected IV (has green badge #2)
+          const selectedBadge = Array.from(document.querySelectorAll('span[class*="bg-green-600"]'))
+            .find(badge => badge.textContent.trim() === '2')
+          if (selectedBadge) {
+            // Go up to the parent row, then find the icon+label container
+            let parentRow = selectedBadge.parentElement
+            // Keep going up until we find the row with all children
+            while (parentRow && !parentRow.querySelector('input[type="radio"]')) {
+              parentRow = parentRow.parentElement
+            }
+            const container = parentRow?.querySelector('div.flex.items-center.space-x-2.flex-1')
+            if (container) return container
           }
-          return null
+          
+          // Priority 2: Find first enabled IV question with red icon
+          const allRedIcons = Array.from(document.querySelectorAll('svg.text-red-400'))
+          
+          for (const icon of allRedIcons) {
+            const container = icon.closest('div.flex.items-center.space-x-2.flex-1')
+            const radioButton = icon.closest('[class*="flex items-center"]')?.querySelector('input[type="radio"]')
+            
+            // Check if enabled (radio not disabled)
+            if (!radioButton || !radioButton.disabled) {
+              // Check if in collapsed block
+              const collapsedParent = icon.closest('[class*="group/block"]')?.previousElementSibling
+              if (collapsedParent && collapsedParent.querySelector('svg[class*="rotate"]')) {
+                // Expand the block
+                collapsedParent.click()
+              }
+              return container
+            }
+          }
+          
+          // Priority 3: Fallback to first red icon container
+          const firstRedIcon = document.querySelector('svg.text-red-400')
+          return firstRedIcon?.closest('div.flex.items-center.space-x-2.flex-1') || null
         },
         on: 'left'
       },
