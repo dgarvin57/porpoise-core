@@ -15,7 +15,7 @@ namespace Porpoise.Api.Database
             
             // Get the path to the migrations folder
             var migrationsPath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", 
-                "Porpoise.DataAccess", "Scripts", "Migrations");
+                "Porpoise.DataAccess", "Migrations");
             
             // Normalize the path
             migrationsPath = Path.GetFullPath(migrationsPath);
