@@ -13,10 +13,12 @@
   top: 50% !important;
   left: 50% !important;
   transform: translate(-50%, -50%) !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
 }
 
 .shepherd-content {
-  border-radius: 4px !important;
+  border-radius: 12px !important;
   padding: 0;
   overflow: hidden !important;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
@@ -24,7 +26,7 @@
 
 .shepherd-content-wrapper {
   padding: 0;
-  border-radius: 4px !important;
+  border-radius: 12px !important;
   overflow: hidden !important;
 }
 
@@ -32,7 +34,7 @@
   background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   padding: 20px 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 4px 4px 0 0 !important;
+  border-radius: 12px 12px 0 0 !important;
   position: relative;
 }
 
@@ -60,7 +62,7 @@ html.dark .shepherd-text {
 html.dark .shepherd-content {
   background-color: #1f2937;
   border: 1px solid #374151;
-  border-radius: 6px;
+  border-radius: 10px;
 }
 
 .shepherd-text p {

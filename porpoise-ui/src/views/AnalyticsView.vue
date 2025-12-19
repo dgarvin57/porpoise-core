@@ -298,12 +298,38 @@
                       AI Analysis
                     </button>
                     
-                    <!-- Reset Tour Button (only for crosstab tab and if tour has been completed) -->
+                    <!-- Reset Tour Button (crosstab) -->
                     <button
-                      v-if="activeAnalysisTab === 'crosstab' && hasTourBeenCompleted()"
+                      v-if="activeAnalysisTab === 'crosstab' && hasCrosstabTourCompleted()"
                       @click="resetCrosstabTour"
                       class="flex items-center gap-1.5 px-3 py-1 text-xs text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors rounded hover:bg-blue-50 dark:hover:bg-blue-900/20"
                       title="Restart the variable selection tour"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>Restart Tour</span>
+                    </button>
+                    
+                    <!-- Reset Tour Button (results) -->
+                    <button
+                      v-if="activeAnalysisTab === 'results' && hasResultsTourCompleted()"
+                      @click="resetResultsTour"
+                      class="flex items-center gap-1.5 px-3 py-1 text-xs text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors rounded hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                      title="Restart the results tour"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>Restart Tour</span>
+                    </button>
+                    
+                    <!-- Reset Tour Button (statsig) -->
+                    <button
+                      v-if="activeAnalysisTab === 'statsig' && hasStatSigTourCompleted()"
+                      @click="resetStatSigTour"
+                      class="flex items-center gap-1.5 px-3 py-1 text-xs text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors rounded hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                      title="Restart the statistical significance tour"
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -433,6 +459,9 @@ import UnderstandingResultsModal from '@/components/Analytics/UnderstandingResul
 import CrosstabView from '@/components/Analytics/CrosstabView.vue'
 import StatSigView from '@/components/Analytics/StatSigView.vue'
 import { useCrosstabTour } from '@/composables/useCrosstabTour'
+import { useResultsTour } from '@/composables/useResultsTour'
+import { useStatSigTour } from '@/composables/useStatSigTour'
+import { useTourManager } from '@/composables/useTourManager'
 import '@/assets/shepherd-theme.css'
 
 // Click outside directive
@@ -463,8 +492,11 @@ const totalCases = ref(0)
 const questionCount = ref(0)
 const activeSection = ref('results')
 
-// Initialize Crosstab Tour
-const { hasTourBeenCompleted, startTour } = useCrosstabTour()
+// Initialize Tours
+const { hasTourBeenCompleted: hasCrosstabTourCompleted, startTour: startCrosstabTour, resetTour: resetCrosstabTourFlag } = useCrosstabTour()
+const { hasTourBeenCompleted: hasResultsTourCompleted, startTour: startResultsTour, resetTour: resetResultsTourFlag } = useResultsTour()
+const { hasTourBeenCompleted: hasStatSigTourCompleted, startTour: startStatSigTour, resetTour: resetStatSigTourFlag } = useStatSigTour()
+const { hasAnyTourBeenCompleted } = useTourManager()
 
 // Sidebar collapse state
 const sidebarCollapsed = ref(true) // Default to collapsed (closed) when survey first opens
@@ -1123,25 +1155,49 @@ function toggleSidebar() {
 // Track if any onboarding tooltips have been dismissed (reactive to localStorage changes)
 const hasAnyTooltipBeenDismissed = ref(false)
 
-// Watch for crosstab section activation and start tour if not completed
+// Watch for section activation and start appropriate tour if not completed
 watch(activeSection, async (newSection, oldSection) => {
-  if (newSection === 'crosstab' && !hasTourBeenCompleted()) {
-    // Wait a bit for the UI to render and question list to load
+  // Results tab tour (primary onboarding)
+  if (newSection === 'results' && !hasResultsTourCompleted()) {
     await nextTick()
     setTimeout(() => {
-      startTour()
+      startResultsTour()
+    }, 800)
+  }
+  // Crosstab tab tour
+  else if (newSection === 'crosstab' && !hasCrosstabTourCompleted()) {
+    await nextTick()
+    setTimeout(() => {
+      startCrosstabTour()
+    }, 800)
+  }
+  // StatSig tab tour
+  else if (newSection === 'statsig' && !hasStatSigTourCompleted()) {
+    await nextTick()
+    setTimeout(() => {
+      startStatSigTour()
     }, 800)
   }
 })
 
 function resetCrosstabTour() {
-  // Reset the Shepherd tour completion flag
-  const { resetTour, startTour } = useCrosstabTour()
-  resetTour()
-  
-  // Start the tour immediately
+  resetCrosstabTourFlag()
   setTimeout(() => {
-    startTour()
+    startCrosstabTour()
+  }, 300)
+}
+
+function resetResultsTour() {
+  resetResultsTourFlag()
+  setTimeout(() => {
+    startResultsTour()
+  }, 300)
+}
+
+function resetStatSigTour() {
+  resetStatSigTourFlag()
+  setTimeout(() => {
+    startStatSigTour()
   }, 300)
 }
 
