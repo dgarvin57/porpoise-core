@@ -8,7 +8,29 @@ Porpoise uses **Semantic Versioning** (SemVer): `MAJOR.MINOR.PATCH`
 - **MINOR** (1.X.0): New features, enhancements, non-breaking changes  
 - **PATCH** (1.0.X): Bug fixes, small tweaks, performance improvements
 
-## Current Version: 1.6.0
+## Current Version: 1.7.0
+
+### Single Source of Truth
+Version is maintained in `porpoise-ui/package.json` and auto-synced to:
+- `Porpoise.Api/Porpoise.Api.csproj` (synced by bump script)
+
+### Version History
+
+#### 1.7.0 (2025-12-19)
+- fix: handle existing tags in version bump workflow
+- fix: add dbup-mysql package for MySQL migration support
+- feat: add automated database migrations with DbUp
+- feat: add pre-commit hook to prevent version file changes
+- docs: add AI assistant instructions for version management
+- chore: bump version to 1.6.0
+- chore: polish analytics headers and project start UI
+- feat: Replace project gallery with new Start page featuring Recent Surveys
+- chore: bump version to 1.5.0
+- feat: add automatic version bumping to staging deployments
+- chore: bump version to 1.4.0
+- Refactor: Extract Results tab to component and improve styling consistency
+- Refactor: Consolidate AI Analysis modals into single reusable component
+- feat: add progressive onboarding tooltips for crosstab analysis
 
 ### Single Source of Truth
 Version is maintained in `porpoise-ui/package.json` and auto-synced to:
