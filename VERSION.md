@@ -19,6 +19,7 @@ Version is maintained in `porpoise-ui/package.json` and auto-synced to:
 #### 1.9.0 (2025-12-19)
 - feat: Implement Shepherd.js guided tour for crosstab interface
 - chore: bump version to 1.8.0
+- feat: change default view to list view on project start screen
 
 ### Single Source of Truth
 Version is maintained in `porpoise-ui/package.json` and auto-synced to:
