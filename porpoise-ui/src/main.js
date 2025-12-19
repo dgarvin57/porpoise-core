@@ -5,6 +5,7 @@ import Aura from '@primevue/themes/aura'
 import { definePreset } from '@primevue/themes'
 import router from './router'
 import './style.css'
+import 'primeicons/primeicons.css'
 import App from './App.vue'
 
 const CustomPreset = definePreset(Aura, {

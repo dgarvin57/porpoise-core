@@ -155,6 +155,27 @@ public class InMemorySurveyRepository : ISurveyRepository
         return Task.FromResult<IEnumerable<dynamic>>(deleted);
     }
 
+    public Task<IEnumerable<dynamic>> GetRecentlyAccessedAsync(int limit = 4)
+    {
+        var recent = _surveys
+            .Where(s => !s.IsDeleted && s.LastAccessedDate != null)
+            .OrderByDescending(s => s.LastAccessedDate)
+            .Take(limit)
+            .Select(s => new
+            {
+                id = s.Id.ToString(),
+                name = s.SurveyName,
+                status = (int)s.Status,
+                lastAccessedDate = s.LastAccessedDate,
+                projectId = s.ProjectId?.ToString(),
+                projectName = (string?)null,
+                questionCount = s.QuestionList?.Count ?? 0,
+                caseCount = s.Data?.DataList?.Count ?? 0
+            })
+            .ToList();
+        return Task.FromResult<IEnumerable<dynamic>>(recent);
+    }
+
     // Helper methods for testing
     public void Clear() => _surveys.Clear();
     public int Count => _surveys.Count;

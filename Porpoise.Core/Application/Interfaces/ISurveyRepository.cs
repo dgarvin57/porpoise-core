@@ -67,4 +67,9 @@ public interface ISurveyRepository : IRepository<Survey>
     /// Get all deleted surveys (trash).
     /// </summary>
     Task<IEnumerable<dynamic>> GetDeletedSurveysAsync();
+
+    /// <summary>
+    /// Get recently accessed surveys with metadata (project name, counts).
+    /// </summary>
+    Task<IEnumerable<dynamic>> GetRecentlyAccessedAsync(int limit = 4);
 }

@@ -192,7 +192,7 @@
                 
                 <!-- Display Mode Toggle (% vs N) -->
                 <div 
-                  class="flex items-center bg-gray-100 dark:bg-gray-700 rounded-md p-0.5"
+                  class="flex items-center gap-2 bg-gray-100 dark:bg-gray-700 rounded-md p-0.5"
                   title="Toggle between percentages and counts. When N is selected (red), the table shows actual response counts instead of percentages."
                 >
                   <button
@@ -206,6 +206,7 @@
                   >
                     %
                   </button>
+                  <span class="text-[10px] text-gray-400 dark:text-gray-500 font-normal">or</span>
                   <button
                     @click="displayMode = 'n'"
                     :class="[
@@ -237,12 +238,26 @@
           <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead class="bg-blue-50 dark:bg-gray-700">
+                <!-- First row: "Among" label for IV columns -->
+                <tr>
+                  <th class="px-6 pt-0.5 pb-0 text-xs font-normal text-gray-500 dark:text-gray-400 uppercase tracking-wider text-left bg-blue-100 dark:bg-gray-600">
+                    &nbsp;
+                  </th>
+                  <th 
+                    v-for="(col, idx) in tableColumns.slice(1)"
+                    :key="'among-' + idx"
+                    class="px-6 pt-0.5 pb-0 text-[10px] font-normal text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center"
+                  >
+                    {{ col.trim() !== '' ? 'Among' : '' }}
+                  </th>
+                </tr>
+                <!-- Second row: Column headers -->
                 <tr>
                   <th 
                     v-for="(col, idx) in tableColumns"
                     :key="idx"
                     :class="[
-                      'px-6 py-1.5 text-xs font-semibold uppercase tracking-wider',
+                      'px-6 pb-1.5 text-xs font-semibold uppercase tracking-wider',
                       idx === 0 ? 'text-left bg-blue-100 dark:bg-gray-600 text-gray-900 dark:text-white' : 'text-center text-gray-800 dark:text-gray-400'
                     ]"
                   >
@@ -284,7 +299,7 @@
               <button
                 @click="graphMode = 'index'"
                 :class="[
-                  'flex-1 px-4 py-1.5 text-xs font-medium transition-colors border-b-2',
+                  'px-4 py-1.5 text-xs font-medium transition-colors border-b-2',
                   graphMode === 'index'
                     ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
                     : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50'
@@ -295,7 +310,7 @@
               <button
                 @click="graphMode = 'posneg'"
                 :class="[
-                  'flex-1 px-4 py-1.5 text-xs font-medium transition-colors border-b-2',
+                  'px-4 py-1.5 text-xs font-medium transition-colors border-b-2',
                   graphMode === 'posneg'
                     ? 'border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20'
                     : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50'
@@ -303,6 +318,7 @@
               >
                 Graph Pos/Neg Percent
               </button>
+              <div class="flex-1 border-b-2 border-transparent"></div>
             </div>
           </div>
           <div class="p-4">
@@ -475,6 +491,20 @@
               <li><strong class="text-red-800 dark:text-red-400">N (Counts):</strong> Shows the actual number of respondents in each cell. When active, the N button turns red and all numbers appear in dark red.</li>
               <li class="text-xs italic text-gray-600 dark:text-gray-400 ml-4">Note: Index and Marginal Percentage rows remain unchanged in both modes</li>
             </ul>
+          </div>
+          
+          <!-- How to Read the Data -->
+          <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+            <h4 class="font-semibold text-gray-900 dark:text-white mb-2">How to Read the Data</h4>
+            <p class="text-sm text-gray-700 dark:text-gray-300 mb-2">
+              The column headers show the <strong>Independent Variable (IV)</strong> categories. Each column represents a different group of respondents. Use the word "<strong>Among</strong>" to read the data naturally:
+            </p>
+            <p class="text-sm text-gray-600 dark:text-gray-400 ml-4 italic mb-2 p-2 bg-white dark:bg-gray-800 rounded border border-green-200 dark:border-green-800">
+              "Among [column group], [percentage or count] felt [row response]."
+            </p>
+            <p class="text-sm text-gray-700 dark:text-gray-300">
+              For example: "Among Religious people, 30.9% felt we were on the right direction." or "Among Somewhat Religious people, 62.5% felt we were on the wrong track."
+            </p>
           </div>
           
           <!-- What is Crosstab Analysis -->
@@ -893,7 +923,8 @@ async function generateAIAnalysis() {
       phi: crosstabData.value.phi,
       cramersV: crosstabData.value.cramersV,
       tableData: crosstabData.value.tableData,
-      indexes: crosstabData.value.ivIndexes
+      indexes: crosstabData.value.ivIndexes,
+      readingGuidance: `When describing the data, use the word "Among" to help readers understand the grouping. For example: "Among [IV category], [percentage] said [DV response]." This frames the data as the percentage or count of each IV group that chose each response.`
     }
     
     const response = await axios.post(

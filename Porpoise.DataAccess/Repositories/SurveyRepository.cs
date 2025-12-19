@@ -187,6 +187,7 @@ public class SurveyRepository : Repository<Survey>, ISurveyRepository
                 DataFileName = @DataFileName,
                 ErrorsExist = @ErrorsExist,
                 SurveyNotes = @SurveyNotes,
+                LastAccessedDate = @LastAccessedDate,
                 ModifiedDate = @ModifiedDate
             WHERE Id = @Id";
         
@@ -201,6 +202,7 @@ public class SurveyRepository : Repository<Survey>, ISurveyRepository
             survey.DataFileName,
             survey.ErrorsExist,
             survey.SurveyNotes,
+            survey.LastAccessedDate,
             ModifiedDate = DateTime.UtcNow
         });
         
@@ -284,5 +286,40 @@ public class SurveyRepository : Repository<Survey>, ISurveyRepository
 
         using var connection = _context.CreateConnection();
         return await connection.QueryAsync(sql, new { TenantId = _tenantContext.TenantId });
+    }
+
+    /// <summary>
+    /// Get recently accessed surveys with metadata
+    /// </summary>
+    public async Task<IEnumerable<dynamic>> GetRecentlyAccessedAsync(int limit = 4)
+    {
+        const string sql = @"
+            SELECT 
+                CAST(s.Id AS CHAR) as id,
+                s.SurveyName as name,
+                s.Status as status,
+                s.LastAccessedDate as lastAccessedDate,
+                CAST(s.ProjectId AS CHAR) as projectId,
+                p.ProjectName as projectName,
+                p.ClientName as clientName,
+                COUNT(DISTINCT q.Id) as questionCount,
+                GREATEST(COALESCE(MAX(JSON_LENGTH(sd.DataList)), 0) - 1, 0) as caseCount
+            FROM Surveys s
+            LEFT JOIN Projects p ON s.ProjectId = p.Id
+            LEFT JOIN Questions q ON s.Id = q.SurveyId
+            LEFT JOIN SurveyData sd ON s.Id = sd.SurveyId
+            WHERE s.TenantId = @TenantId 
+            AND (s.IsDeleted = 0 OR s.IsDeleted IS NULL)
+            AND s.LastAccessedDate IS NOT NULL
+            GROUP BY s.Id, s.SurveyName, s.Status, s.LastAccessedDate, s.ProjectId, p.ProjectName, p.ClientName
+            ORDER BY s.LastAccessedDate DESC
+            LIMIT @Limit";
+
+        using var connection = _context.CreateConnection();
+        return await connection.QueryAsync(sql, new 
+        { 
+            TenantId = _tenantContext.TenantId,
+            Limit = limit
+        });
     }
 }
