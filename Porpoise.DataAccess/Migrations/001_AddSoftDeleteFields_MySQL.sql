@@ -52,6 +52,28 @@ PREPARE alterIfNotExists FROM @preparedStatement;
 EXECUTE alterIfNotExists;
 DEALLOCATE PREPARE alterIfNotExists;
 
--- Create indexes if not exist
-CREATE INDEX IF NOT EXISTS IX_Projects_IsDeleted ON Projects(IsDeleted);
-CREATE INDEX IF NOT EXISTS IX_Surveys_IsDeleted ON Surveys(IsDeleted);
+-- Create index on Projects.IsDeleted if not exists
+SET @tablename = 'Projects';
+SET @indexname = 'IX_Projects_IsDeleted';
+SET @preparedStatement = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS
+   WHERE table_schema = DATABASE() AND table_name = @tablename AND index_name = @indexname) > 0,
+  'SELECT 1',
+  CONCAT('CREATE INDEX ', @indexname, ' ON ', @tablename, '(IsDeleted)')
+));
+PREPARE alterIfNotExists FROM @preparedStatement;
+EXECUTE alterIfNotExists;
+DEALLOCATE PREPARE alterIfNotExists;
+
+-- Create index on Surveys.IsDeleted if not exists
+SET @tablename = 'Surveys';
+SET @indexname = 'IX_Surveys_IsDeleted';
+SET @preparedStatement = (SELECT IF(
+  (SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS
+   WHERE table_schema = DATABASE() AND table_name = @tablename AND index_name = @indexname) > 0,
+  'SELECT 1',
+  CONCAT('CREATE INDEX ', @indexname, ' ON ', @tablename, '(IsDeleted)')
+));
+PREPARE alterIfNotExists FROM @preparedStatement;
+EXECUTE alterIfNotExists;
+DEALLOCATE PREPARE alterIfNotExists;
