@@ -81,6 +81,12 @@ else
     var connectionString = builder.Configuration.GetConnectionString("PorpoiseDb") 
         ?? throw new InvalidOperationException("Connection string 'PorpoiseDb' not found");
     
+    // Add AllowUserVariables=true for migration scripts that use @variables
+    if (!connectionString.Contains("AllowUserVariables", StringComparison.OrdinalIgnoreCase))
+    {
+        connectionString += ";AllowUserVariables=true";
+    }
+    
     // Run database migrations BEFORE setting up repositories
     try
     {
