@@ -740,6 +740,10 @@ function loadSurveyState() {
   // First check URL query params (highest priority)
   if (route.query.section) {
     activeSection.value = route.query.section
+    // Also update activeAnalysisTab for analysis sections
+    if (route.query.section === 'crosstab' || route.query.section === 'results' || route.query.section === 'statsig') {
+      activeAnalysisTab.value = route.query.section
+    }
   }
   if (route.query.questionId) {
     selectedQuestionId.value = route.query.questionId
@@ -813,6 +817,17 @@ watch(activeAnalysisTab, (newTab, oldTab) => {
       loadQuestionData(crosstabFirstQuestion.value.id)
     }
   }
+  
+  // Update URL query params to reflect the current tab
+  if (newTab && newTab !== route.query.section) {
+    router.replace({
+      query: {
+        ...route.query,
+        section: newTab
+      }
+    })
+  }
+  
   saveSurveyState()
 })
 
@@ -1257,26 +1272,36 @@ watch(() => route.params.id, (newId) => {
   }
 })
 
+// Watch section query param separately to handle back button navigation
+watch(() => route.query.section, (newSection, oldSection) => {
+  if (newSection && (newSection === 'crosstab' || newSection === 'results' || newSection === 'statsig')) {
+    if (newSection !== activeAnalysisTab.value) {
+      activeAnalysisTab.value = newSection
+    }
+  }
+})
+
 // Watch for query parameter changes (when navigating from Stat Sig to Crosstab)
-watch(() => route.query, (newQuery, oldQuery) => {
+watch([() => route.query.section, () => route.query.firstQuestion, () => route.query.secondQuestion], 
+  ([newSection, newFirstQuestion, newSecondQuestion], [oldSection, oldFirstQuestion, oldSecondQuestion]) => {
+  
   // Update section if it changed
-  if (newQuery.section && newQuery.section !== activeSection.value) {
-    activeSection.value = newQuery.section
+  if (newSection && newSection !== activeSection.value) {
+    activeSection.value = newSection
   }
   
-  // Only apply questionId from URL on initial load or if it explicitly changed
-  // Don't override manual selections from sidebar
-  if (newQuery.questionId && isInitialRouteLoad.value) {
-    selectedQuestionId.value = newQuery.questionId
-    loadQuestionData(newQuery.questionId)
-    isInitialRouteLoad.value = false
+  // Always update activeAnalysisTab for analysis sections
+  if (newSection && (newSection === 'crosstab' || newSection === 'results' || newSection === 'statsig')) {
+    if (newSection !== activeAnalysisTab.value) {
+      activeAnalysisTab.value = newSection
+    }
   }
   
   // Handle crosstab navigation parameters
-  if (newQuery.firstQuestion && newQuery.secondQuestion) {
-    loadQuestionsForCrosstab(newQuery.firstQuestion, newQuery.secondQuestion)
+  if (newFirstQuestion && newSecondQuestion) {
+    loadQuestionsForCrosstab(newFirstQuestion, newSecondQuestion)
   }
-}, { deep: true })
+}, { deep: true, flush: 'post' })
 
 </script>
 

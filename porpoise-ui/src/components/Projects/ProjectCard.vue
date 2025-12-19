@@ -1,7 +1,7 @@
 <template>
   <div class="relative h-full">
     <div :class="[
-      'bg-white dark:bg-gray-800 shadow-sm h-full flex flex-col border-2 min-h-[200px]',
+      'bg-white dark:bg-gray-800 shadow-sm h-full flex flex-col border-2 min-h-[160px] transition-all duration-200',
       props.isExpanded 
         ? 'rounded-t-lg border-b-0 border-blue-600/70 dark:border-blue-500/70'
         : props.isFocused
@@ -18,40 +18,40 @@
         @mousedown="isActive = true"
         @mouseup="isActive = false"
         @mouseleave="isActive = false"
-        class="p-6 cursor-pointer flex-1 flex flex-col justify-between min-w-0"
+        class="p-4 cursor-pointer flex-1 flex flex-col justify-between min-w-0"
       >
         <!-- Top row: folder + content + icons (unchanged) -->
-        <div class="flex items-start justify-between mb-4">
-          <div class="flex items-start space-x-4 flex-1 min-w-0 pr-8">
+        <div class="flex items-start justify-between mb-3">
+          <div class="flex items-start space-x-3 flex-1 min-w-0 pr-6">
             <!-- Folder Icon -->
             <div class="flex-shrink-0">
-              <svg class="w-10 h-10 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
               </svg>
             </div>
             
             <!-- Content -->
             <div class="flex-1 min-w-0">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white truncate">
+              <h3 class="text-sm font-semibold text-gray-900 dark:text-white truncate">
                 {{ project.name }}
               </h3>
-              <span class="text-sm text-gray-500 dark:text-gray-400 mt-1 block 5xl:inline 5xl:ml-2 5xl:mt-0">
+              <span class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 block 5xl:inline 5xl:ml-2 5xl:mt-0">
                 ({{ project.surveyCount }} {{ project.surveyCount === 1 ? 'survey' : 'surveys' }})
               </span>
-              <p v-if="project.clientName" class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              <p v-if="project.clientName" class="text-xs text-gray-600 dark:text-gray-400 mt-1">
                 {{ project.clientName }}
               </p>
-              <p v-if="project.description" class="text-sm text-gray-500 dark:text-gray-400 mt-2 line-clamp-2">
+              <p v-if="project.description" class="text-xs text-gray-500 dark:text-gray-400 mt-1.5 line-clamp-2">
                 {{ project.description }}
               </p>
             </div>
           </div>
           
           <!-- Gear, Status, Delete Icon -->
-          <div class="flex items-center space-x-3 ml-4 flex-shrink-0">
+          <div class="flex items-center space-x-2 ml-3 flex-shrink-0">
             <svg
               @click.stop="handleGearClick"
-              class="w-4 h-4 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
+              class="w-3.5 h-3.5 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -63,13 +63,13 @@
             <span
               v-if="project.status"
               :class="getStatusClass(project.status)"
-              class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+              class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium"
             >
               {{ project.status }}
             </span>
             <svg
               @click.stop="deleteProject"
-              class="w-4 h-4 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors cursor-pointer"
+              class="w-3.5 h-3.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors cursor-pointer"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -80,10 +80,10 @@
           </div>
           
           <!-- Expand Icon -->
-          <div class="flex items-center ml-4 flex-shrink-0">
+          <div class="flex items-center ml-3 flex-shrink-0">
             <svg
               :class="{ 'rotate-180': isExpanded }"
-              class="w-5 h-5 text-gray-400 transition-transform"
+              class="w-4 h-4 text-gray-400 transition-transform"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -94,15 +94,15 @@
         </div>
         
         <!-- Metadata - at the bottom, left-aligned with content -->
-        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-gray-400 pl-14">
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-gray-500 dark:text-gray-400 pl-8">
           <span v-if="project.createdAt" class="flex items-center flex-shrink-0">
-            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span class="truncate">Created {{ formatDate(project.createdAt) }}</span>
           </span>
           <span v-if="project.lastModified" class="flex items-center flex-shrink-0">
-            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
             <span class="truncate">Modified {{ formatDate(project.lastModified) }}</span>
@@ -115,7 +115,7 @@
         v-if="clientLogo"
         :src="clientLogo"
         alt="Client Logo"
-        class="absolute right-12 top-1/2 -translate-y-1/2 max-h-20 max-w-32 object-contain pointer-events-none"
+        class="absolute right-10 top-1/2 -translate-y-1/2 max-h-16 max-w-24 object-contain pointer-events-none"
       />
 
       <!-- Expanded Survey List -->
@@ -123,9 +123,9 @@
         v-if="props.isExpanded"
         class="absolute left-[-2px] right-[-2px] top-full z-[60] bg-gray-50 dark:bg-gray-900/95 backdrop-blur-sm rounded-b-lg border-x-2 border-b-2 border-blue-600/70 dark:border-blue-500/70 shadow-2xl overflow-hidden"
       >
-        <div class="px-6 py-4">
-          <div v-if="loadingSurveys" class="flex items-center justify-center py-4">
-            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+        <div class="px-4 py-3">
+          <div v-if="loadingSurveys" class="flex items-center justify-center py-3">
+            <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
           </div>
           <SurveyList 
             v-else 

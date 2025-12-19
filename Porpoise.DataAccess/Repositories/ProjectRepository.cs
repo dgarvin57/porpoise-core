@@ -238,6 +238,11 @@ public class ProjectRepository : Repository<Project>, IProjectRepository
                 p.DefaultWeightingScheme as defaultWeightingScheme,
                 MAX(s.ModifiedDate) as lastModified,
                 MAX(s.LastAccessedDate) as lastAccessedDate,
+                GREATEST(
+                    COALESCE(MAX(s.LastAccessedDate), '1970-01-01'),
+                    COALESCE(MAX(s.ModifiedDate), '1970-01-01'),
+                    COALESCE(p.ModifiedDate, '1970-01-01')
+                ) as recentActivityDate,
                 COUNT(DISTINCT s.Id) as surveyCount,
                 CAST(MAX(s.Id) AS CHAR) as firstSurveyId,
                 MAX(s.SurveyName) as firstSurveyName,

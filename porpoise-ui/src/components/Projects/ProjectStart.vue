@@ -62,9 +62,9 @@
           ]"
           role="button"
           tabindex="0"
-          @click="navigateToSurvey(survey.id)"
-          @keydown.enter.prevent="navigateToSurvey(survey.id)"
-          @keydown.space.prevent="navigateToSurvey(survey.id)"
+          @click="navigateToSurvey(survey.id, false)"
+          @keydown.enter.prevent="navigateToSurvey(survey.id, false)"
+          @keydown.space.prevent="navigateToSurvey(survey.id, false)"
         >
           <!-- Survey Icon and Title -->
           <div class="flex items-start gap-2 mb-2">
@@ -84,7 +84,7 @@
           <!-- Project with Gear Icon -->
           <div class="mb-2 text-left">
             <div class="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400 mb-0.5">
-              <svg class="w-3.5 h-3.5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
               </svg>
               <span class="truncate flex-1">{{ survey.projectName || 'No project' }}</span>
@@ -129,6 +129,31 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+    <div v-else class="max-w-6xl mx-auto pb-2 mb-1 border-b border-gray-200 dark:border-gray-700">
+      <div class="flex items-center gap-2 mb-3 text-gray-500 dark:text-gray-400">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <h2 class="text-sm font-semibold">Recent Surveys</h2>
+      </div>
+      <div class="flex items-center justify-between p-3 rounded-lg border border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-600 dark:text-gray-400">
+        <div class="flex items-center gap-2">
+          <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+          </svg>
+          <div>
+            <p class="font-medium text-gray-700 dark:text-gray-200">No recent surveys yet</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Open a survey to have it show up here.</p>
+          </div>
+        </div>
+        <button
+          @click="$router.push('/projects')"
+          class="px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-900/20 rounded-md border border-blue-200 dark:border-blue-800 transition-colors"
+        >
+          Browse projects
+        </button>
       </div>
     </div>
 
@@ -208,12 +233,12 @@
           </button>
         </div>
 
-        <!-- Sort Dropdown (PrimeVue) -->
+        <!-- Sort Select (PrimeVue) -->
         <div class="flex items-center gap-2">
           <label class="text-xs font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
             Sort by:
           </label>
-          <Dropdown
+          <Select
             v-model="sortBy"
             :options="sortOptions"
             optionLabel="label"
@@ -243,7 +268,7 @@
                 <span class="text-xs">{{ slotProps.option.label }}</span>
               </div>
             </template>
-          </Dropdown>
+          </Select>
         </div>
       </div>
     </div>
@@ -290,7 +315,7 @@
     </div>
 
     <!-- Project Grid -->
-    <div v-else-if="viewMode === 'grid'" class="grid grid-cols-1 lg:grid-cols-2 3xl:grid-cols-3 4xl:grid-cols-4 5xl:grid-cols-5 gap-6">
+    <div v-else-if="viewMode === 'grid'" class="grid grid-cols-1 md: grid-cols-2 lg:grid-cols-3 gap-6 pt-1 max-w-6xl mx-auto">
       <ProjectCard
         v-for="project in filteredProjects"
         :key="project.id"
@@ -300,7 +325,7 @@
         :focused-survey-id="focusedSurveyId"
         @toggle-expand="handleToggleExpand(project.id)"
         @set-focus="handleSetFocus(project.id)"
-        @survey-click="handleSurveyClick"
+        @survey-click="handleSurveyClickFromGrid"
         @clear-all="handleClearAll"
         @delete-project="deleteProject"
         @delete-survey="deleteSurvey"
@@ -312,7 +337,7 @@
     <div v-else class="max-w-6xl mx-auto overflow-x-auto">
       
       <!-- Column Headers -->
-      <div class="grid grid-cols-[32px_minmax(200px,1fr)_140px_80px_80px_110px_110px_90px_60px] gap-3 items-center px-3 py-1 mt-2 border-b-2 border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 sticky top-0 min-w-[960px]">
+      <div class="grid grid-cols-[32px_minmax(200px,1fr)_140px_80px_80px_110px_90px_60px] gap-3 items-center px-3 py-1 mt-2 border-b-2 border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 sticky top-0 min-w-[860px]">
         <button
           class="flex items-center justify-center w-6 h-6 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
           :class="expandedProjects.size === 0 ? 'text-gray-400 dark:text-gray-600 cursor-not-allowed' : 'text-gray-600 dark:text-gray-300'"
@@ -358,17 +383,9 @@
         </div>
         
         <SortableColumnHeader
-          label="Accessed"
-          sort-key="accessed"
-          :current-sort="sortBy"
-          :direction="sortDirection"
-          text-align="right"
-          @sort="sortByColumn"
-        />
-        
-        <SortableColumnHeader
-          label="Modified"
-          sort-key="modified"
+          label="Recent Activity"
+          class="text-[8px]"
+          sort-key="activity"
           :current-sort="sortBy"
           :direction="sortDirection"
           text-align="right"
@@ -394,7 +411,7 @@
           <div>
             <div
               :class="[
-                'grid grid-cols-[32px_minmax(200px,1fr)_24px_140px_80px_80px_110px_110px_90px_60px] gap-3 items-center px-3 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 group border-b border-gray-100 dark:border-gray-800 min-w-[930px]',
+                'grid grid-cols-[32px_minmax(200px,1fr)_24px_140px_80px_80px_110px_90px_60px] gap-3 items-center px-3 py-1 hover:bg-gray-100 dark:hover:bg-gray-800 group border-b border-gray-100 dark:border-gray-800 min-w-[830px]',
                 focusedProjectId === project.id && expandedProjects.has(project.id)
                   ? 'bg-blue-50 dark:bg-blue-900/20'
                   : ''
@@ -447,12 +464,7 @@
               <span
                 class="text-xs text-gray-500 dark:text-gray-400 text-right tabular-nums"
               >
-                —
-              </span>
-              <span
-                class="text-xs text-gray-500 dark:text-gray-400 text-right tabular-nums"
-              >
-                {{ formatDateShort(project.lastModified) }}
+                {{ formatDateShort(project.activityDate) }}
               </span>
               <div class="flex justify-center">
                 <span v-if="project.status" :class="getStatusClass(project.status)" class="text-xs px-2 py-0.5 rounded-full whitespace-nowrap">
@@ -488,7 +500,7 @@
                   :key="survey.id"
                   :ref="el => { if (focusedSurveyId === survey.id) surveyRowRef = el }"
                   :class="[
-                    'grid grid-cols-[32px_minmax(200px,1fr)_24px_140px_80px_80px_110px_110px_90px_60px] gap-3 items-center px-3 py-0.5 group border-b border-gray-100 dark:border-gray-800 min-w-[960px]',
+                    'grid grid-cols-[32px_minmax(200px,1fr)_24px_140px_80px_80px_110px_90px_60px] gap-3 items-center px-3 py-0.5 group border-b border-gray-100 dark:border-gray-800 min-w-[860px]',
                     focusedSurveyId === survey.id
                       ? 'bg-blue-50 dark:bg-blue-900/30'
                       : 'hover:bg-gray-100 dark:hover:bg-gray-800'
@@ -521,11 +533,6 @@
                     class="text-xs text-gray-500 dark:text-gray-400 text-right tabular-nums"
                   >
                     {{ formatDateShort(survey.lastAccessedDate) }}
-                  </span>
-                  <span
-                    class="text-xs text-gray-500 dark:text-gray-400 text-right tabular-nums"
-                  >
-                    {{ formatDateShort(survey.modifiedDate) }}
                   </span>
                   <span class="text-xs text-gray-500 dark:text-gray-400 text-center"></span>
                   
@@ -570,7 +577,7 @@ import { API_BASE_URL } from '@/config/api'
 import ProjectCard from './ProjectCard.vue'
 import ProjectFilters from './ProjectFilters.vue'
 import SortableColumnHeader from '../UI/SortableColumnHeader.vue'
-import Dropdown from 'primevue/dropdown'
+import Select from 'primevue/select'
 import ProjectSettingsModal from './ProjectSettingsModal.vue'
 
 const surveyRowRef = ref(null)
@@ -582,16 +589,15 @@ const recentSurveys = ref([])
 const showRecentSurveys = ref(localStorage.getItem('showRecentSurveys') !== 'false')
 const loading = ref(true)
 const error = ref(null)
-const sortBy = ref('modified')
+const sortBy = ref('activity')
 const sortDirection = ref('desc') // 'asc' or 'desc'
 const viewMode = ref(localStorage.getItem('projectViewMode') || 'grid') // 'grid' or 'list', persisted
 const showFilters = ref(false)
 const showSettingsModal = ref(false)
 const selectedProject = ref(null)
-// Options for PrimeVue Dropdown (Sort by)
+// Options for PrimeVue Select (Sort by)
 const sortOptions = [
-  { label: 'Most Recent', value: 'modified', icon: 'pi pi-clock' },
-  { label: 'Last Accessed', value: 'accessed', icon: 'pi pi-history' },
+  { label: 'Recent Activity', value: 'activity', icon: 'pi pi-clock' },
   { label: 'Name (A-Z)', value: 'name', icon: 'pi pi-sort-alpha-up' },
   { label: 'Date Created', value: 'created', icon: 'pi pi-calendar' },
   { label: 'Client Name', value: 'client', icon: 'pi pi-user' },
@@ -637,6 +643,7 @@ async function fetchProjects() {
       createdAt: p.createdAt,
       lastModified: p.modifiedDate || p.lastModified || p.createdAt,
       lastAccessedDate: p.lastAccessedDate,
+      activityDate: p.recentActivityDate || p.lastAccessedDate || p.lastModified || p.modifiedDate || p.createdAt,
       startDate: p.startDate,
       endDate: p.endDate,
       status: p.status || getStatusFromDates(p.startDate, p.endDate),
@@ -766,8 +773,8 @@ const filteredProjects = computed(() => {
       case 'created':
         comparison = new Date(a.createdAt || 0) - new Date(b.createdAt || 0)
         break
-      case 'accessed':
-        comparison = new Date(a.lastAccessedDate || 0) - new Date(b.lastAccessedDate || 0)
+      case 'activity':
+        comparison = new Date(a.activityDate || 0) - new Date(b.activityDate || 0)
         break
       case 'client':
         comparison = (a.clientName || '').localeCompare(b.clientName || '')
@@ -778,9 +785,9 @@ const filteredProjects = computed(() => {
         const bOrder = statusOrder[b.status] || 999
         comparison = aOrder - bOrder
         break
-      case 'modified':
       default:
-        comparison = new Date(a.lastModified || 0) - new Date(b.lastModified || 0)
+        // Default to recent activity ordering
+        comparison = new Date(a.activityDate || 0) - new Date(b.activityDate || 0)
         break
     }
     // Apply sort direction
@@ -800,15 +807,15 @@ function sortByColumn(column) {
     // Toggle direction if clicking the same column
     sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
   } else {
-    // New column, default to ascending
+    // New column, default to sensible direction
     sortBy.value = column
-    sortDirection.value = 'asc'
+    sortDirection.value = (column === 'activity' || column === 'created') ? 'desc' : 'asc'
   }
 }
 
 // Watch sortBy from dropdown and reset to sensible default direction
 watch(sortBy, (newVal) => {
-  if (newVal === 'modified' || newVal === 'created') {
+  if (newVal === 'created' || newVal === 'activity') {
     sortDirection.value = 'desc' // Dates default to newest first
   } else {
     sortDirection.value = 'asc' // Names, clients, status default to A-Z
@@ -948,6 +955,13 @@ function handleSurveyClick(surveyId) {
   localStorage.setItem('focusedSurveyId', surveyId)
 }
 
+// When a survey is clicked from a grid ProjectCard's dropdown list,
+// navigate without pre-scroll and record access so recents and ordering update.
+async function handleSurveyClickFromGrid(surveyId) {
+  handleSurveyClick(surveyId)
+  await navigateToSurvey(surveyId, false)
+}
+
 function toggleRecentSurveys() {
   showRecentSurveys.value = !showRecentSurveys.value
   localStorage.setItem('showRecentSurveys', showRecentSurveys.value.toString())
@@ -1063,7 +1077,7 @@ async function handleSingleProjectClick(project) {
   try {
     const response = await axios.get(`${API_BASE_URL}/api/projects/${project.id}/surveys`)
     if (response.data && response.data.length > 0) {
-      navigateToSurvey(response.data[0].id)
+      navigateToSurvey(response.data[0].id, false)
     } else {
       navigateToProject(project)
     }
@@ -1108,8 +1122,13 @@ async function navigateToSurvey(surveyId, autoExpandAndScroll = true) {
   // Record survey access before navigating
   try {
     await axios.post(`${API_BASE_URL}/api/surveys/${surveyId}/access`)
-    // Refresh recent surveys after recording access
-    fetchRecentSurveys()
+    // Refresh recent surveys and projects after recording access
+    await Promise.all([
+      fetchRecentSurveys(),
+      fetchProjects()
+    ])
+    // If we were on a different sort, switch to Recent Activity so grid/list reorder
+    sortBy.value = 'activity'
   } catch (error) {
     console.error('Error recording survey access:', error)
     // Continue navigation even if recording fails
@@ -1335,17 +1354,30 @@ onActivated(async () => {
     await fetchProjects()
   }
   
-  // Restore focus in list view if we have a focused survey and are in list mode
-  if (focusedSurveyId.value && viewMode.value === 'list' && focusedProjectId.value) {
-    // Auto-expand the project containing the focused survey
-    if (!expandedProjects.value.has(focusedProjectId.value)) {
-      await toggleProjectExpand(focusedProjectId.value, false)
+  // Restore focus in list view: derive project from focused survey if needed
+  if (focusedSurveyId.value && viewMode.value === 'list') {
+    let ensureProjectId = focusedProjectId.value
+    // If missing or stale, recompute the parent project for the focused survey
+    if (!ensureProjectId || !projectSurveys.value.get(ensureProjectId)?.some(s => s.id === focusedSurveyId.value)) {
+      for (const project of projects.value) {
+        const surveys = projectSurveys.value.get(project.id) || await loadSurveysForProject(project.id)
+        if (surveys && surveys.some(s => s.id === focusedSurveyId.value)) {
+          ensureProjectId = project.id
+          break
+        }
+      }
     }
-    
-    // Scroll to the focused survey after DOM updates
-    await nextTick()
-    if (surveyRowRef.value) {
-      surveyRowRef.value.scrollIntoView({ behavior: 'smooth', block: 'center' })
+
+    if (ensureProjectId) {
+      focusedProjectId.value = ensureProjectId
+      localStorage.setItem('focusedProjectId', ensureProjectId)
+      if (!expandedProjects.value.has(ensureProjectId)) {
+        await toggleProjectExpand(ensureProjectId, false)
+      }
+      await nextTick()
+      if (surveyRowRef.value) {
+        surveyRowRef.value.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
     }
   }
   

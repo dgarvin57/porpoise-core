@@ -6,7 +6,7 @@
         <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 ">
           Client
         </label>
-        <Dropdown
+        <Select
           v-model="filters.client"
           :options="clientOptions"
           optionLabel="label"
@@ -20,7 +20,7 @@
             trigger: { class: 'px-2.5 py-1.5' },
             label: { class: 'text-xs' },
             panel: { class: 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg py-1' },
-            item: { class: 'text-xs text-gray-800 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-750 px-2.5 py-1 flex items-center gap-2' },
+            item: { class: 'text-xs leading-tight text-gray-800 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-750 px-2.5 py-0.5 flex items-center gap-2' },
             itemLabel: { class: 'text-xs' },
             header: { class: 'hidden' }
           }"
@@ -33,7 +33,7 @@
               <span>{{ slotProps.option.label }}</span>
             </div>
           </template>
-        </Dropdown>
+        </Select>
       </div>
 
       <!-- Status Filter -->
@@ -41,7 +41,7 @@
         <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
           Status
         </label>
-        <Dropdown
+        <Select
           v-model="filters.status"
           :options="statusOptions"
           optionLabel="label"
@@ -55,7 +55,7 @@
             trigger: { class: 'px-2.5 py-1.5' },
             label: { class: 'text-xs' },
             panel: { class: 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg py-1' },
-            item: { class: 'text-xs text-gray-800 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-750 px-2.5 py-1 flex items-center gap-2' },
+            item: { class: 'text-xs leading-tight text-gray-800 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-750 px-2.5 py-0.5 flex items-center gap-2' },
             itemLabel: { class: 'text-xs' },
             header: { class: 'hidden' }
           }"
@@ -68,7 +68,7 @@
               <span>{{ slotProps.option.label }}</span>
             </div>
           </template>
-        </Dropdown>
+        </Select>
       </div>
 
       <!-- Date Range Filter -->
@@ -76,7 +76,7 @@
         <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
           Date Range
         </label>
-        <Dropdown
+        <Select
           v-model="filters.dateRange"
           :options="dateRangeOptions"
           optionLabel="label"
@@ -90,7 +90,7 @@
             trigger: { class: 'px-2.5 py-1.5' },
             label: { class: 'text-xs' },
             panel: { class: 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg py-1' },
-            item: { class: 'text-xs text-gray-800 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-750 px-2.5 py-1 flex items-center gap-2' },
+            item: { class: 'text-xs leading-tight text-gray-800 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-750 px-2.5 py-0.5 flex items-center gap-2' },
             itemLabel: { class: 'text-xs' },
             header: { class: 'hidden' }
           }"
@@ -103,7 +103,7 @@
               <span>{{ slotProps.option.label }}</span>
             </div>
           </template>
-        </Dropdown>
+        </Select>
       </div>
     </div>
 
@@ -133,7 +133,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import Dropdown from 'primevue/dropdown'
+import Select from 'primevue/select'
 
 const props = defineProps({
   clients: {

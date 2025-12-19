@@ -204,7 +204,7 @@
                       'hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer transition-colors',
                       activeQuestionId === item.id ? 'bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-500' : (idx % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700/30')
                     ]"
-                    @click="navigateToQuestion(item.id)"
+                    @click.stop="navigateToQuestion(item.id)"
                   >
                     <td class="px-6 py-1 whitespace-nowrap text-xs font-medium text-gray-900 dark:text-white">
                       {{ item.phi.toFixed(3) }}
@@ -451,11 +451,21 @@ function sortBy(column) {
 }
 
 function navigateToQuestion(ivQuestionId) {
-  // TODO: Navigate to crosstab once the crosstab UX is improved
-  // For now, just show a message
   const item = statSigData.value.find(d => d.id === ivQuestionId)
-  if (item) {
-    alert(`Crosstab view coming soon!\n\nYou clicked: ${item.questionLabel}\n\nThis will show a crosstab of "${props.selectedQuestion.label || props.selectedQuestion.qstLabel}" by "${item.questionLabel}".`)
+  if (item && props.selectedQuestion) {
+    // Store the clicked IV for row highlighting
+    lastClickedIV.value = ivQuestionId
+    
+    const newQuery = {
+      section: 'crosstab',
+      firstQuestion: props.selectedQuestion.id,
+      secondQuestion: ivQuestionId
+    }
+    
+    // Navigate to crosstab tab with both DV and IV selected via query params
+    router.push({
+      query: newQuery
+    })
   }
 }
 
