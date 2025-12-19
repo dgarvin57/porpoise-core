@@ -4,6 +4,28 @@ import 'shepherd.js/dist/css/shepherd.css'
 
 const TOUR_COMPLETED_KEY = 'porpoise_crosstab_tour_completed'
 
+// Helper function to check if element is in collapsed block and expand it
+function expandIfCollapsed(element) {
+  if (!element) return
+  
+  // Look for parent block that might be collapsed
+  let current = element.parentElement
+  while (current) {
+    // Check if this element has a sibling that's a block header (clickable collapse toggle)
+    const blockHeader = current.previousElementSibling
+    if (blockHeader && blockHeader.tagName === 'BUTTON') {
+      // Check if block content is hidden (collapsed)
+      const blockContent = blockHeader.nextElementSibling
+      if (blockContent && blockContent.offsetHeight === 0) {
+        // Block is collapsed, click to expand
+        blockHeader.click()
+        return
+      }
+    }
+    current = current.parentElement
+  }
+}
+
 export function useCrosstabTour() {
   const tourInstance = ref(null)
 
@@ -108,22 +130,26 @@ export function useCrosstabTour() {
             .find(badge => badge.textContent.trim() === '1')
           if (selectedBadge) {
             const radio = selectedBadge.closest('[class*="flex items-center"]')?.querySelector('input[type="radio"]')
-            if (radio) return radio
+            if (radio) {
+              // Check if hidden in collapsed block and expand
+              expandIfCollapsed(radio)
+              return radio
+            }
           }
           
           // Priority 2: Find checked radio button
           let radio = document.querySelector('.group\\/radio input[type="radio"]:checked')
-          if (radio && !radio.disabled) return radio
+          if (radio && !radio.disabled) {
+            expandIfCollapsed(radio)
+            return radio
+          }
           
           // Priority 3: Find first enabled radio button
           const allRadios = Array.from(document.querySelectorAll('.group\\/radio input[type="radio"]'))
           radio = allRadios.find(r => !r.disabled)
           
           if (radio) {
-            const collapsedParent = radio.closest('[class*="group/block"]')?.previousElementSibling
-            if (collapsedParent && collapsedParent.querySelector('svg[class*="rotate"]')) {
-              collapsedParent.click()
-            }
+            expandIfCollapsed(radio)
             return radio
           }
           
@@ -185,7 +211,10 @@ export function useCrosstabTour() {
               parentRow = parentRow.parentElement
             }
             const container = parentRow?.querySelector('div.flex.items-center.space-x-2.flex-1')
-            if (container) return container
+            if (container) {
+              expandIfCollapsed(container)
+              return container
+            }
           }
           
           // Priority 2: Find first enabled IV question with red icon
@@ -197,12 +226,7 @@ export function useCrosstabTour() {
             
             // Check if enabled (radio not disabled)
             if (!radioButton || !radioButton.disabled) {
-              // Check if in collapsed block
-              const collapsedParent = icon.closest('[class*="group/block"]')?.previousElementSibling
-              if (collapsedParent && collapsedParent.querySelector('svg[class*="rotate"]')) {
-                // Expand the block
-                collapsedParent.click()
-              }
+              expandIfCollapsed(container)
               return container
             }
           }
