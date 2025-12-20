@@ -1156,23 +1156,23 @@ function toggleSidebar() {
 const hasAnyTooltipBeenDismissed = ref(false)
 
 // Watch for section activation and start appropriate tour if not completed
-watch(activeSection, async (newSection, oldSection) => {
+watch(activeAnalysisTab, async (newTab, oldTab) => {
   // Results tab tour (primary onboarding)
-  if (newSection === 'results' && !hasResultsTourCompleted()) {
+  if (newTab === 'results' && !hasResultsTourCompleted()) {
     await nextTick()
     setTimeout(() => {
       startResultsTour()
     }, 800)
   }
   // Crosstab tab tour
-  else if (newSection === 'crosstab' && !hasCrosstabTourCompleted()) {
+  else if (newTab === 'crosstab' && !hasCrosstabTourCompleted()) {
     await nextTick()
     setTimeout(() => {
       startCrosstabTour()
     }, 800)
   }
   // StatSig tab tour
-  else if (newSection === 'statsig' && !hasStatSigTourCompleted()) {
+  else if (newTab === 'statsig' && !hasStatSigTourCompleted()) {
     await nextTick()
     setTimeout(() => {
       startStatSigTour()
