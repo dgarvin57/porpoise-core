@@ -462,6 +462,7 @@ import { useCrosstabTour } from '@/composables/useCrosstabTour'
 import { useResultsTour } from '@/composables/useResultsTour'
 import { useStatSigTour } from '@/composables/useStatSigTour'
 import { useTourManager } from '@/composables/useTourManager'
+import { useContextualHints } from '@/composables/useContextualHints'
 import '@/assets/shepherd-theme.css'
 
 // Click outside directive
@@ -497,6 +498,9 @@ const { hasTourBeenCompleted: hasCrosstabTourCompleted, startTour: startCrosstab
 const { hasTourBeenCompleted: hasResultsTourCompleted, startTour: startResultsTour, resetTour: resetResultsTourFlag } = useResultsTour()
 const { hasTourBeenCompleted: hasStatSigTourCompleted, startTour: startStatSigTour, resetTour: resetStatSigTourFlag } = useStatSigTour()
 const { hasAnyTourBeenCompleted } = useTourManager()
+
+// Initialize Contextual Hints
+const { showHint, dismissHint, activeHint } = useContextualHints()
 
 // Sidebar collapse state
 const sidebarCollapsed = ref(true) // Default to collapsed (closed) when survey first opens
@@ -786,8 +790,8 @@ function loadSurveyState() {
     selectedQuestionId.value = route.query.questionId
   }
   
-  // Handle crosstab navigation from Stat Sig
-  if (route.query.firstQuestion && route.query.secondQuestion) {
+  // Handle crosstab navigation from Stat Sig - but only when actually in crosstab mode
+  if (route.query.firstQuestion && route.query.secondQuestion && activeAnalysisTab.value === 'crosstab') {
     // Load questions by ID for crosstab
     loadQuestionsForCrosstab(route.query.firstQuestion, route.query.secondQuestion)
   }
@@ -844,15 +848,96 @@ watch(activeSection, (newSection, oldSection) => {
   saveSurveyState()
 })
 
+// Dismiss hint when IV is selected
+watch(crosstabSecondQuestion, (newIV) => {
+  if (newIV && activeHint.value?.key === 'crosstab-iv-selection') {
+    dismissHint()
+  }
+})
+
 // Watch activeAnalysisTab changes separately for tab-specific logic
-watch(activeAnalysisTab, (newTab, oldTab) => {
-  // When switching FROM crosstab to results or statsig, sync the selected question
+watch(activeAnalysisTab, async (newTab, oldTab) => {
+  // When switching FROM crosstab to results or statsig, sync the selected question and CLEAR crosstab selections
   if ((newTab === 'results' || newTab === 'statsig') && oldTab === 'crosstab' && crosstabFirstQuestion.value) {
     if (!selectedQuestionId.value || selectedQuestionId.value !== crosstabFirstQuestion.value.id) {
       selectedQuestionId.value = crosstabFirstQuestion.value.id
       selectedQuestion.value = crosstabFirstQuestion.value
       loadQuestionData(crosstabFirstQuestion.value.id)
     }
+    // Clear crosstab selections so they don't interfere with single-question selection
+    crosstabFirstQuestion.value = null
+    crosstabSecondQuestion.value = null
+    
+    // Also clear query params to prevent re-loading crosstab state
+    const newQuery = { ...route.query }
+    delete newQuery.firstQuestion
+    delete newQuery.secondQuestion
+    router.replace({ query: newQuery })
+  }
+  
+  // When switching TO crosstab, check for hint after route params load
+  if (newTab === 'crosstab' && hasCrosstabTourCompleted()) {
+    await nextTick()
+    // Wait for route watcher to load questions from URL params
+    setTimeout(() => {
+      // Only show hint if we have DV but no IV
+      if (crosstabFirstQuestion.value && !crosstabSecondQuestion.value) {
+        showHint({
+          key: 'crosstab-iv-selection',
+          target: () => {
+            // Find first nominal/demographic variable (red icon) that's not the DV
+            // These are typically the independent variables users look for
+            const questionItems = Array.from(document.querySelectorAll('.group\\/radio'))
+            let firstDemographic = null
+            
+            for (const item of questionItems) {
+              const radio = item.querySelector('input[type="radio"]')
+              const isChecked = radio?.checked  // This is the DV
+              const isDisabled = radio?.disabled
+              
+              // Look for red icon (nominal variable, variableType 1)
+              const parentLabel = item.parentElement
+              const redIcon = parentLabel?.querySelector('svg.text-red-400')
+              
+              // Skip the DV, disabled questions, and non-demographic questions
+              if (!isChecked && !isDisabled && redIcon) {
+                const questionNameDiv = parentLabel?.querySelector('div.flex-1.min-w-0')
+                
+                if (questionNameDiv) {
+                  firstDemographic = questionNameDiv
+                  break
+                }
+              }
+            }
+            
+            // Fallback to any valid IV if no demographics found
+            if (!firstDemographic) {
+              for (const item of questionItems) {
+                const radio = item.querySelector('input[type="radio"]')
+                const isChecked = radio?.checked
+                const isDisabled = radio?.disabled
+                
+                if (!isChecked && !isDisabled) {
+                  const parentLabel = item.parentElement
+                  const questionNameDiv = parentLabel?.querySelector('div.flex-1.min-w-0')
+                  
+                  if (questionNameDiv) {
+                    firstDemographic = questionNameDiv
+                    break
+                  }
+                }
+              }
+            }
+            
+            return firstDemographic
+          },
+          title: 'Now select the IV',
+          text: 'Click on a question name to select your Independent Variable for comparison.',
+          position: 'right',
+          autoDismiss: 8000
+        })
+      }
+    }, 800)
   }
   
   // Update URL query params to reflect the current tab
@@ -897,8 +982,8 @@ watch(infoTab, () => {
 })
 
 watch(crosstabFirstQuestion, (newVal, oldVal) => {
-  // When crosstab first question changes and we're in results/statsig, sync the selection
-  if (newVal && (activeAnalysisTab.value === 'results' || activeAnalysisTab.value === 'statsig')) {
+  // When crosstab first question changes and we're IN CROSSTAB MODE, sync the selection
+  if (newVal && activeAnalysisTab.value === 'crosstab') {
     if (!selectedQuestionId.value || selectedQuestionId.value !== newVal.id) {
       selectedQuestionId.value = newVal.id
       selectedQuestion.value = newVal
@@ -928,8 +1013,8 @@ watch(selectedQuestionId, (newId) => {
 // Watch selectedQuestionWithResponses to sync with crosstab first question (results -> crosstab)
 // This ensures when you change the dependent variable on Results, it's reflected in Crosstab
 watch(selectedQuestionWithResponses, (newQuestion) => {
-  // Only sync if we have a question and it's different from current crosstab selection
-  if (newQuestion && (!crosstabFirstQuestion.value || crosstabFirstQuestion.value.id !== newQuestion.id)) {
+  // Only sync if we're in crosstab mode AND have a question that's different from current crosstab selection
+  if (activeAnalysisTab.value === 'crosstab' && newQuestion && (!crosstabFirstQuestion.value || crosstabFirstQuestion.value.id !== newQuestion.id)) {
     // Update crosstab first question to match the Results selection
     crosstabFirstQuestion.value = newQuestion
   }
@@ -1022,8 +1107,8 @@ watch(crosstabFirstQuestion, (newQuestion, oldQuestion) => {
   }
   
   // Sync to Results view selectedQuestionId (crosstab -> results)
-  // Only update if the IDs don't match to prevent circular updates
-  if (newQuestion && newQuestion !== oldQuestion && newQuestion.id !== selectedQuestionId.value) {
+  // Only update if we're in CROSSTAB MODE and the IDs don't match to prevent circular updates
+  if (activeAnalysisTab.value === 'crosstab' && newQuestion && newQuestion !== oldQuestion && newQuestion.id !== selectedQuestionId.value) {
     selectedQuestionId.value = newQuestion.id
     
     // If the question has a blockId, ensure that block is expanded
@@ -1156,23 +1241,23 @@ function toggleSidebar() {
 const hasAnyTooltipBeenDismissed = ref(false)
 
 // Watch for section activation and start appropriate tour if not completed
-watch(activeSection, async (newSection, oldSection) => {
+watch(activeAnalysisTab, async (newTab, oldTab) => {
   // Results tab tour (primary onboarding)
-  if (newSection === 'results' && !hasResultsTourCompleted()) {
+  if (newTab === 'results' && !hasResultsTourCompleted()) {
     await nextTick()
     setTimeout(() => {
       startResultsTour()
     }, 800)
   }
   // Crosstab tab tour
-  else if (newSection === 'crosstab' && !hasCrosstabTourCompleted()) {
+  else if (newTab === 'crosstab' && !hasCrosstabTourCompleted()) {
     await nextTick()
     setTimeout(() => {
       startCrosstabTour()
     }, 800)
   }
   // StatSig tab tour
-  else if (newSection === 'statsig' && !hasStatSigTourCompleted()) {
+  else if (newTab === 'statsig' && !hasStatSigTourCompleted()) {
     await nextTick()
     setTimeout(() => {
       startStatSigTour()
@@ -1341,9 +1426,12 @@ watch([() => route.query.section, () => route.query.firstQuestion, () => route.q
     }
   }
   
-  // Handle crosstab navigation parameters
-  if (newFirstQuestion && newSecondQuestion) {
-    loadQuestionsForCrosstab(newFirstQuestion, newSecondQuestion)
+  // Handle crosstab navigation parameters - but ONLY when in crosstab mode AND params actually changed
+  if (newFirstQuestion && newSecondQuestion && newSection === 'crosstab') {
+    // Only reload if the question IDs actually changed (not just a re-trigger of the same values)
+    if (newFirstQuestion !== oldFirstQuestion || newSecondQuestion !== oldSecondQuestion) {
+      loadQuestionsForCrosstab(newFirstQuestion, newSecondQuestion)
+    }
   }
 }, { deep: true, flush: 'post' })
 

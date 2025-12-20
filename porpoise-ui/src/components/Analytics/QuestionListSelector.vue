@@ -420,6 +420,14 @@ watch(() => props.initialSecondSelection, (newVal) => {
   }
 }, { deep: true, immediate: true })
 
+// Clear crosstab selections when switching to single selection mode
+watch(() => props.selectionMode, (newMode) => {
+  if (newMode === 'single') {
+    firstSelection.value = null
+    secondSelection.value = null
+  }
+})
+
 // Watch for questions being loaded to expand blocks for existing selections
 watch(() => props.questions, (newQuestions) => {
   if (newQuestions && newQuestions.length > 0) {

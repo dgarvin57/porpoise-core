@@ -117,7 +117,7 @@ export function useResultsTour() {
             </h3>
           </div>
           <div class="shepherd-text">
-            <p>Click the <strong>toggle button</strong> (○) next to any question to view its detailed results.</p>
+            <p>Click a <strong>toggle button</strong> (○) or <strong>question name</strong> to view its detailed results.</p>
             <div class="mt-3 p-2.5 bg-blue-50 dark:bg-blue-900/30 rounded-lg border-l-4 border-blue-600 border border-blue-300 dark:border-blue-700">
               <div class="flex items-center space-x-2">
                 <div class="relative w-5 h-5 flex-shrink-0">
@@ -191,45 +191,34 @@ export function useResultsTour() {
           <div class="shepherd-header">
             <h3 class="shepherd-title">
               <span class="inline-flex items-center justify-center w-6 h-6 rounded bg-green-600 text-white text-sm font-semibold mr-2">2</span>
-              Quick Crosstab Generation
+              Compare Questions
             </h3>
           </div>
           <div class="shepherd-text">
-            <p>Want to compare two questions? Click directly on any <strong>question name</strong> to automatically generate a crosstab!</p>
-            <div class="mt-3 p-2.5 bg-green-50 dark:bg-green-900/30 rounded-lg border-l-4 border-green-600 border border-green-300 dark:border-green-700">
-              <div class="flex items-center space-x-2">
-                <input type="radio" class="w-5 h-5 opacity-40" disabled />
-                <svg class="w-3.5 h-3.5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
+            <p>Want to compare two questions? Click the <strong>Analyze in Crosstab</strong> button above the chart.</p>
+            <div class="mt-3 p-3 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-lg border border-blue-200 dark:border-blue-700">
+              <button class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
-                <span class="flex-1 text-sm font-medium text-gray-900 dark:text-white cursor-pointer hover:text-blue-600">Age</span>
-              </div>
+                Analyze in Crosstab
+              </button>
             </div>
-            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">This will automatically switch to the Crosstab tab and show your comparison analysis.</p>
+            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">This will take you to the Crosstab tab where you can select a second question to compare.</p>
           </div>
         </div>
       `,
       attachTo: {
         element: () => {
-          // Find first enabled IV question with red icon (not the selected DV)
-          const allRedIcons = Array.from(document.querySelectorAll('svg.text-red-400'))
-          
-          for (const icon of allRedIcons) {
-            const container = icon.closest('div.flex.items-center.space-x-2.flex-1')
-            const radioButton = icon.closest('[class*="flex items-center"]')?.querySelector('input[type="radio"]')
-            
-            // Check if enabled (radio not disabled) and not currently selected as DV
-            if ((!radioButton || !radioButton.disabled) && (!radioButton || !radioButton.checked)) {
-              expandIfCollapsed(container)
-              return container
-            }
-          }
-          
-          // Fallback to first red icon container
-          const firstRedIcon = document.querySelector('svg.text-red-400')
-          return firstRedIcon?.closest('div.flex.items-center.space-x-2.flex-1') || null
+          // Find the "Analyze in Crosstab" button
+          const buttons = Array.from(document.querySelectorAll('button'))
+          const crosstabButton = buttons.find(btn => 
+            btn.textContent.includes('Analyze in Crosstab') || 
+            btn.textContent.includes('Crosstab')
+          )
+          return crosstabButton || null
         },
-        on: 'left'
+        on: 'bottom'
       },
       buttons: [
         {
@@ -297,8 +286,18 @@ export function useResultsTour() {
     })
 
     // Handle tour completion/cancellation
-    tour.on('complete', () => markTourCompleted('results'))
-    tour.on('cancel', () => markTourCompleted('results'))
+    tour.on('complete', () => {
+      markTourCompleted('results')
+      // Clean up modal overlay
+      const overlay = document.querySelector('.shepherd-modal-overlay-container')
+      if (overlay) overlay.remove()
+    })
+    tour.on('cancel', () => {
+      markTourCompleted('results')
+      // Clean up modal overlay
+      const overlay = document.querySelector('.shepherd-modal-overlay-container')
+      if (overlay) overlay.remove()
+    })
 
     tourInstance.value = tour
     return tour
