@@ -89,7 +89,7 @@ export function useStatSigTour() {
             </h3>
           </div>
           <div class="shepherd-text">
-            <p>Click the <strong>toggle button</strong> (○) next to any question to analyze its statistical significance.</p>
+            <p>Click a <strong>toggle button</strong> (○) or <strong>question name</strong> to analyze its statistical significance.</p>
             <div class="mt-3 p-2.5 bg-blue-50 dark:bg-blue-900/30 rounded-lg border-l-4 border-blue-600 border border-blue-300 dark:border-blue-700">
               <div class="flex items-center space-x-2">
                 <div class="relative w-5 h-5 flex-shrink-0">

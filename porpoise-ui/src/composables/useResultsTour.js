@@ -117,7 +117,7 @@ export function useResultsTour() {
             </h3>
           </div>
           <div class="shepherd-text">
-            <p>Click the <strong>toggle button</strong> (○) next to any question to view its detailed results.</p>
+            <p>Click a <strong>toggle button</strong> (○) or <strong>question name</strong> to view its detailed results.</p>
             <div class="mt-3 p-2.5 bg-blue-50 dark:bg-blue-900/30 rounded-lg border-l-4 border-blue-600 border border-blue-300 dark:border-blue-700">
               <div class="flex items-center space-x-2">
                 <div class="relative w-5 h-5 flex-shrink-0">
@@ -195,7 +195,7 @@ export function useResultsTour() {
             </h3>
           </div>
           <div class="shepherd-text">
-            <p>Want to compare two questions? Click directly on any <strong>question name</strong> to automatically generate a crosstab!</p>
+            <p>Want to compare two questions? Click the <strong>Analyze in Crosstab</strong> button below the chart to compare this question with others.</p>
             <div class="mt-3 p-2.5 bg-green-50 dark:bg-green-900/30 rounded-lg border-l-4 border-green-600 border border-green-300 dark:border-green-700">
               <div class="flex items-center space-x-2">
                 <input type="radio" class="w-5 h-5 opacity-40" disabled />
