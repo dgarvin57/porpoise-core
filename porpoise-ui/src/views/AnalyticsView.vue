@@ -786,8 +786,8 @@ function loadSurveyState() {
     selectedQuestionId.value = route.query.questionId
   }
   
-  // Handle crosstab navigation from Stat Sig
-  if (route.query.firstQuestion && route.query.secondQuestion) {
+  // Handle crosstab navigation from Stat Sig - but only when actually in crosstab mode
+  if (route.query.firstQuestion && route.query.secondQuestion && activeAnalysisTab.value === 'crosstab') {
     // Load questions by ID for crosstab
     loadQuestionsForCrosstab(route.query.firstQuestion, route.query.secondQuestion)
   }
@@ -846,13 +846,22 @@ watch(activeSection, (newSection, oldSection) => {
 
 // Watch activeAnalysisTab changes separately for tab-specific logic
 watch(activeAnalysisTab, (newTab, oldTab) => {
-  // When switching FROM crosstab to results or statsig, sync the selected question
+  // When switching FROM crosstab to results or statsig, sync the selected question and CLEAR crosstab selections
   if ((newTab === 'results' || newTab === 'statsig') && oldTab === 'crosstab' && crosstabFirstQuestion.value) {
     if (!selectedQuestionId.value || selectedQuestionId.value !== crosstabFirstQuestion.value.id) {
       selectedQuestionId.value = crosstabFirstQuestion.value.id
       selectedQuestion.value = crosstabFirstQuestion.value
       loadQuestionData(crosstabFirstQuestion.value.id)
     }
+    // Clear crosstab selections so they don't interfere with single-question selection
+    crosstabFirstQuestion.value = null
+    crosstabSecondQuestion.value = null
+    
+    // Also clear query params to prevent re-loading crosstab state
+    const newQuery = { ...route.query }
+    delete newQuery.firstQuestion
+    delete newQuery.secondQuestion
+    router.replace({ query: newQuery })
   }
   
   // Update URL query params to reflect the current tab
@@ -897,8 +906,8 @@ watch(infoTab, () => {
 })
 
 watch(crosstabFirstQuestion, (newVal, oldVal) => {
-  // When crosstab first question changes and we're in results/statsig, sync the selection
-  if (newVal && (activeAnalysisTab.value === 'results' || activeAnalysisTab.value === 'statsig')) {
+  // When crosstab first question changes and we're IN CROSSTAB MODE, sync the selection
+  if (newVal && activeAnalysisTab.value === 'crosstab') {
     if (!selectedQuestionId.value || selectedQuestionId.value !== newVal.id) {
       selectedQuestionId.value = newVal.id
       selectedQuestion.value = newVal
@@ -928,8 +937,8 @@ watch(selectedQuestionId, (newId) => {
 // Watch selectedQuestionWithResponses to sync with crosstab first question (results -> crosstab)
 // This ensures when you change the dependent variable on Results, it's reflected in Crosstab
 watch(selectedQuestionWithResponses, (newQuestion) => {
-  // Only sync if we have a question and it's different from current crosstab selection
-  if (newQuestion && (!crosstabFirstQuestion.value || crosstabFirstQuestion.value.id !== newQuestion.id)) {
+  // Only sync if we're in crosstab mode AND have a question that's different from current crosstab selection
+  if (activeAnalysisTab.value === 'crosstab' && newQuestion && (!crosstabFirstQuestion.value || crosstabFirstQuestion.value.id !== newQuestion.id)) {
     // Update crosstab first question to match the Results selection
     crosstabFirstQuestion.value = newQuestion
   }
@@ -1022,8 +1031,8 @@ watch(crosstabFirstQuestion, (newQuestion, oldQuestion) => {
   }
   
   // Sync to Results view selectedQuestionId (crosstab -> results)
-  // Only update if the IDs don't match to prevent circular updates
-  if (newQuestion && newQuestion !== oldQuestion && newQuestion.id !== selectedQuestionId.value) {
+  // Only update if we're in CROSSTAB MODE and the IDs don't match to prevent circular updates
+  if (activeAnalysisTab.value === 'crosstab' && newQuestion && newQuestion !== oldQuestion && newQuestion.id !== selectedQuestionId.value) {
     selectedQuestionId.value = newQuestion.id
     
     // If the question has a blockId, ensure that block is expanded
@@ -1341,9 +1350,12 @@ watch([() => route.query.section, () => route.query.firstQuestion, () => route.q
     }
   }
   
-  // Handle crosstab navigation parameters
-  if (newFirstQuestion && newSecondQuestion) {
-    loadQuestionsForCrosstab(newFirstQuestion, newSecondQuestion)
+  // Handle crosstab navigation parameters - but ONLY when in crosstab mode AND params actually changed
+  if (newFirstQuestion && newSecondQuestion && newSection === 'crosstab') {
+    // Only reload if the question IDs actually changed (not just a re-trigger of the same values)
+    if (newFirstQuestion !== oldFirstQuestion || newSecondQuestion !== oldSecondQuestion) {
+      loadQuestionsForCrosstab(newFirstQuestion, newSecondQuestion)
+    }
   }
 }, { deep: true, flush: 'post' })
 
