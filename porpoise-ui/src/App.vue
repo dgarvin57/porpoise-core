@@ -8,10 +8,12 @@
         </keep-alive>
       </router-view>
     </main>
+    <ContextualHint />
   </div>
 </template>
 
 <script setup lang="ts">
 import TopNav from './components/TopNav.vue';
+import ContextualHint from './components/ContextualHint.vue';
 </script>
 

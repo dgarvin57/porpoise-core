@@ -462,6 +462,7 @@ import { useCrosstabTour } from '@/composables/useCrosstabTour'
 import { useResultsTour } from '@/composables/useResultsTour'
 import { useStatSigTour } from '@/composables/useStatSigTour'
 import { useTourManager } from '@/composables/useTourManager'
+import { useContextualHints } from '@/composables/useContextualHints'
 import '@/assets/shepherd-theme.css'
 
 // Click outside directive
@@ -497,6 +498,9 @@ const { hasTourBeenCompleted: hasCrosstabTourCompleted, startTour: startCrosstab
 const { hasTourBeenCompleted: hasResultsTourCompleted, startTour: startResultsTour, resetTour: resetResultsTourFlag } = useResultsTour()
 const { hasTourBeenCompleted: hasStatSigTourCompleted, startTour: startStatSigTour, resetTour: resetStatSigTourFlag } = useStatSigTour()
 const { hasAnyTourBeenCompleted } = useTourManager()
+
+// Initialize Contextual Hints
+const { showHint, dismissHint, activeHint } = useContextualHints()
 
 // Sidebar collapse state
 const sidebarCollapsed = ref(true) // Default to collapsed (closed) when survey first opens
@@ -844,8 +848,15 @@ watch(activeSection, (newSection, oldSection) => {
   saveSurveyState()
 })
 
+// Dismiss hint when IV is selected
+watch(crosstabSecondQuestion, (newIV) => {
+  if (newIV && activeHint.value?.key === 'crosstab-iv-selection') {
+    dismissHint()
+  }
+})
+
 // Watch activeAnalysisTab changes separately for tab-specific logic
-watch(activeAnalysisTab, (newTab, oldTab) => {
+watch(activeAnalysisTab, async (newTab, oldTab) => {
   // When switching FROM crosstab to results or statsig, sync the selected question and CLEAR crosstab selections
   if ((newTab === 'results' || newTab === 'statsig') && oldTab === 'crosstab' && crosstabFirstQuestion.value) {
     if (!selectedQuestionId.value || selectedQuestionId.value !== crosstabFirstQuestion.value.id) {
@@ -862,6 +873,71 @@ watch(activeAnalysisTab, (newTab, oldTab) => {
     delete newQuery.firstQuestion
     delete newQuery.secondQuestion
     router.replace({ query: newQuery })
+  }
+  
+  // When switching TO crosstab, check for hint after route params load
+  if (newTab === 'crosstab' && hasCrosstabTourCompleted()) {
+    await nextTick()
+    // Wait for route watcher to load questions from URL params
+    setTimeout(() => {
+      // Only show hint if we have DV but no IV
+      if (crosstabFirstQuestion.value && !crosstabSecondQuestion.value) {
+        showHint({
+          key: 'crosstab-iv-selection',
+          target: () => {
+            // Find first nominal/demographic variable (red icon) that's not the DV
+            // These are typically the independent variables users look for
+            const questionItems = Array.from(document.querySelectorAll('.group\\/radio'))
+            let firstDemographic = null
+            
+            for (const item of questionItems) {
+              const radio = item.querySelector('input[type="radio"]')
+              const isChecked = radio?.checked  // This is the DV
+              const isDisabled = radio?.disabled
+              
+              // Look for red icon (nominal variable, variableType 1)
+              const parentLabel = item.parentElement
+              const redIcon = parentLabel?.querySelector('svg.text-red-400')
+              
+              // Skip the DV, disabled questions, and non-demographic questions
+              if (!isChecked && !isDisabled && redIcon) {
+                const questionNameDiv = parentLabel?.querySelector('div.flex-1.min-w-0')
+                
+                if (questionNameDiv) {
+                  firstDemographic = questionNameDiv
+                  break
+                }
+              }
+            }
+            
+            // Fallback to any valid IV if no demographics found
+            if (!firstDemographic) {
+              for (const item of questionItems) {
+                const radio = item.querySelector('input[type="radio"]')
+                const isChecked = radio?.checked
+                const isDisabled = radio?.disabled
+                
+                if (!isChecked && !isDisabled) {
+                  const parentLabel = item.parentElement
+                  const questionNameDiv = parentLabel?.querySelector('div.flex-1.min-w-0')
+                  
+                  if (questionNameDiv) {
+                    firstDemographic = questionNameDiv
+                    break
+                  }
+                }
+              }
+            }
+            
+            return firstDemographic
+          },
+          title: 'Now select the IV',
+          text: 'Click on a question name to select your Independent Variable for comparison.',
+          position: 'right',
+          autoDismiss: 8000
+        })
+      }
+    }, 800)
   }
   
   // Update URL query params to reflect the current tab
