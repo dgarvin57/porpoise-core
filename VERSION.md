@@ -8,7 +8,23 @@ Porpoise uses **Semantic Versioning** (SemVer): `MAJOR.MINOR.PATCH`
 - **MINOR** (1.X.0): New features, enhancements, non-breaking changes  
 - **PATCH** (1.0.X): Bug fixes, small tweaks, performance improvements
 
-## Current Version: 1.15.4
+## Current Version: 1.16.0
+
+### Single Source of Truth
+Version is maintained in `porpoise-ui/package.json` and auto-synced to:
+- `Porpoise.Api/Porpoise.Api.csproj` (synced by bump script)
+
+### Version History
+
+#### 1.16.0 (2025-12-20)
+- feat: Add contextual hint system for IV selection guidance
+- chore: bump version to 1.11.0
+- chore: bump version to 1.9.0
+- chore: bump version to 1.8.0
+- chore: bump version to 1.7.0
+- chore: bump version to 1.5.0
+- Refactor: Consolidate AI Analysis modals into single reusable component
+- chore: bump version to 1.4.0
 
 ### Single Source of Truth
 Version is maintained in `porpoise-ui/package.json` and auto-synced to:
