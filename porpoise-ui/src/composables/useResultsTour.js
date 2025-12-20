@@ -297,8 +297,18 @@ export function useResultsTour() {
     })
 
     // Handle tour completion/cancellation
-    tour.on('complete', () => markTourCompleted('results'))
-    tour.on('cancel', () => markTourCompleted('results'))
+    tour.on('complete', () => {
+      markTourCompleted('results')
+      // Clean up modal overlay
+      const overlay = document.querySelector('.shepherd-modal-overlay-container')
+      if (overlay) overlay.remove()
+    })
+    tour.on('cancel', () => {
+      markTourCompleted('results')
+      // Clean up modal overlay
+      const overlay = document.querySelector('.shepherd-modal-overlay-container')
+      if (overlay) overlay.remove()
+    })
 
     tourInstance.value = tour
     return tour

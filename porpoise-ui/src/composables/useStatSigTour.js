@@ -197,8 +197,18 @@ export function useStatSigTour() {
     })
 
     // Handle tour completion/cancellation
-    tour.on('complete', () => markTourCompleted('statsig'))
-    tour.on('cancel', () => markTourCompleted('statsig'))
+    tour.on('complete', () => {
+      markTourCompleted('statsig')
+      // Clean up modal overlay
+      const overlay = document.querySelector('.shepherd-modal-overlay-container')
+      if (overlay) overlay.remove()
+    })
+    tour.on('cancel', () => {
+      markTourCompleted('statsig')
+      // Clean up modal overlay
+      const overlay = document.querySelector('.shepherd-modal-overlay-container')
+      if (overlay) overlay.remove()
+    })
 
     tourInstance.value = tour
     return tour

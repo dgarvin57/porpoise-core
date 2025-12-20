@@ -284,8 +284,18 @@ export function useCrosstabTour() {
     })
 
     // Handle tour completion/cancellation
-    tour.on('complete', () => markTourCompleted('crosstab'))
-    tour.on('cancel', () => markTourCompleted('crosstab'))
+    tour.on('complete', () => {
+      markTourCompleted('crosstab')
+      // Clean up modal overlay
+      const overlay = document.querySelector('.shepherd-modal-overlay-container')
+      if (overlay) overlay.remove()
+    })
+    tour.on('cancel', () => {
+      markTourCompleted('crosstab')
+      // Clean up modal overlay
+      const overlay = document.querySelector('.shepherd-modal-overlay-container')
+      if (overlay) overlay.remove()
+    })
 
     tourInstance.value = tour
     return tour
