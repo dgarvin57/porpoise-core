@@ -397,10 +397,16 @@ const lastLoadedQuestionId = ref(null)
 
 // Track active question from route (when returning from crosstab)
 const activeQuestionId = computed(() => {
+  // Check route.query.iv first (set when syncing from crosstab)
+  if (route.query.iv) {
+    return route.query.iv
+  }
   // When returning from crosstab, secondQuestion will be the IV we visited
-  return route.query.fromStatSig === 'true' && route.query.secondQuestion 
-    ? route.query.secondQuestion 
-    : lastClickedIV.value
+  if (route.query.fromStatSig === 'true' && route.query.secondQuestion) {
+    return route.query.secondQuestion
+  }
+  // Fall back to last clicked IV
+  return lastClickedIV.value
 })
 
 // Define emits
@@ -459,9 +465,10 @@ function navigateToQuestion(ivQuestionId) {
     const newQuery = {
       section: 'crosstab',
       firstQuestion: props.selectedQuestion.id,
-      secondQuestion: ivQuestionId
+      secondQuestion: ivQuestionId,
+      iv: ivQuestionId  // Also set iv param for return highlighting
     }
-    
+
     // Navigate to crosstab tab with both DV and IV selected via query params
     router.push({
       query: newQuery

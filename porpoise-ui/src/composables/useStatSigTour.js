@@ -27,7 +27,7 @@ function expandIfCollapsed(element) {
 
 export function useStatSigTour() {
   const tourInstance = ref(null)
-  const { hasTourBeenCompleted, markTourCompleted, resetTour } = useTourManager()
+  const { hasTourBeenCompleted, markTourCompleted, resetTour, skipAllTours } = useTourManager()
 
   function createTour() {
     if (tourInstance.value) {
@@ -204,7 +204,7 @@ export function useStatSigTour() {
       if (overlay) overlay.remove()
     })
     tour.on('cancel', () => {
-      markTourCompleted('statsig')
+      skipAllTours()  // Mark all analytics tours as skipped
       // Clean up modal overlay
       const overlay = document.querySelector('.shepherd-modal-overlay-container')
       if (overlay) overlay.remove()

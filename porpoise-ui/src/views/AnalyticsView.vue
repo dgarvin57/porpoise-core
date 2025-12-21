@@ -848,32 +848,40 @@ watch(activeSection, (newSection, oldSection) => {
   saveSurveyState()
 })
 
-// Dismiss hint when IV is selected
+// Dismiss hint when IV is selected AND sync IV to StatSig tab
 watch(crosstabSecondQuestion, (newIV) => {
   if (newIV && activeHint.value?.key === 'crosstab-iv-selection') {
     dismissHint()
   }
+  
+  // Sync IV selection to route for StatSig highlighting
+  if (newIV && activeAnalysisTab.value === 'statsig') {
+    // If on StatSig tab, update route to highlight the IV row
+    const newQuery = { ...route.query, iv: newIV.id }
+    router.push({ query: newQuery }).catch(() => {})
+  }
+  
+  saveSurveyState()
 })
 
 // Watch activeAnalysisTab changes separately for tab-specific logic
 watch(activeAnalysisTab, async (newTab, oldTab) => {
-  // When switching FROM crosstab to results or statsig, sync the selected question and CLEAR crosstab selections
+  // When switching FROM crosstab to results or statsig, sync the DV to selectedQuestion
   if ((newTab === 'results' || newTab === 'statsig') && oldTab === 'crosstab' && crosstabFirstQuestion.value) {
     if (!selectedQuestionId.value || selectedQuestionId.value !== crosstabFirstQuestion.value.id) {
       selectedQuestionId.value = crosstabFirstQuestion.value.id
       selectedQuestion.value = crosstabFirstQuestion.value
       loadQuestionData(crosstabFirstQuestion.value.id)
     }
-    // Clear crosstab selections so they don't interfere with single-question selection
-    crosstabFirstQuestion.value = null
-    crosstabSecondQuestion.value = null
-    
-    // Also clear query params to prevent re-loading crosstab state
-    const newQuery = { ...route.query }
-    delete newQuery.firstQuestion
-    delete newQuery.secondQuestion
-    router.replace({ query: newQuery })
   }
+  
+  // When switching TO statsig, sync the IV to route.query.iv for row highlighting
+  if (newTab === 'statsig' && crosstabSecondQuestion.value) {
+    const newQuery = { ...route.query, iv: crosstabSecondQuestion.value.id }
+    router.push({ query: newQuery }).catch(() => {})
+  }
+  
+  // DON'T clear crosstab selections - preserve them so user can return to crosstab with same context
   
   // When switching TO crosstab, check for hint after route params load
   if (newTab === 'crosstab' && hasCrosstabTourCompleted()) {
@@ -1365,6 +1373,23 @@ onMounted(() => {
   if (splitViewEnabled.value && crosstabFirstQuestion.value) {
     selectedQuestionForSplit.value = crosstabFirstQuestion.value
   }
+  
+  // Start tour on initial load if not completed
+  nextTick(() => {
+    if (activeAnalysisTab.value === 'results' && !hasResultsTourCompleted()) {
+      setTimeout(() => {
+        startResultsTour()
+      }, 800)
+    } else if (activeAnalysisTab.value === 'crosstab' && !hasCrosstabTourCompleted()) {
+      setTimeout(() => {
+        startCrosstabTour()
+      }, 800)
+    } else if (activeAnalysisTab.value === 'statsig' && !hasStatSigTourCompleted()) {
+      setTimeout(() => {
+        startStatSigTour()
+      }, 800)
+    }
+  })
 })
 
 // Watch for route changes (when navigating to the same route with different params)

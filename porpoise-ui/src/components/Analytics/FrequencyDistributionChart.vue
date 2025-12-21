@@ -11,17 +11,19 @@
           {{ response.label }}
         </div>
         <div class="flex-1 flex items-center gap-2">
-          <div class="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-6 relative overflow-hidden">
-            <div
-              class="h-full rounded-full flex items-center justify-end pr-2"
-              :style="{ width: `${response.percentage}%`, backgroundColor: '#3b82f6' }"
-            >
-              <span class="text-xs font-semibold text-white">
+          <div class="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-6 relative">
+            <div class="flex items-center">
+              <div
+                class="h-6 rounded-full transition-all"
+                :style="{ width: `${response.percentage}%`, backgroundColor: '#3b82f6' }"
+              >
+              </div>
+              <div class="ml-2 text-xs font-semibold text-gray-900 dark:text-white whitespace-nowrap">
                 {{ response.percentage.toFixed(1) }}%
-              </span>
+              </div>
             </div>
           </div>
-          <div class="w-16 text-right text-sm text-gray-600 dark:text-gray-400">
+          <div class="w-12 text-right text-sm text-gray-600 dark:text-gray-400">
             {{ response.count }}
           </div>
         </div>
@@ -38,7 +40,7 @@
         <span>75</span>
         <span>100</span>
       </div>
-      <div class="w-16"></div>
+      <div class="w-12"></div>
     </div>
 
     <!-- Summary Statistics -->
