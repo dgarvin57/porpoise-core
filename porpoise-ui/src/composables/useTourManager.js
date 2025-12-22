@@ -3,6 +3,7 @@
  * Manages localStorage keys and provides unified interface for tour completion tracking
  */
 
+// Each tour has its own completion key, but they share a skip-all flag
 const TOUR_KEYS = {
   results: 'porpoise_results_tour_completed',
   crosstab: 'porpoise_crosstab_tour_completed',
@@ -10,9 +11,12 @@ const TOUR_KEYS = {
   start: 'porpoise_start_tour_completed'
 }
 
+// Shared flag for skipping all analytics tours
+const SKIP_ALL_KEY = 'porpoise_analytics_tours_skipped'
+
 export function useTourManager() {
   /**
-   * Check if a specific tour has been completed
+   * Check if a specific tour has been completed OR if all tours were skipped
    * @param {string} tourName - One of: 'results', 'crosstab', 'statsig', 'start'
    * @returns {boolean}
    */
@@ -22,7 +26,10 @@ export function useTourManager() {
       console.warn(`Unknown tour name: ${tourName}`)
       return false
     }
-    return localStorage.getItem(key) === 'true'
+    // Check if this specific tour was completed OR if user skipped all tours
+    const isSkippedAll = localStorage.getItem(SKIP_ALL_KEY) === 'true'
+    const isCompleted = localStorage.getItem(key) === 'true'
+    return isCompleted || isSkippedAll
   }
 
   /**
@@ -49,6 +56,7 @@ export function useTourManager() {
 
   /**
    * Reset a specific tour (mark as not completed)
+   * Also clears the skip-all flag to allow tours to run again
    * @param {string} tourName - One of: 'results', 'crosstab', 'statsig', 'start'
    */
   function resetTour(tourName) {
@@ -58,6 +66,15 @@ export function useTourManager() {
       return
     }
     localStorage.removeItem(key)
+    // Also clear skip-all flag when resetting any individual tour
+    localStorage.removeItem(SKIP_ALL_KEY)
+  }
+
+  /**
+   * Mark all tours as skipped (when user cancels/skips any tour)
+   */
+  function skipAllTours() {
+    localStorage.setItem(SKIP_ALL_KEY, 'true')
   }
 
   /**
@@ -65,6 +82,7 @@ export function useTourManager() {
    */
   function resetAllTours() {
     Object.values(TOUR_KEYS).forEach(key => localStorage.removeItem(key))
+    localStorage.removeItem(SKIP_ALL_KEY)
   }
 
   return {
@@ -72,6 +90,7 @@ export function useTourManager() {
     hasAnyTourBeenCompleted,
     markTourCompleted,
     resetTour,
-    resetAllTours
+    resetAllTours,
+    skipAllTours
   }
 }

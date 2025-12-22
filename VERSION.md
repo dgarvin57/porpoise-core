@@ -8,7 +8,46 @@ Porpoise uses **Semantic Versioning** (SemVer): `MAJOR.MINOR.PATCH`
 - **MINOR** (1.X.0): New features, enhancements, non-breaking changes  
 - **PATCH** (1.0.X): Bug fixes, small tweaks, performance improvements
 
-## Current Version: 1.16.0
+## Current Version: 1.17.3
+
+### Single Source of Truth
+Version is maintained in `porpoise-ui/package.json` and auto-synced to:
+- `Porpoise.Api/Porpoise.Api.csproj` (synced by bump script)
+
+### Version History
+
+#### 1.17.3 (2025-12-22)
+- fix: Use Railway CLI install script instead of npm package
+
+### Single Source of Truth
+Version is maintained in `porpoise-ui/package.json` and auto-synced to:
+- `Porpoise.Api/Porpoise.Api.csproj` (synced by bump script)
+
+### Version History
+
+#### 1.17.2 (2025-12-22)
+- fix: Replace Railway CLI with official GitHub Action
+
+### Single Source of Truth
+Version is maintained in `porpoise-ui/package.json` and auto-synced to:
+- `Porpoise.Api/Porpoise.Api.csproj` (synced by bump script)
+
+### Version History
+
+#### 1.17.1 (2025-12-22)
+- fix: Resolve tour skip and IV sync issues
+
+### Single Source of Truth
+Version is maintained in `porpoise-ui/package.json` and auto-synced to:
+- `Porpoise.Api/Porpoise.Api.csproj` (synced by bump script)
+
+### Version History
+
+#### 1.17.0 (2025-12-21)
+- feat: Add contextual hints, IV sync, chart improvements, and tour enhancements
+- chore: bump version to 1.17.0
+- docs: Simplify git workflow to use GitHub UI for production releases
+- chore: bump version to 1.16.0
 
 ### Single Source of Truth
 Version is maintained in `porpoise-ui/package.json` and auto-synced to:

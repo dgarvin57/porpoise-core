@@ -178,6 +178,7 @@
                 :key="question.id"
                 :class="getQuestionClasses(question)"
                 class="w-full flex items-center px-2 py-0.5 rounded cursor-pointer transition-all border-l"
+                :data-question-id="question.id"
               >
                 <!-- Left hover zone for radio button -->
                 <div class="group/radio flex items-center flex-shrink-0">
@@ -251,6 +252,7 @@
             v-else
             :class="getQuestionClasses(item.question || item)"
             class="w-full flex items-center space-x-2 px-2 py-0 rounded cursor-pointer transition-all border-l-2"
+            :data-question-id="(item.question || item).id"
           >
             <!-- Left hover zone for radio button -->
             <div class="group/radio flex items-center flex-shrink-0">
@@ -632,8 +634,9 @@ function handleQuestionClick(question) {
   }
   
   if (props.selectionMode === 'single') {
-    singleSelection.value = question
-    emit('question-selected', question)
+    // On Results tab (single mode), clicking label = navigate to crosstab with this as IV
+    // Emit special event for label click that will trigger crosstab navigation
+    emit('label-click-for-crosstab', question)
   } else if (props.selectionMode === 'crosstab') {
     if (USE_RADIO_BUTTON_MODE) {
       handleRadioModeCrosstabSelection(question)

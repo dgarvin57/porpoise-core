@@ -27,7 +27,7 @@ function expandIfCollapsed(element) {
 
 export function useStatSigTour() {
   const tourInstance = ref(null)
-  const { hasTourBeenCompleted, markTourCompleted, resetTour } = useTourManager()
+  const { hasTourBeenCompleted, markTourCompleted, resetTour, skipAllTours } = useTourManager()
 
   function createTour() {
     if (tourInstance.value) {
@@ -41,7 +41,13 @@ export function useStatSigTour() {
         classes: 'shepherd-theme-custom',
         scrollTo: false,
         cancelIcon: {
-          enabled: true
+          enabled: true,
+          label: 'Skip tour'
+        },
+        when: {
+          cancel: () => {
+            skipAllTours()  // Set skip-all flag when X button clicked
+          }
         },
         modalOverlayOpeningPadding: 8,
         modalOverlayOpeningRadius: 8,
@@ -145,7 +151,10 @@ export function useStatSigTour() {
       buttons: [
         {
           text: 'Skip Tour',
-          action: tour.complete,
+          action: () => {
+            skipAllTours()
+            tour.complete()
+          },
           secondary: true
         },
         {
@@ -204,7 +213,7 @@ export function useStatSigTour() {
       if (overlay) overlay.remove()
     })
     tour.on('cancel', () => {
-      markTourCompleted('statsig')
+      skipAllTours()  // Mark all analytics tours as skipped
       // Clean up modal overlay
       const overlay = document.querySelector('.shepherd-modal-overlay-container')
       if (overlay) overlay.remove()

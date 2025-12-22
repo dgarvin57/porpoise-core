@@ -27,7 +27,7 @@ function expandIfCollapsed(element) {
 
 export function useCrosstabTour() {
   const tourInstance = ref(null)
-  const { hasTourBeenCompleted, markTourCompleted, resetTour } = useTourManager()
+  const { hasTourBeenCompleted, markTourCompleted, resetTour, skipAllTours } = useTourManager()
 
   function createTour() {
     if (tourInstance.value) {
@@ -41,7 +41,13 @@ export function useCrosstabTour() {
         classes: 'shepherd-theme-custom',
         scrollTo: false, // Disable auto-scrolling to prevent jumping
         cancelIcon: {
-          enabled: true
+          enabled: true,
+          label: 'Skip tour'
+        },
+        when: {
+          cancel: () => {
+            skipAllTours()  // Set skip-all flag when X button clicked
+          }
         },
         modalOverlayOpeningPadding: 8,
         modalOverlayOpeningRadius: 8,
@@ -149,7 +155,10 @@ export function useCrosstabTour() {
       buttons: [
         {
           text: 'Skip Tour',
-          action: tour.complete,
+          action: () => {
+            skipAllTours()
+            tour.complete()
+          },
           secondary: true
         },
         {
@@ -291,7 +300,7 @@ export function useCrosstabTour() {
       if (overlay) overlay.remove()
     })
     tour.on('cancel', () => {
-      markTourCompleted('crosstab')
+      skipAllTours()  // Mark all analytics tours as skipped
       // Clean up modal overlay
       const overlay = document.querySelector('.shepherd-modal-overlay-container')
       if (overlay) overlay.remove()

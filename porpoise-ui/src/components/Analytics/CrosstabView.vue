@@ -333,15 +333,17 @@
               <div class="w-24 text-xs text-gray-700 dark:text-gray-300 text-right truncate">
                 {{ bar.label }}
               </div>
-              <div class="flex-1 flex items-center gap-2">
-                <div class="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-6 overflow-hidden">
-                  <div
-                    :style="{ width: Math.min((bar.value / 200 * 100), 100) + '%', backgroundColor: bar.color }"
-                    class="h-full transition-all"
-                  ></div>
-                </div>
-                <div class="w-12 text-xs font-medium text-gray-900 dark:text-white text-right">
-                  {{ bar.value }}
+              <div class="flex-1">
+                <div class="bg-gray-200 dark:bg-gray-700 rounded-full h-6 relative">
+                  <div class="flex items-center">
+                    <div
+                      :style="{ width: Math.min((bar.value / 200 * 100), 100) + '%', backgroundColor: bar.color }"
+                      class="h-6 rounded-full transition-all"
+                    ></div>
+                    <div class="ml-2 text-xs font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+                      {{ bar.value }}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -355,7 +357,6 @@
                 <span>150</span>
                 <span>200</span>
               </div>
-              <div class="w-12"></div>
             </div>
           </div>
           
@@ -373,17 +374,20 @@
                 <div
                   v-for="(segment, segIdx) in bar.segments"
                   :key="segIdx"
-                  class="flex items-center gap-2"
+                  class="flex items-center"
                 >
-                  <div class="flex-1 bg-gray-200 dark:bg-gray-700 rounded h-4 overflow-hidden max-w-md">
-                    <div
-                      :style="{ width: Math.min(segment.value, 100) + '%', backgroundColor: segment.color }"
-                      class="h-full transition-all"
-                      :title="`${segment.label}: ${segment.value.toFixed(1)}%`"
-                    ></div>
-                  </div>
-                  <div class="w-10 text-xs font-medium text-gray-700 dark:text-gray-300 text-right">
-                    {{ segment.value.toFixed(1) }}%
+                  <div class="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-4 relative max-w-md">
+                    <div class="flex items-center">
+                      <div
+                        :style="{ width: Math.min(segment.value, 100) + '%', backgroundColor: segment.color }"
+                        class="h-4 rounded-full transition-all"
+                        :title="`${segment.label}: ${segment.value.toFixed(1)}%`"
+                      >
+                      </div>
+                      <div class="ml-2 text-xs font-semibold text-gray-900 dark:text-white whitespace-nowrap">
+                        {{ segment.value.toFixed(1) }}%
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

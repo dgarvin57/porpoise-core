@@ -63,21 +63,3 @@ jobs:
         run: |
           git push origin develop || echo "No version changes to push"
           git push origin --tags --force || echo "No tags to push"
-
-  deploy:
-    needs: bump-version
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          ref: develop
-
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli@latest
-
-      - name: Deploy to Railway
-        run: railway up --service porpoise-api
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          RAILWAY_ENVIRONMENT: staging

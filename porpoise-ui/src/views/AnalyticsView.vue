@@ -109,6 +109,7 @@
                 :initialSecondSelection="questionListMode === 'crosstab' ? crosstabSecondQuestion : null"
                 @question-selected="handleQuestionListSelection"
                 @crosstab-selection="handleQuestionListCrosstabSelection"
+                @label-click-for-crosstab="handleLabelClickForCrosstab"
                 @expanded-blocks-changed="handleExpandedBlocksChanged"
                 @questions-loaded="handleQuestionsLoaded"
               />
@@ -417,6 +418,71 @@
       :show="showUnderstandingModal"
       @close="showUnderstandingModal = false"
     />
+    
+    <!-- Results Label Click Hint -->
+    <Transition name="hint-slide-fade">
+      <div
+        v-if="showResultsLabelHint"
+        ref="resultsLabelHintElement"
+        class="fixed pointer-events-auto"
+        style="z-index: 10000;"
+      >
+        <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl border-2 border-blue-500 dark:border-blue-400 max-w-xs overflow-hidden">
+          <!-- Accent bar on left -->
+          <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-blue-500 to-blue-600"></div>
+          
+          <!-- Content -->
+          <div class="pl-5 pr-4 py-3.5">
+            <div class="flex items-start gap-3">
+              <!-- Icon -->
+              <div class="flex-shrink-0 mt-0.5">
+                <div class="w-8 h-8 rounded-lg bg-blue-500 dark:bg-blue-600 flex items-center justify-center">
+                  <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+              </div>
+              
+              <!-- Text content -->
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-bold text-gray-900 dark:text-white mb-2">Quick Tip: Two Ways to Select</p>
+                <div class="space-y-2 text-xs text-gray-700 dark:text-gray-300">
+                  <div class="flex items-start gap-2">
+                    <div class="relative w-4 h-4 flex-shrink-0 mt-0.5">
+                      <input type="radio" checked class="w-4 h-4 accent-blue-600" disabled />
+                    </div>
+                    <span><strong class="text-gray-900 dark:text-white">Radio button</strong> – View results for this question</span>
+                  </div>
+                  <div class="flex items-start gap-2">
+                    <svg class="w-4 h-4 text-blue-500 dark:text-blue-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
+                    </svg>
+                    <span><strong class="text-gray-900 dark:text-white">Question name</strong> – Compare in crosstab (sets as IV)</span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Close button -->
+              <button
+                @click="dismissResultsLabelHint"
+                class="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                title="Dismiss hint"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          <!-- Animated pulse ring for emphasis -->
+          <div 
+            v-if="isResultsLabelHintAnimating"
+            class="absolute inset-0 rounded-xl border-2 border-blue-500 dark:border-blue-400 animate-ping opacity-75 pointer-events-none"
+          ></div>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>    <!-- Standalone Main Content (when question list is hidden) -->
     <main v-if="activeSection === 'dataview' || activeSection === 'datacleansing' || activeSection === 'questions'" class="h-full w-full overflow-hidden">
@@ -463,6 +529,7 @@ import { useResultsTour } from '@/composables/useResultsTour'
 import { useStatSigTour } from '@/composables/useStatSigTour'
 import { useTourManager } from '@/composables/useTourManager'
 import { useContextualHints } from '@/composables/useContextualHints'
+import { useResultsLabelHint } from '@/composables/useResultsLabelHint'
 import '@/assets/shepherd-theme.css'
 
 // Click outside directive
@@ -501,6 +568,13 @@ const { hasAnyTourBeenCompleted } = useTourManager()
 
 // Initialize Contextual Hints
 const { showHint, dismissHint, activeHint } = useContextualHints()
+const { 
+  hintElement: resultsLabelHintElement, 
+  showHint: showResultsLabelHint, 
+  isAnimating: isResultsLabelHintAnimating,
+  showHintIfNeeded: showResultsLabelHintIfNeeded,
+  dismissHint: dismissResultsLabelHint 
+} = useResultsLabelHint()
 
 // Sidebar collapse state
 const sidebarCollapsed = ref(true) // Default to collapsed (closed) when survey first opens
@@ -848,32 +922,45 @@ watch(activeSection, (newSection, oldSection) => {
   saveSurveyState()
 })
 
-// Dismiss hint when IV is selected
+// Dismiss hint when IV is selected AND sync IV to StatSig tab
 watch(crosstabSecondQuestion, (newIV) => {
   if (newIV && activeHint.value?.key === 'crosstab-iv-selection') {
     dismissHint()
   }
+  
+  // Sync IV selection to route for StatSig highlighting
+  // Update route.query.iv whenever IV changes, regardless of current tab
+  if (newIV) {
+    const newQuery = { ...route.query, iv: newIV.id }
+    router.push({ query: newQuery }).catch(() => {})
+  } else {
+    // If IV is cleared, remove iv from query
+    const newQuery = { ...route.query }
+    delete newQuery.iv
+    router.push({ query: newQuery }).catch(() => {})
+  }
+  
+  saveSurveyState()
 })
 
 // Watch activeAnalysisTab changes separately for tab-specific logic
 watch(activeAnalysisTab, async (newTab, oldTab) => {
-  // When switching FROM crosstab to results or statsig, sync the selected question and CLEAR crosstab selections
+  // When switching FROM crosstab to results or statsig, sync the DV to selectedQuestion
   if ((newTab === 'results' || newTab === 'statsig') && oldTab === 'crosstab' && crosstabFirstQuestion.value) {
     if (!selectedQuestionId.value || selectedQuestionId.value !== crosstabFirstQuestion.value.id) {
       selectedQuestionId.value = crosstabFirstQuestion.value.id
       selectedQuestion.value = crosstabFirstQuestion.value
       loadQuestionData(crosstabFirstQuestion.value.id)
     }
-    // Clear crosstab selections so they don't interfere with single-question selection
-    crosstabFirstQuestion.value = null
-    crosstabSecondQuestion.value = null
-    
-    // Also clear query params to prevent re-loading crosstab state
-    const newQuery = { ...route.query }
-    delete newQuery.firstQuestion
-    delete newQuery.secondQuestion
-    router.replace({ query: newQuery })
   }
+  
+  // When switching TO statsig, sync the IV to route.query.iv for row highlighting
+  if (newTab === 'statsig' && crosstabSecondQuestion.value) {
+    const newQuery = { ...route.query, iv: crosstabSecondQuestion.value.id }
+    router.push({ query: newQuery }).catch(() => {})
+  }
+  
+  // DON'T clear crosstab selections - preserve them so user can return to crosstab with same context
   
   // When switching TO crosstab, check for hint after route params load
   if (newTab === 'crosstab' && hasCrosstabTourCompleted()) {
@@ -1060,7 +1147,51 @@ async function handleQuestionsLoaded(questions) {
       // Select the first question
       selectedQuestionId.value = firstQuestion.id
       selectedQuestion.value = firstQuestion
+      
+      // Show hint for label click behavior (only on Results tab)
+      if (activeAnalysisTab.value === 'results') {
+        await nextTick()
+        // Find the second question in the list to point the hint at
+        let secondQuestion = null
+        for (const item of questions) {
+          if (item.type === 'block' && item.questions && item.questions.length > 1) {
+            secondQuestion = item.questions[1]
+            break
+          } else if (item.type === 'question' && item.id !== firstQuestion.id) {
+            secondQuestion = item
+            break
+          }
+        }
+        
+        if (secondQuestion) {
+          // Wait a bit for rendering, then show hint pointing to second question's label
+          setTimeout(() => {
+            showResultsLabelHintIfNeeded(`[data-question-id="${secondQuestion.id}"] .flex-1.min-w-0.leading-none`)
+          }, 800)
+        }
+      }
     }
+  }
+}
+
+// Handle label click on Results tab - navigate to crosstab
+function handleLabelClickForCrosstab(ivQuestion) {
+  // Current selected question becomes DV, clicked question becomes IV
+  if (selectedQuestion.value && selectedQuestion.value.id !== ivQuestion.id) {
+    crosstabFirstQuestion.value = selectedQuestion.value
+    crosstabSecondQuestion.value = ivQuestion
+    activeAnalysisTab.value = 'crosstab'
+    
+    // Update route to reflect crosstab selection
+    router.push({
+      query: {
+        ...route.query,
+        section: 'crosstab',
+        firstQuestion: selectedQuestion.value.id,
+        secondQuestion: ivQuestion.id,
+        iv: ivQuestion.id
+      }
+    })
   }
 }
 
@@ -1365,6 +1496,23 @@ onMounted(() => {
   if (splitViewEnabled.value && crosstabFirstQuestion.value) {
     selectedQuestionForSplit.value = crosstabFirstQuestion.value
   }
+  
+  // Start tour on initial load if not completed
+  nextTick(() => {
+    if (activeAnalysisTab.value === 'results' && !hasResultsTourCompleted()) {
+      setTimeout(() => {
+        startResultsTour()
+      }, 800)
+    } else if (activeAnalysisTab.value === 'crosstab' && !hasCrosstabTourCompleted()) {
+      setTimeout(() => {
+        startCrosstabTour()
+      }, 800)
+    } else if (activeAnalysisTab.value === 'statsig' && !hasStatSigTourCompleted()) {
+      setTimeout(() => {
+        startStatSigTour()
+      }, 800)
+    }
+  })
 })
 
 // Watch for route changes (when navigating to the same route with different params)
@@ -1471,5 +1619,56 @@ watch([() => route.query.section, () => route.query.firstQuestion, () => route.q
 
 :deep(.dark .p-splitter-gutter:hover) {
   background-color: rgb(96 165 250) !important; /* blue-400 */
+}
+
+/* Hint animation */
+@keyframes hint-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 25px 50px -12px rgba(59, 130, 246, 0.4);
+  }
+}
+
+.animate-hint-pulse {
+  animation: hint-pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) 2;
+}
+
+/* Hint slide-fade animation */
+.hint-slide-fade-enter-active {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hint-slide-fade-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 1, 1);
+}
+
+.hint-slide-fade-enter-from {
+  transform: translateX(-20px);
+  opacity: 0;
+}
+
+.hint-slide-fade-leave-to {
+  transform: translateX(10px);
+  opacity: 0;
+}
+
+/* Fade transition */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 300ms ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.fade-enter-to,
+.fade-leave-from {
+  opacity: 1;
 }
 </style>
