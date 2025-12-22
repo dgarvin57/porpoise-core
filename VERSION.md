@@ -8,7 +8,16 @@ Porpoise uses **Semantic Versioning** (SemVer): `MAJOR.MINOR.PATCH`
 - **MINOR** (1.X.0): New features, enhancements, non-breaking changes  
 - **PATCH** (1.0.X): Bug fixes, small tweaks, performance improvements
 
-## Current Version: 1.17.2
+## Current Version: 1.17.3
+
+### Single Source of Truth
+Version is maintained in `porpoise-ui/package.json` and auto-synced to:
+- `Porpoise.Api/Porpoise.Api.csproj` (synced by bump script)
+
+### Version History
+
+#### 1.17.3 (2025-12-22)
+- fix: Use Railway CLI install script instead of npm package
 
 ### Single Source of Truth
 Version is maintained in `porpoise-ui/package.json` and auto-synced to:
