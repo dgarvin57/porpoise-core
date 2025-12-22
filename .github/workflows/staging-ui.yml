@@ -39,10 +39,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install Railway CLI
+        run: |
+          curl -fsSL https://railway.app/install.sh | sh
+          echo "$HOME/.railway/bin" >> $GITHUB_PATH
+
       - name: Deploy to Railway
-        uses: railwayapp/railway-deploy@v1
-        with:
-          service: pulse-ui
-          environment: staging
+        run: railway up --service pulse-ui
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_ENVIRONMENT: staging
