@@ -39,11 +39,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli@latest
-
       - name: Deploy to Railway
-        run: railway up --service pulse-ui
+        uses: railwayapp/railway-deploy@v1
+        with:
+          service: pulse-ui
+          environment: staging
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-          RAILWAY_ENVIRONMENT: staging

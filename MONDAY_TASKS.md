@@ -1,5 +1,14 @@
 # Monday Tasks - December 23, 2025
 
+## ✅ Deployment Issue Fixed (December 22)
+
+**Railway deployment failing consistently** - RESOLVED
+- ✅ Replaced manual Railway CLI installation with official Railway GitHub Action
+- ✅ Updated both staging-api.yml and staging-ui.yml workflows
+- Changed from `npm install -g @railway/cli@latest` → `railwayapp/railway-deploy@v1`
+- This is more reliable and maintained by Railway team
+- **Next**: Test deployment on next push to develop
+
 ## ✅ Issues Fixed (December 22)
 
 ### Tour Behavior Issues - FIXED
