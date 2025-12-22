@@ -201,8 +201,10 @@
                     v-for="(item, idx) in sortedStatSigData"
                     :key="item.id"
                     :class="[
-                      'hover:bg-blue-50 dark:hover:bg-gray-700 cursor-pointer transition-colors',
-                      activeQuestionId === item.id ? 'bg-blue-50 dark:bg-blue-900/30 border-l-4 border-blue-500' : (idx % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700/30')
+                      'cursor-pointer transition-colors',
+                      activeQuestionId === item.id 
+                        ? 'bg-blue-100 dark:bg-blue-900/50 border-l-4 border-blue-600 shadow-sm' 
+                        : 'hover:bg-blue-50 dark:hover:bg-gray-700 ' + (idx % 2 === 0 ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-700/30')
                     ]"
                     @click.stop="navigateToQuestion(item.id)"
                   >

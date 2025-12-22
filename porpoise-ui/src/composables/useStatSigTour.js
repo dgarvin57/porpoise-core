@@ -41,7 +41,13 @@ export function useStatSigTour() {
         classes: 'shepherd-theme-custom',
         scrollTo: false,
         cancelIcon: {
-          enabled: true
+          enabled: true,
+          label: 'Skip tour'
+        },
+        when: {
+          cancel: () => {
+            skipAllTours()  // Set skip-all flag when X button clicked
+          }
         },
         modalOverlayOpeningPadding: 8,
         modalOverlayOpeningRadius: 8,
@@ -145,7 +151,10 @@ export function useStatSigTour() {
       buttons: [
         {
           text: 'Skip Tour',
-          action: tour.complete,
+          action: () => {
+            skipAllTours()
+            tour.complete()
+          },
           secondary: true
         },
         {
