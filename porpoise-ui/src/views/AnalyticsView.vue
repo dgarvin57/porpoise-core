@@ -855,9 +855,14 @@ watch(crosstabSecondQuestion, (newIV) => {
   }
   
   // Sync IV selection to route for StatSig highlighting
-  if (newIV && activeAnalysisTab.value === 'statsig') {
-    // If on StatSig tab, update route to highlight the IV row
+  // Update route.query.iv whenever IV changes, regardless of current tab
+  if (newIV) {
     const newQuery = { ...route.query, iv: newIV.id }
+    router.push({ query: newQuery }).catch(() => {})
+  } else {
+    // If IV is cleared, remove iv from query
+    const newQuery = { ...route.query }
+    delete newQuery.iv
     router.push({ query: newQuery }).catch(() => {})
   }
   

@@ -56,6 +56,7 @@ export function useTourManager() {
 
   /**
    * Reset a specific tour (mark as not completed)
+   * Also clears the skip-all flag to allow tours to run again
    * @param {string} tourName - One of: 'results', 'crosstab', 'statsig', 'start'
    */
   function resetTour(tourName) {
@@ -65,6 +66,8 @@ export function useTourManager() {
       return
     }
     localStorage.removeItem(key)
+    // Also clear skip-all flag when resetting any individual tour
+    localStorage.removeItem(SKIP_ALL_KEY)
   }
 
   /**
