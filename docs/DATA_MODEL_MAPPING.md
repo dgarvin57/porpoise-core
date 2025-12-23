@@ -171,7 +171,7 @@ CREATE TABLE QuestionBlocks (
 | Feature | Orca (Project) | Porpoise Core (Survey) | Status |
 |---------|----------------|------------------------|--------|
 | **Project Name** | Name (NVARCHAR 50) | Name (string) | ✅ Supported |
-| **Client Name** | ClientName (NVARCHAR 50) | ❌ Not tracked | ⚠️ Could add |
+| **Client Name** | ClientName (NVARCHAR 50) | Tracked at Project level | ✅ Already supported |
 | **Notes** | Notes (text) | ❌ Not tracked | ⚠️ Could add |
 | **Data File Path** | OriginalDataFilePath (string) | ❌ Not persisted after import | Different approach |
 | **Delimiter** | Delimiter (char) | ❌ Not stored | Different approach |
@@ -228,8 +228,14 @@ CREATE TABLE QuestionBlocks (
    )
    ```
 
-2. **Recoding/Data Editing** ⭐⭐⭐
-   - Change data values across entire dataset
+2. **Recoding (Post-Import Data Transformation)** ⭐⭐⭐
+   - **NOT the same as import conversion** (see below)
+   - Change data values across entire dataset AFTER import
+   - Use cases:
+     - Collapse categories: 1-10 scale → Low (1-3), Med (4-7), High (8-10)
+     - Fix data errors: Change invalid 9s → missing code 99
+     - Standardize missing codes: Change all 0s → 99 across questions
+     - Create derived variables: Age ranges → Under 35 vs 35+
    - Track recoding operations for audit trail
    
    **Implementation:**
@@ -249,25 +255,67 @@ CREATE TABLE QuestionBlocks (
    )
    ```
 
-3. **Response Value Flexibility**
-   - Currently Porpoise only supports integer response values
-   - Orca allowed string values (e.g., "Male", "Female")
+3. **Import Conversion (String → Integer) vs Recoding**
+   
+   **Two Different Concepts:**
+   
+   **A. Import Conversion** (REQUIRED - happens during upload):
+   - CSV may contain strings: "Male", "Female", "Yes", "No", "Strongly Agree"
+   - Must convert to integers for analysis: "Male" → 1, "Female" → 2
+   - Store original in `OriginalValue`, integer in `RespValue`
+   - **One-time operation during import**
+   
+   **B. Recoding** (OPTIONAL - happens after analysis):
+   - Change existing integer values: all 1,2,3 → 1 (collapse Low)
+   - Happens to data already imported and potentially analyzed
+   - Creates new values, updates all respondent data
+   - **Repeatable operation for data transformation**
+   
+   **Import Workflow:**
+   ```
+   Step 1: Upload CSV → Parse file, detect unique values per column
+   
+   Step 2: Preview & Map (User Review)
+      Q1 (Gender):
+        ✓ "Male" → 1 (auto-assigned)
+        ✓ "Female" → 2 (auto-assigned)
+        ⚠ "" → 99 (suggested as missing - user can edit)
+        
+      Q2 (Satisfaction):
+        ✓ "Very Satisfied" → 1 (smart detection)
+        ✓ "Satisfied" → 2
+        ✓ "Neutral" → 3
+        ! "Somewhat Satisfied" → 4 (user can reorder/edit)
+   
+   Step 3: User confirms or edits mappings
+   
+   Step 4: Import with mappings applied
+      - OriginalValue = "Male"
+      - RespValue = 1
+      - Label = "Male" (default, user can edit later)
+   ```
+   
+   **Smart Detection Patterns:**
+   - "Yes"/"No" → 1/0
+   - "True"/"False" → 1/0
+   - "Male"/"Female" → 1/2
+   - Likert scales → 1-5 or 1-7 based on count
+   - Already numeric strings → parse to int
    
    **Implementation:**
    ```sql
-   -- Option 1: Change RespValue from INT to VARCHAR
-   ALTER TABLE Responses MODIFY COLUMN RespValue VARCHAR(255);
-   
-   -- Option 2: Add separate field for original value
+   -- Add fields to track original string values
    ALTER TABLE Responses ADD COLUMN OriginalValue VARCHAR(255);
    ALTER TABLE Responses ADD COLUMN ValueType VARCHAR(20); -- 'Integer', 'String', 'Decimal'
+   
+   -- RespValue remains INT for analysis
+   -- OriginalValue stores "Male", "Female", etc.
    ```
 
 #### MEDIUM PRIORITY
 
-4. **Client Name & Notes**
+4. **Survey Notes Field**
    ```sql
-   ALTER TABLE Surveys ADD COLUMN ClientName VARCHAR(255);
    ALTER TABLE Surveys ADD COLUMN Notes TEXT;
    ```
 
@@ -357,7 +405,6 @@ CREATE TABLE QuestionBlocks (
 
 ```sql
 -- Add survey-level metadata
-ALTER TABLE Surveys ADD COLUMN ClientName VARCHAR(255);
 ALTER TABLE Surveys ADD COLUMN Notes TEXT;
 ALTER TABLE Surveys ADD COLUMN OriginalFileName VARCHAR(255);
 ALTER TABLE Surveys ADD COLUMN ImportedAt DATETIME;
@@ -423,7 +470,7 @@ CREATE TABLE DataSnapshots (
 1. ✅ **Document current schema** (this document)
 2. 🔲 **Review with Bereket & Val** - validate gaps
 3. 🔲 **Prototype quality metrics** - can we calculate from existing data?
-4. 🔲 **Test response value flexibility** - do we need strings or can we standardize?
+4. 🔲 **Design import mapping UI** - how to handle string → integer conversion during upload?
 
 ### Short Term (Next Sprint)
 
@@ -432,14 +479,20 @@ CREATE TABLE DataSnapshots (
    - Background job to calculate metrics
    - Display on survey detail page
 
-2. **Enhance Response Model**
+2. **Enhance Response Model for Import Conversion**
    - Add `OriginalValue` and `ValueType` columns
    - Backward-compatible migration
    - Update import logic to populate both fields
 
-3. **Add Client Name & Notes**
-   - Simple ALTER TABLE commands
-   - Update UI to expose fields
+3. **Build Import Mapping UI**
+   - Preview page showing detected values per question
+   - Smart detection for common patterns (Yes/No, Male/Female, Likert)
+   - Allow user to edit suggested integer mappings
+   - Validate mappings before final import
+
+4. **Add Survey Notes Field**
+   - Simple ALTER TABLE command
+   - Update UI to expose field
 
 ### Long Term (Future)
 
