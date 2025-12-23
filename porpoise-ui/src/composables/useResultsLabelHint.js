@@ -2,6 +2,7 @@ import { ref, onMounted, nextTick } from 'vue'
 
 const HINT_KEY = 'hint-results-label-click-shown'
 const MAX_SHOW_COUNT = 1 // Only show once
+const TOUR_COMPLETED_KEY = 'porpoise_results_tour_completed'
 
 // Module-level reactive ref for active hint (shared across all instances)
 const activeHint = ref(null)
@@ -13,6 +14,14 @@ export function useResultsLabelHint() {
 
   function shouldShowHint() {
     try {
+      // Only show hint if tour has been completed or skipped
+      const tourCompleted = localStorage.getItem(TOUR_COMPLETED_KEY) === 'true'
+      const toursSkipped = localStorage.getItem('porpoise_analytics_tours_skipped') === 'true'
+      
+      if (!tourCompleted && !toursSkipped) {
+        return false // Tour hasn't been completed yet
+      }
+      
       const shownCount = parseInt(localStorage.getItem(HINT_KEY) || '0', 10)
       return shownCount < MAX_SHOW_COUNT
     } catch (e) {
