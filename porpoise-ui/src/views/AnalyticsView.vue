@@ -954,6 +954,11 @@ watch(activeAnalysisTab, async (newTab, oldTab) => {
     }
   }
   
+  // When switching AWAY FROM crosstab, dismiss the crosstab hint if it's showing
+  if (oldTab === 'crosstab' && newTab !== 'crosstab' && activeHint.value?.key === 'crosstab-iv-selection') {
+    dismissHint()
+  }
+  
   // When switching TO statsig, sync the IV to route.query.iv for row highlighting
   if (newTab === 'statsig' && crosstabSecondQuestion.value) {
     const newQuery = { ...route.query, iv: crosstabSecondQuestion.value.id }
@@ -1148,25 +1153,55 @@ async function handleQuestionsLoaded(questions) {
       selectedQuestionId.value = firstQuestion.id
       selectedQuestion.value = firstQuestion
       
-      // Show hint for label click behavior (only on Results tab)
+      // Show hint for label click behavior (only on Results tab, after tour is completed)
       if (activeAnalysisTab.value === 'results') {
         await nextTick()
-        // Find the second question in the list to point the hint at
-        let secondQuestion = null
+        // Find a question about halfway down the list (4th or 5th question)
+        let targetQuestion = null
+        let questionCount = 0
+        let targetIndex = 4 // Aim for 5th question (0-indexed)
+        
         for (const item of questions) {
-          if (item.type === 'block' && item.questions && item.questions.length > 1) {
-            secondQuestion = item.questions[1]
-            break
-          } else if (item.type === 'question' && item.id !== firstQuestion.id) {
-            secondQuestion = item
-            break
+          if (item.type === 'block' && item.questions) {
+            for (const q of item.questions) {
+              if (questionCount === targetIndex && q.id !== firstQuestion.id) {
+                targetQuestion = q
+                break
+              }
+              questionCount++
+            }
+            if (targetQuestion) break
+          } else if (item.type === 'question') {
+            const q = item.question || item
+            if (questionCount === targetIndex && q.id !== firstQuestion.id) {
+              targetQuestion = q
+              break
+            }
+            questionCount++
           }
         }
         
-        if (secondQuestion) {
-          // Wait a bit for rendering, then show hint pointing to second question's label
+        // Fallback to second question if we don't have enough questions
+        if (!targetQuestion) {
+          for (const item of questions) {
+            if (item.type === 'block' && item.questions && item.questions.length > 1) {
+              targetQuestion = item.questions[1]
+              break
+            } else if (item.type === 'question') {
+              const q = item.question || item
+              if (q.id !== firstQuestion.id) {
+                targetQuestion = q
+                break
+              }
+            }
+          }
+        }
+        
+        if (targetQuestion) {
+          // Wait a bit for rendering, then show hint pointing to target question's label
+          // Hint will only show if tour has been completed/skipped
           setTimeout(() => {
-            showResultsLabelHintIfNeeded(`[data-question-id="${secondQuestion.id}"] .flex-1.min-w-0.leading-none`)
+            showResultsLabelHintIfNeeded(`[data-question-id="${targetQuestion.id}"] .flex-1.min-w-0.leading-none`)
           }, 800)
         }
       }

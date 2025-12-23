@@ -165,7 +165,7 @@
         <div class="pt-3 px-6 pb-6 flex justify-center">
           <div class="w-full max-w-[833px]">
             <!-- Header matching Results/StatSig tabs -->
-            <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center justify-between ">
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2 flex-wrap">
                 <span>{{ crosstabData.firstQuestion.label }}</span>
                 <span class="inline-flex items-center justify-center w-4 h-4 rounded bg-blue-600 text-white text-xs font-semibold flex-shrink-0">1</span>

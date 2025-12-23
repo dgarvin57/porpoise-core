@@ -114,7 +114,7 @@ export function useResultsTour() {
       ]
     })
 
-    // Step 2: Explain selecting a question
+    // Step 2: Explain selecting a question - TWO WAYS
     tour.addStep({
       id: 'results-select-question',
       text: `
@@ -122,26 +122,36 @@ export function useResultsTour() {
           <div class="shepherd-header">
             <h3 class="shepherd-title">
               <span class="inline-flex items-center justify-center w-6 h-6 rounded bg-blue-600 text-white text-sm font-semibold mr-2">1</span>
-              Select a Question
+              Two Ways to Select
             </h3>
           </div>
           <div class="shepherd-text">
-            <p>Click a <strong>toggle button</strong> (○) or <strong>question name</strong> to view its detailed results.</p>
-            <div class="mt-3 p-2.5 bg-blue-50 dark:bg-blue-900/30 rounded-lg border-l-4 border-blue-600 border border-blue-300 dark:border-blue-700">
-              <div class="flex items-center space-x-2">
+            <p class="mb-3"><strong>Clicking different parts does different things:</strong></p>
+            
+            <!-- Radio button example -->
+            <div class="mb-3 p-2.5 bg-blue-50 dark:bg-blue-900/30 rounded-lg border-l-4 border-blue-600 border border-blue-300 dark:border-blue-700">
+              <div class="flex items-center space-x-2 mb-1">
                 <div class="relative w-5 h-5 flex-shrink-0">
                   <input type="radio" checked class="w-5 h-5 accent-blue-600 appearance-none rounded-full border-2 border-blue-600 bg-white" disabled />
                   <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
                     <div class="w-2.5 h-2.5 rounded-full bg-blue-600"></div>
                   </div>
                 </div>
-                <svg class="w-3.5 h-3.5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                <span class="text-sm font-semibold text-gray-900 dark:text-white">Radio button (○)</span>
+              </div>
+              <p class="text-xs text-gray-600 dark:text-gray-400 ml-7">View results for this question</p>
+            </div>
+            
+            <!-- Question name example -->
+            <div class="p-2.5 bg-green-50 dark:bg-green-900/30 rounded-lg border-l-4 border-green-600 border border-green-300 dark:border-green-700">
+              <div class="flex items-center space-x-2 mb-1">
+                <svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd" />
                 </svg>
-                <span class="flex-1 text-sm font-medium text-gray-900 dark:text-white">1st Ballot</span>
+                <span class="text-sm font-semibold text-gray-900 dark:text-white">Question name</span>
               </div>
+              <p class="text-xs text-gray-600 dark:text-gray-400 ml-6">Compare in crosstab (sets as IV)</p>
             </div>
-            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">The selected question's responses will appear in the main panel with charts and statistics.</p>
           </div>
         </div>
       `,
@@ -192,7 +202,7 @@ export function useResultsTour() {
       ]
     })
 
-    // Step 3: Explain crosstab generation
+    // Step 3: Explain quick crosstab navigation
     tour.addStep({
       id: 'results-crosstab-hint',
       text: `
@@ -200,34 +210,41 @@ export function useResultsTour() {
           <div class="shepherd-header">
             <h3 class="shepherd-title">
               <span class="inline-flex items-center justify-center w-6 h-6 rounded bg-green-600 text-white text-sm font-semibold mr-2">2</span>
-              Compare Questions
+              Quick Crosstab Tip
             </h3>
           </div>
           <div class="shepherd-text">
-            <p>Want to compare two questions? Click the <strong>Analyze in Crosstab</strong> button above the chart.</p>
-            <div class="mt-3 p-3 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-lg border border-blue-200 dark:border-blue-700">
-              <button class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-md shadow-sm transition-colors">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            <p>The fastest way to create a crosstab is to <strong>click a question name</strong> in the list.</p>
+            <div class="mt-3 p-3 bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 rounded-lg border border-green-200 dark:border-green-700">
+              <div class="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                <svg class="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
                 </svg>
-                Analyze in Crosstab
-              </button>
+                <span>Current question becomes the DV (row), clicked question becomes the IV (column)</span>
+              </div>
             </div>
-            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">This will take you to the Crosstab tab where you can select a second question to compare.</p>
+            <p class="mt-3 text-xs text-gray-600 dark:text-gray-400">You can also use the <strong>Analyze in Crosstab</strong> button above the chart if you prefer.</p>
           </div>
         </div>
       `,
       attachTo: {
         element: () => {
-          // Find the "Analyze in Crosstab" button
-          const buttons = Array.from(document.querySelectorAll('button'))
-          const crosstabButton = buttons.find(btn => 
-            btn.textContent.includes('Analyze in Crosstab') || 
-            btn.textContent.includes('Crosstab')
-          )
-          return crosstabButton || null
+          // Find a question name in the list (not the selected one)
+          const allQuestions = Array.from(document.querySelectorAll('[data-question-id]'))
+          // Find the second question (first one that's not currently selected)
+          const selectedId = document.querySelector('input[type="radio"]:checked')?.closest('[data-question-id]')?.getAttribute('data-question-id')
+          const targetQuestion = allQuestions.find(q => q.getAttribute('data-question-id') !== selectedId)
+          
+          if (targetQuestion) {
+            // Find the question label within this element
+            const label = targetQuestion.querySelector('.flex-1.min-w-0.leading-none')
+            return label || targetQuestion
+          }
+          
+          // Fallback to first question
+          return allQuestions[0] || null
         },
-        on: 'bottom'
+        on: 'right'
       },
       buttons: [
         {
