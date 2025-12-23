@@ -251,7 +251,7 @@
           <div
             v-else
             :class="getQuestionClasses(item.question || item)"
-            class="w-full flex items-center space-x-2 px-2 py-0 rounded cursor-pointer transition-all border-l-2"
+            class="w-full flex items-center space-x-2 px-2 py-0.5 rounded cursor-pointer transition-all border-l-2"
             :data-question-id="(item.question || item).id"
           >
             <!-- Left hover zone for radio button -->
