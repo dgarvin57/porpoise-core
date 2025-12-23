@@ -165,22 +165,19 @@
         <div class="pt-3 px-6 pb-6 flex justify-center">
           <div class="w-full max-w-[833px]">
             <!-- Header matching Results/StatSig tabs -->
-            <div class="flex items-center justify-between ">
-              <h3 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2 flex-wrap">
-                <span>{{ crosstabData.firstQuestion.label }}</span>
-                <span class="inline-flex items-center justify-center w-4 h-4 rounded bg-blue-600 text-white text-xs font-semibold flex-shrink-0">1</span>
-                <span class="text-gray-500 dark:text-gray-400 font-normal">by</span>
-                <span>{{ crosstabData.secondQuestion.label }}</span>
-                <span class="inline-flex items-center justify-center w-4 h-4 rounded bg-green-600 text-white text-xs font-semibold flex-shrink-0">2</span>
-              </h3>
-            </div>
-            
-            <!-- Subtitle row with stats and controls -->
-            <div class="flex items-center justify-between mb-3">
-              <div class="flex items-center gap-2">
-                <div class="uppercase tracking-wide font-medium text-xs text-blue-600 dark:text-blue-400">CROSSTAB</div>
+            <div class="flex items-end justify-between mb-2 pb-2">
+              <div>
+                <h3 class="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2 flex-wrap">
+                  <span>{{ crosstabData.firstQuestion.label }}</span>
+                  <span class="inline-flex items-center justify-center w-4 h-4 rounded bg-blue-600 text-white text-xs font-semibold flex-shrink-0">1</span>
+                  <span class="text-gray-500 dark:text-gray-400 font-normal">by</span>
+                  <span>{{ crosstabData.secondQuestion.label }}</span>
+                  <span class="inline-flex items-center justify-center w-4 h-4 rounded bg-green-600 text-white text-xs font-semibold flex-shrink-0">2</span>
+                </h3>
+                <div class="text-[10px] font-medium text-blue-600 dark:text-blue-400 uppercase tracking-wide">
+                  Crosstab
+                </div>
               </div>
-              
               <div class="flex items-center gap-3">
                 <div 
                   class="text-xs"
