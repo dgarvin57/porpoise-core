@@ -190,7 +190,7 @@
                       'w-5 h-5 transition-all duration-200 ease-in-out flex-shrink-0 mr-2 cursor-pointer',
                       'border-2 rounded-full',
                       'accent-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0',
-                      (singleSelection?.id === question.id || selectedQuestionId === question.id) ? 'opacity-100 scale-110' : 'opacity-40 group-hover/radio:opacity-100 group-hover/radio:scale-105',
+                      (singleSelection?.id === question.id || selectedQuestionId === question.id) ? 'opacity-100 dark:opacity-85 scale-110' : 'opacity-40 group-hover/radio:opacity-100 group-hover/radio:scale-105',
                       props.activeTab === 'statsig' && question.variableType === 1 ? 'opacity-20 cursor-not-allowed' : ''
                     ]"
                   />
@@ -206,7 +206,7 @@
                       'w-5 h-5 transition-all duration-200 ease-in-out flex-shrink-0 mr-2 cursor-pointer',
                       'border-2 rounded-full',
                       'accent-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0',
-                      firstSelection?.id === question.id ? 'opacity-100 scale-110' : 'opacity-40 group-hover/radio:opacity-100 group-hover/radio:scale-105',
+                      firstSelection?.id === question.id ? 'opacity-100 dark:opacity-85 scale-110' : 'opacity-40 group-hover/radio:opacity-100 group-hover/radio:scale-105',
                       props.activeTab === 'statsig' && question.variableType === 1 ? 'opacity-20 cursor-not-allowed' : ''
                     ]"
                   />
@@ -264,7 +264,7 @@
                   'w-5 h-5 transition-all duration-200 ease-in-out flex-shrink-0 cursor-pointer',
                   'border-2 rounded-full',
                   'accent-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0',
-                  (singleSelection?.id === (item.question || item).id || selectedQuestionId === (item.question || item).id) ? 'opacity-100 scale-110' : 'opacity-40 group-hover/radio:opacity-100 group-hover/radio:scale-105',
+                  (singleSelection?.id === (item.question || item).id || selectedQuestionId === (item.question || item).id) ? 'opacity-100 dark:opacity-65 scale-110' : 'opacity-40 group-hover/radio:opacity-100 group-hover/radio:scale-105',
                   props.activeTab === 'statsig' && (item.question || item).variableType === 1 ? 'opacity-20 cursor-not-allowed' : ''
                 ]"
               />
@@ -280,7 +280,7 @@
                   'w-5 h-5 transition-all duration-200 ease-in-out flex-shrink-0 cursor-pointer',
                   'border-2 rounded-full',
                   'accent-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0',
-                  firstSelection?.id === (item.question || item).id ? 'opacity-100 scale-110' : 'opacity-40 group-hover/radio:opacity-100 group-hover/radio:scale-105',
+                  firstSelection?.id === (item.question || item).id ? 'opacity-100 dark:opacity-65 scale-110' : 'opacity-40 group-hover/radio:opacity-100 group-hover/radio:scale-105',
                   props.activeTab === 'statsig' && (item.question || item).variableType === 1 ? 'opacity-20 cursor-not-allowed' : ''
                 ]"
               />

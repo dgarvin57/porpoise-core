@@ -13,6 +13,7 @@ public class SurveysControllerTests
     private readonly Mock<IQuestionRepository> _mockQuestionRepository;
     private readonly Mock<IResponseRepository> _mockResponseRepository;
     private readonly Mock<ISurveyDataRepository> _mockSurveyDataRepository;
+    private readonly Mock<IQuestionBlockRepository> _mockQuestionBlockRepository;
     private readonly SurveysController _controller;
 
     public SurveysControllerTests()
@@ -21,11 +22,13 @@ public class SurveysControllerTests
         _mockQuestionRepository = new Mock<IQuestionRepository>();
         _mockResponseRepository = new Mock<IResponseRepository>();
         _mockSurveyDataRepository = new Mock<ISurveyDataRepository>();
+        _mockQuestionBlockRepository = new Mock<IQuestionBlockRepository>();
         _controller = new SurveysController(
             _mockRepository.Object,
             _mockQuestionRepository.Object,
             _mockResponseRepository.Object,
-            _mockSurveyDataRepository.Object);
+            _mockSurveyDataRepository.Object,
+            _mockQuestionBlockRepository.Object);
     }
 
     [Fact]

@@ -5,12 +5,14 @@
         <!-- Logo and Brand -->
         <div class="flex items-center space-x-4 flex-shrink-0">
           <router-link to="/" class="flex items-center space-x-3">
-            <div class="w-7 h-7 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <span class="text-white font-bold text-base">P</span>
-            </div>
-            <div>
-              <span class="text-base font-semibold text-gray-900 dark:text-white">Pulse</span>
-              <span class="text-base font-light text-gray-600 dark:text-gray-400 ml-1">Analytics</span>
+            <img
+              :src="porpoiseLogo"
+              alt="Porpoise Analytics logo"
+              class="w-8 h-8 rounded-lg shadow-sm"
+            />
+            <div class="leading-tight">
+              <span class="text-base font-semibold text-gray-900 dark:text-white">{{ PRODUCT_FULL_NAME }}</span>
+              <span class="ml-2 text-xs text-gray-600 dark:text-gray-400 hidden sm:inline">{{ PRODUCT_TAGLINE }}</span>
             </div>
           </router-link>
           
@@ -116,6 +118,8 @@ import { ref, onMounted, computed, watch, provide } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
 import { API_BASE_URL } from '@/config/api'
+import { PRODUCT_FULL_NAME, PRODUCT_TAGLINE } from '@/config/branding'
+import porpoiseLogo from '@/assets/Porpoise_48.png'
 
 const router = useRouter()
 const route = useRoute()

@@ -70,7 +70,7 @@ public class SurveyPersistenceServiceTests
         {
             Id = Guid.NewGuid(),
             SurveyName = "Test Survey",
-            QuestionList = null
+            QuestionList = null!
         };
 
         _surveyRepoMock.Setup(r => r.AddAsync(survey))
@@ -119,7 +119,7 @@ public class SurveyPersistenceServiceTests
         {
             Id = questionId,
             QstLabel = "Test Question",
-            Responses = null
+            Responses = null!
         };
 
         var survey = new Survey
@@ -291,7 +291,7 @@ public class SurveyPersistenceServiceTests
         {
             Id = Guid.NewGuid(),
             SurveyName = "Test Survey",
-            Data = new SurveyData { DataList = null }
+            Data = new SurveyData { DataList = null! }
         };
 
         _surveyRepoMock.Setup(r => r.AddAsync(survey))

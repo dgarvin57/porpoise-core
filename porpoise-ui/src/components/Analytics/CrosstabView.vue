@@ -163,7 +163,7 @@
         </div>
         
         <div class="pt-3 px-6 pb-6 flex justify-center">
-          <div class="w-full max-w-[833px]">
+          <div class="w-full max-w-[848px]">
             <!-- Header matching Results/StatSig tabs -->
             <div class="flex items-end justify-between mb-2 pb-2">
               <div>
@@ -922,11 +922,13 @@ watch(() => props.surveyId, (newId, oldId) => {
 
 <style scoped>
 .glow-subtle {
+  /* @apply is valid Tailwind CSS */
   @apply drop-shadow-[0_0_20px_rgba(255,255,255,0.6)] 
          drop-shadow-[0_0_50px_rgba(147,197,253,0.4)];
 }
 
 .glow-intense {
+  /* @apply is valid Tailwind CSS */
   @apply drop-shadow-[0_0_30px_rgba(255,255,255,0.8)] 
          drop-shadow-[0_0_70px_rgba(147,197,253,0.6)];
 }

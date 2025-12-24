@@ -49,11 +49,8 @@ export function useContextualHints() {
       onDismiss
     } = options
 
-    console.log('🔔 showHint called:', { key, title, hasTarget: !!target })
-
     // Check if hint was already shown
     if (hasHintBeenShown(key)) {
-      console.log('🔔 Hint already shown, skipping')
       return
     }
 
