@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800">
+  <defs>
+    <linearGradient id="water" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#5dade2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3498db;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="dolphin" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#5dade2;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#3498db;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2980b9;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="wave1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#3498db;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2980b9;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Circle background -->
+  <circle cx="400" cy="400" r="390" fill="#f8f9fa" stroke="#1a2332" stroke-width="20"/>
+  
+  <!-- Water line -->
+  <rect x="10" y="390" width="780" height="400" fill="url(#water)"/>
+  
+  <!-- Wave 1 (back) -->
+  <path d="M 500 420 Q 550 380, 600 400 Q 650 420, 700 410 L 700 500 Q 650 490, 600 510 Q 550 530, 500 510 Z" 
+        fill="#8ab6d6" opacity="0.6"/>
+  
+  <!-- Wave 2 (middle) -->
+  <path d="M 450 440 Q 520 400, 590 430 Q 660 460, 720 440 L 720 550 Q 660 530, 590 560 Q 520 590, 450 560 Z" 
+        fill="url(#wave1)" opacity="0.8"/>
+  
+  <!-- Wave 3 (front) -->
+  <path d="M 150 480 Q 250 440, 350 470 Q 450 500, 550 480 Q 650 460, 750 490 L 750 600 Q 650 570, 550 600 Q 450 630, 350 600 Q 250 570, 150 600 Z" 
+        fill="#2980b9"/>
+  
+  <!-- Dolphin body -->
+  <g>
+    <!-- Main body -->
+    <ellipse cx="320" cy="240" rx="110" ry="65" fill="url(#dolphin)" stroke="#1a2332" stroke-width="8"/>
+    
+    <!-- Head/Beak -->
+    <ellipse cx="420" cy="250" rx="50" ry="40" fill="url(#dolphin)" stroke="#1a2332" stroke-width="8"/>
+    <path d="M 460 250 L 500 255 L 500 245 Z" fill="url(#dolphin)" stroke="#1a2332" stroke-width="6" stroke-linejoin="round"/>
+    
+    <!-- Dorsal fin -->
+    <path d="M 300 190 Q 285 150, 300 140 Q 310 150, 310 190 Z" 
+          fill="#5dade2" stroke="#1a2332" stroke-width="6" stroke-linejoin="round"/>
+    
+    <!-- Tail -->
+    <path d="M 230 230 Q 180 210, 160 230 Q 170 245, 200 240 Q 220 250, 230 250 Z" 
+          fill="url(#dolphin)" stroke="#1a2332" stroke-width="7" stroke-linejoin="round"/>
+    <path d="M 230 250 Q 180 270, 160 250 Q 170 235, 200 240 Z" 
+          fill="url(#dolphin)" stroke="#1a2332" stroke-width="7" stroke-linejoin="round"/>
+    
+    <!-- Pectoral fin -->
+    <path d="M 340 270 Q 350 310, 330 320 Q 325 300, 335 280 Z" 
+          fill="#5dade2" stroke="#1a2332" stroke-width="6" stroke-linejoin="round"/>
+    
+    <!-- Eye -->
+    <circle cx="400" cy="240" r="8" fill="#1a2332"/>
+    <circle cx="402" cy="237" r="3" fill="#ffffff"/>
+    
+    <!-- Highlights on body -->
+    <ellipse cx="310" cy="225" rx="25" ry="15" fill="#a3d5f0" opacity="0.5"/>
+    <ellipse cx="380" cy="235" rx="15" ry="10" fill="#a3d5f0" opacity="0.5"/>
+    <ellipse cx="445" cy="245" rx="10" ry="6" fill="#a3d5f0" opacity="0.5"/>
+    
+    <!-- Belly highlight -->
+    <ellipse cx="330" cy="260" rx="50" ry="25" fill="#e8f4f8" opacity="0.4"/>
+  </g>
+  
+  <!-- Outer circle border -->
+  <circle cx="400" cy="400" r="390" fill="none" stroke="#1a2332" stroke-width="20"/>
+</svg>
