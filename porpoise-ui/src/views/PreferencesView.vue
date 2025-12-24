@@ -206,7 +206,7 @@
                   <img
                     :src="porpoiseLogo"
                     alt="Porpoise Analytics logo"
-                    class="w-16 h-16"
+                    class="w-16 h-16 drop-shadow-lg rounded-lg"
                   />
                   <div>
                     <div class="text-lg font-semibold text-gray-900 dark:text-white">{{ PRODUCT_FULL_NAME }}</div>
@@ -274,7 +274,7 @@ import { API_BASE_URL } from '@/config/api'
 import SidebarNav from '../components/SidebarNav.vue'
 import packageJson from '../../package.json'
 import { PRODUCT_FULL_NAME, WEBSITE_URL } from '@/config/branding'
-import porpoiseLogo from '@/assets/Porpoise_48.png'
+import porpoiseLogo from '@/assets/p_5.png'
 
 const activeSection = ref('appearance')
 

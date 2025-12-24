@@ -1,9 +1,9 @@
 <template>
-  <div class="fixed inset-0 top-12 bg-gray-50 dark:bg-gray-900">
+  <div class="fixed inset-0 top-[58px] bg-gray-50 dark:bg-gray-900">
     <!-- Sidebar Navigation (overlays when expanded) -->
     <aside 
       :class="[
-        'fixed left-0 top-12 bottom-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto overflow-x-hidden transition-all duration-300 z-20',
+        'fixed left-0 top-[58px] bottom-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto overflow-x-hidden transition-all duration-300 z-20',
         sidebarCollapsed ? 'w-14' : 'w-72 shadow-2xl'
       ]"
     >
@@ -86,7 +86,7 @@
     </aside>
 
     <!-- Main content area with left margin for collapsed sidebar -->
-    <div class="fixed top-12 bottom-0 right-0 left-14 overflow-hidden">
+    <div class="fixed top-[58px] bottom-0 right-0 left-14 overflow-hidden">
       <!-- Content Area with Question List (for Analytics sections) -->
       <template v-if="activeSection !== 'dataview' && activeSection !== 'datacleansing' && activeSection !== 'questions'">
         <!-- Horizontal Layout: Question List | Main Content -->
@@ -293,8 +293,8 @@
                       ]"
                       :title="getAIAnalysisTooltip"
                     >
-                      <svg class="w-5 h-5 text-yellow-600 fill-yellow-600 dark:text-yellow-400 dark:fill-transparent" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                      <svg class="w-5 h-5" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24">
+                        <path class="text-yellow-500 fill-yellow-500 dark:text-yellow-400 dark:fill-yellow-400" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                       </svg>
                       AI Analysis
                     </button>
