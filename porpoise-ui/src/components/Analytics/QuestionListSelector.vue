@@ -130,14 +130,10 @@
               @click="toggleBlock(item)"
               class="w-full flex items-center space-x-2 px-2 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded transition-colors text-left"
             >
-              <svg 
-                class="w-3 h-3 text-gray-500 dark:text-gray-400 transition-transform flex-shrink-0"
+              <span 
+                class="text-xs text-gray-700 dark:text-gray-300 transition-transform flex-shrink-0 font-bold"
                 :class="{ 'rotate-90': item.isExpanded }"
-                fill="currentColor" 
-                viewBox="0 0 20 20"
-              >
-                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-              </svg>
+              >▶</span>
               <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
               </svg>

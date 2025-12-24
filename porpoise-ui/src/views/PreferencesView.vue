@@ -217,7 +217,7 @@
                 </div>
 
                 <p class="text-sm text-gray-600 dark:text-gray-400">
-                  Professional polling and survey analysis platform for political campaigns and market research. Built on the legendary Porpoise survey statistical engine.
+                  Professional survey analysis platform for research, consulting, and decision-making. Built on the legendary Porpoise statistical engine.
                 </p>
 
                 <!-- Environment Badge -->

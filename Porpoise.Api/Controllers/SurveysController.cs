@@ -15,17 +15,20 @@ public class SurveysController : ControllerBase
     private readonly IQuestionRepository _questionRepository;
     private readonly IResponseRepository _responseRepository;
     private readonly ISurveyDataRepository _surveyDataRepository;
+    private readonly IQuestionBlockRepository _questionBlockRepository;
 
     public SurveysController(
         ISurveyRepository surveyRepository,
         IQuestionRepository questionRepository,
         IResponseRepository responseRepository,
-        ISurveyDataRepository surveyDataRepository)
+        ISurveyDataRepository surveyDataRepository,
+        IQuestionBlockRepository questionBlockRepository)
     {
         _surveyRepository = surveyRepository;
         _questionRepository = questionRepository;
         _responseRepository = responseRepository;
         _surveyDataRepository = surveyDataRepository;
+        _questionBlockRepository = questionBlockRepository;
     }
 
     /// <summary>
@@ -426,6 +429,67 @@ public class SurveysController : ControllerBase
     }
 
     /// <summary>
+    /// Get all questions with responses for editing (Question Definition screen)
+    /// </summary>
+    [HttpGet("{id:guid}/questions-with-responses")]
+    public async Task<IActionResult> GetQuestionsWithResponses(Guid id)
+    {
+        try
+        {
+            var survey = await _surveyRepository.GetByIdAsync(id);
+            if (survey == null)
+            {
+                return NotFound($"Survey with ID {id} not found");
+            }
+
+            // Get questions from database ordered by data file column
+            var questions = (await _questionRepository.GetBySurveyIdAsync(id))
+                .OrderBy(q => q.DataFileCol)
+                .ToList();
+
+            // Load responses for each question
+            var questionResults = new List<object>();
+            foreach (var question in questions)
+            {
+                var responses = await _responseRepository.GetByQuestionIdAsync(question.Id);
+
+                questionResults.Add(new
+                {
+                    id = question.Id,
+                    qstNumber = question.QstNumber,
+                    qstLabel = question.QstLabel,
+                    qstStem = question.QstStem,
+                    dataFileCol = question.DataFileCol,
+                    variableType = (int)question.VariableType,
+                    dataType = (int)question.DataType,
+                    blkQstStatus = (int?)question.BlkQstStatus,
+                    blockId = question.BlockId,
+                    blkLabel = question.BlkLabel,
+                    blkStem = question.BlkStem,
+                    missValue1 = question.MissValue1,
+                    missValue2 = question.MissValue2,
+                    missValue3 = question.MissValue3,
+                    questionNotes = question.QuestionNotes,
+                    responses = responses.Select(r => new
+                    {
+                        id = r.Id,
+                        respValue = r.RespValue,
+                        label = r.Label,
+                        indexType = r.IndexType.ToString(),
+                        weight = r.Weight
+                    }).ToList()
+                });
+            }
+
+            return Ok(questionResults);
+        }
+        catch (Exception ex)
+        {
+            return Problem($"Error retrieving questions with responses: {ex.Message}");
+        }
+    }
+
+    /// <summary>
     /// Get all questions with response statistics for a survey
     /// </summary>
     [HttpGet("{id:guid}/questions")]
@@ -785,6 +849,235 @@ public class SurveysController : ControllerBase
         catch (Exception ex)
         {
             return Problem($"Error retrieving question results: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Update a single question's properties
+    /// </summary>
+    [HttpPut("{id:guid}/questions/{questionId:guid}")]
+    public async Task<IActionResult> UpdateQuestion(Guid id, Guid questionId, [FromBody] Question question)
+    {
+        try
+        {
+            // Validate IDs match
+            if (questionId != question.Id)
+            {
+                return BadRequest("Question ID mismatch");
+            }
+
+            // Verify survey exists and question belongs to it
+            var existingQuestion = await _questionRepository.GetByIdAsync(questionId);
+            if (existingQuestion == null)
+            {
+                return NotFound($"Question with ID {questionId} not found");
+            }
+
+            // Update the question
+            var updated = await _questionRepository.UpdateAsync(question);
+            return Ok(updated);
+        }
+        catch (Exception ex)
+        {
+            return Problem($"Error updating question: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Update a single response's properties
+    /// </summary>
+    [HttpPut("{id:guid}/questions/{questionId:guid}/responses/{responseId:guid}")]
+    public async Task<IActionResult> UpdateResponse(Guid id, Guid questionId, Guid responseId, [FromBody] Response response)
+    {
+        try
+        {
+            // Validate IDs match
+            if (responseId != response.Id)
+            {
+                return BadRequest("Response ID mismatch");
+            }
+
+            // Verify question exists (responses are loaded separately, no need to check collection)
+            var questionExists = await _questionRepository.ExistsAsync(questionId);
+            if (!questionExists)
+            {
+                return NotFound($"Question with ID {questionId} not found");
+            }
+
+            // Update the response
+            var updated = await _responseRepository.UpdateAsync(response);
+            return Ok(updated);
+        }
+        catch (Exception ex)
+        {
+            return Problem($"Error updating response: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Add a new response to a question
+    /// </summary>
+    [HttpPost("{id:guid}/questions/{questionId:guid}/responses")]
+    public async Task<IActionResult> AddResponse(Guid id, Guid questionId, [FromBody] Response response)
+    {
+        try
+        {
+            // Verify question exists
+            var question = await _questionRepository.GetByIdAsync(questionId);
+            if (question == null)
+            {
+                return NotFound($"Question with ID {questionId} not found");
+            }
+
+            // Validate response value is unique for this question
+            if (question.Responses.Any(r => r.RespValue == response.RespValue))
+            {
+                return Conflict($"Response value {response.RespValue} already exists for this question");
+            }
+
+            // Add the response
+            var created = await _responseRepository.AddAsync(response);
+            return CreatedAtAction(
+                nameof(GetSurveyQuestions), 
+                new { id = id }, 
+                created
+            );
+        }
+        catch (Exception ex)
+        {
+            return Problem($"Error adding response: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Delete a response from a question
+    /// </summary>
+    [HttpDelete("{id:guid}/questions/{questionId:guid}/responses/{responseId:guid}")]
+    public async Task<IActionResult> DeleteResponse(Guid id, Guid questionId, Guid responseId)
+    {
+        try
+        {
+            // Verify question exists
+            var question = await _questionRepository.GetByIdAsync(questionId);
+            if (question == null)
+            {
+                return NotFound($"Question with ID {questionId} not found");
+            }
+
+            // Verify response exists in question's responses
+            var response = question.Responses.FirstOrDefault(r => r.Id == responseId);
+            if (response == null)
+            {
+                return NotFound($"Response with ID {responseId} not found in question {questionId}");
+            }
+
+            // Delete the response
+            await _responseRepository.DeleteAsync(responseId);
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            return Problem($"Error deleting response: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Get frequency counts for all response values of a question
+    /// </summary>
+    [HttpGet("{id:guid}/questions/{questionId:guid}/response-frequencies")]
+    public async Task<IActionResult> GetResponseFrequencies(Guid id, Guid questionId)
+    {
+        try
+        {
+            // Verify question exists
+            var question = await _questionRepository.GetByIdAsync(questionId);
+            if (question == null)
+            {
+                return NotFound($"Question with ID {questionId} not found");
+            }
+
+            // Get survey data
+            var surveyData = await _surveyDataRepository.GetBySurveyIdAsync(id);
+            if (surveyData?.DataList == null || surveyData.DataList.Count <= 1)
+            {
+                return Ok(new { frequencies = new Dictionary<int, int>() });
+            }
+
+            // Fix DataFileCol by looking up question number in header row
+            // This handles legacy imports where DataFileCol wasn't set correctly
+            if (surveyData.DataList.Count > 0)
+            {
+                int indexOfQuestion = surveyData.DataList[0].IndexOf(question.QstNumber);
+                if (indexOfQuestion > -1)
+                {
+                    question.DataFileCol = (short)indexOfQuestion;
+                }
+            }
+
+            // Build frequencies dictionary by counting occurrences in DataList
+            // Use same approach as GetSurveyQuestions for consistency
+            var frequencies = new Dictionary<int, int>();
+            
+            // Skip row 0 (header row)
+            for (int i = 1; i < surveyData.DataList.Count; i++)
+            {
+                var row = surveyData.DataList[i];
+                if (question.DataFileCol < row.Count)
+                {
+                    if (int.TryParse(row[question.DataFileCol], out int value))
+                    {
+                        if (frequencies.ContainsKey(value))
+                        {
+                            frequencies[value]++;
+                        }
+                        else
+                        {
+                            frequencies[value] = 1;
+                        }
+                    }
+                }
+            }
+
+            return Ok(new { frequencies });
+        }
+        catch (Exception ex)
+        {
+            return Problem($"Error calculating response frequencies: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Update a question block (affects all questions in the block)
+    /// </summary>
+    [HttpPut("{id:guid}/blocks/{blockId:guid}")]
+    public async Task<IActionResult> UpdateQuestionBlock(Guid id, Guid blockId, [FromBody] QuestionBlock block)
+    {
+        try
+        {
+            // Validate IDs match
+            if (blockId != block.Id)
+            {
+                return BadRequest("Block ID mismatch");
+            }
+
+            // Verify block exists and belongs to survey
+            var existingBlock = await _questionBlockRepository.GetByIdAsync(blockId);
+            if (existingBlock == null)
+            {
+                return NotFound($"Block with ID {blockId} not found");
+            }
+            if (existingBlock.SurveyId != id)
+            {
+                return BadRequest($"Block does not belong to survey {id}");
+            }
+
+            // Update the block
+            var updated = await _questionBlockRepository.UpdateAsync(block);
+            return Ok(updated);
+        }
+        catch (Exception ex)
+        {
+            return Problem($"Error updating question block: {ex.Message}");
         }
     }
 

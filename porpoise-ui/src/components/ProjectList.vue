@@ -40,7 +40,15 @@
                 <p class="client-name">{{ project.ClientName }}</p>
                 <span class="survey-count">{{ project.SurveyCount }} {{ project.SurveyCount === 1 ? 'survey' : 'surveys' }}</span>
               </div>
-              <span class="toggle-icon">{{ expandedProjects.has(project.Id) ? '▼' : '▶' }}</span>
+              <svg 
+                class="toggle-icon w-4 h-4 text-gray-500 transition-transform flex-shrink-0"
+                :class="{ 'rotate-90': expandedProjects.has(project.Id) }"
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              </svg>
             </div>
 
             <div v-if="expandedProjects.has(project.Id)" class="folder-surveys">
