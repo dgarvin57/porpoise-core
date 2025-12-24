@@ -130,14 +130,10 @@
               @click="toggleBlock(item)"
               class="w-full flex items-center space-x-2 px-2 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 rounded transition-colors text-left"
             >
-              <svg 
-                class="w-3 h-3 text-gray-500 dark:text-gray-400 transition-transform flex-shrink-0"
+              <span 
+                class="text-xs text-gray-700 dark:text-gray-300 transition-transform flex-shrink-0 font-bold"
                 :class="{ 'rotate-90': item.isExpanded }"
-                fill="currentColor" 
-                viewBox="0 0 20 20"
-              >
-                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-              </svg>
+              >▶</span>
               <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
               </svg>
@@ -194,7 +190,7 @@
                       'w-5 h-5 transition-all duration-200 ease-in-out flex-shrink-0 mr-2 cursor-pointer',
                       'border-2 rounded-full',
                       'accent-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0',
-                      (singleSelection?.id === question.id || selectedQuestionId === question.id) ? 'opacity-100 scale-110' : 'opacity-40 group-hover/radio:opacity-100 group-hover/radio:scale-105',
+                      (singleSelection?.id === question.id || selectedQuestionId === question.id) ? 'opacity-100 dark:opacity-85 scale-110' : 'opacity-40 group-hover/radio:opacity-100 group-hover/radio:scale-105',
                       props.activeTab === 'statsig' && question.variableType === 1 ? 'opacity-20 cursor-not-allowed' : ''
                     ]"
                   />
@@ -210,7 +206,7 @@
                       'w-5 h-5 transition-all duration-200 ease-in-out flex-shrink-0 mr-2 cursor-pointer',
                       'border-2 rounded-full',
                       'accent-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0',
-                      firstSelection?.id === question.id ? 'opacity-100 scale-110' : 'opacity-40 group-hover/radio:opacity-100 group-hover/radio:scale-105',
+                      firstSelection?.id === question.id ? 'opacity-100 dark:opacity-85 scale-110' : 'opacity-40 group-hover/radio:opacity-100 group-hover/radio:scale-105',
                       props.activeTab === 'statsig' && question.variableType === 1 ? 'opacity-20 cursor-not-allowed' : ''
                     ]"
                   />
@@ -268,7 +264,7 @@
                   'w-5 h-5 transition-all duration-200 ease-in-out flex-shrink-0 cursor-pointer',
                   'border-2 rounded-full',
                   'accent-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0',
-                  (singleSelection?.id === (item.question || item).id || selectedQuestionId === (item.question || item).id) ? 'opacity-100 scale-110' : 'opacity-40 group-hover/radio:opacity-100 group-hover/radio:scale-105',
+                  (singleSelection?.id === (item.question || item).id || selectedQuestionId === (item.question || item).id) ? 'opacity-100 dark:opacity-65 scale-110' : 'opacity-40 group-hover/radio:opacity-100 group-hover/radio:scale-105',
                   props.activeTab === 'statsig' && (item.question || item).variableType === 1 ? 'opacity-20 cursor-not-allowed' : ''
                 ]"
               />
@@ -284,7 +280,7 @@
                   'w-5 h-5 transition-all duration-200 ease-in-out flex-shrink-0 cursor-pointer',
                   'border-2 rounded-full',
                   'accent-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0',
-                  firstSelection?.id === (item.question || item).id ? 'opacity-100 scale-110' : 'opacity-40 group-hover/radio:opacity-100 group-hover/radio:scale-105',
+                  firstSelection?.id === (item.question || item).id ? 'opacity-100 dark:opacity-65 scale-110' : 'opacity-40 group-hover/radio:opacity-100 group-hover/radio:scale-105',
                   props.activeTab === 'statsig' && (item.question || item).variableType === 1 ? 'opacity-20 cursor-not-allowed' : ''
                 ]"
               />

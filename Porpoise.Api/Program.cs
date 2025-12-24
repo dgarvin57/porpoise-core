@@ -26,8 +26,12 @@ builder.Services.AddCors(options =>
     )
 );
 
-// Add controllers
-builder.Services.AddControllers();
+// Add controllers with JSON options to handle string enums
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
 
 // Load AI prompt configuration from JSON file
 var promptConfigPath = Path.Combine(builder.Environment.ContentRootPath, "Configuration", "ai-prompts.json");

@@ -46,3 +46,30 @@ Just load the data → ask the question → get the answer in 3 clicks.
 | **All Validation Rules**            | Catches mismatched responses, index types, block consistency, etc.             | Garbage in → caught before it becomes garbage out                                 |
 | **Smart Tooltips & Messages**       | Every disabled question, every validation error explained in plain English      | Users never wonder “why can’t I select this?”                                  |
 | **Researcher Logo & Branding**      | Custom logo and title on every report                                         | White-label ready out of the box                                                |
+---
+
+## Design Philosophy: User Acceptance Over Academic Precision
+
+Porpoise prioritizes **practitioner usability** over statistical jargon. Features must be immediately understood by working researchers, consultants, and decision-makers — not just academics.
+
+### Strategic Decisions on Terminology & Features
+
+**Variable Type** ("Who They Are / What They Think")
+- **Issue**: The term "Variable Type" is not intuitive to most users
+- **Solution**: Added clickable info icons with plain-language explanations and examples
+- **Future**: Name may be revisited; tooltip ensures current usability
+
+**Data Type** (Nominal, Ordinal, Interval, Ratio)
+- **Issue**: Auto-generated, technically correct, but rarely understood by clients
+- **Usage**: Minimal throughout the application; users don't reference it
+- **Future**: Inclusion is questionable; may be removed or hidden in future versions
+- **Rationale**: Academic classification adds little practical value for end users
+
+**Favorability Index** (formerly "Index Type")
+- **Issue**: Original terminology was unclear; users questioned if it was proprietary methodology
+- **Clarification**: Standard research technique (net favorability = % Positive − % Negative), not a custom invention
+- **Solution**: Renamed from "Index Type" to "Favorability Index" with helpful tooltip and real-time net score display
+- **Outcome**: Familiar concept presented in immediately understandable terms
+
+### Guiding Principle
+If a feature requires academic training to understand, it either needs better terminology, helpful context (tooltips/examples), or should be reconsidered entirely. **High-value features presented in accessible language** — that's the product strategy.

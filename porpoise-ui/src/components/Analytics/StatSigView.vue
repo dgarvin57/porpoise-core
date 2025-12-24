@@ -127,7 +127,7 @@
       <!-- Statistical Significance Results -->
       <div v-else-if="statSigData && statSigData.length > 0" key="results" class="h-full overflow-auto">
         <div class="pt-3 px-6 pb-6 flex justify-center">
-          <div class="w-full max-w-[833px] ">
+          <div class="w-full max-w-[848px]">
             <!-- Header with question label and buttons (matching Results tab) -->
             <div class="flex items-end justify-between mb-2 pb-2">
             <div>
@@ -277,7 +277,7 @@
           <div>
             <p class="text-sm text-gray-700 dark:text-gray-300"><strong>What is Statistical Significance?</strong></p>
             <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              Statistical significance testing helps determine whether the relationship between two survey questions is likely due to a real pattern in your data, or just random chance. This table shows all independent variables (demographics and classifiers) ranked by the strength of their relationship with your selected question.
+              Statistical significance testing helps determine whether the relationship between two survey questions is likely due to a real pattern in your data, or just random chance. This table shows all independent variables (background characteristics and classifiers) ranked by the strength of their relationship with your selected question.
             </p>
           </div>
           
@@ -312,14 +312,14 @@
               <li>Variables are sorted by Phi coefficient (strongest relationships at top)</li>
               <li>Click any row to view the detailed crosstab analysis</li>
               <li>Focus on variables with higher Phi values and significant p-values for meaningful insights</li>
-              <li>Use this to identify which demographics or classifiers have the strongest relationship with your selected question</li>
+              <li>Use this to identify which background characteristics or segments have the strongest relationship with your selected question</li>
             </ul>
           </div>
 
           <div>
             <p class="text-sm text-gray-700 dark:text-gray-300"><strong>Why Is This Important?</strong></p>
             <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              This analysis helps you quickly identify which demographic groups or segments show meaningfully different patterns in their responses. For example, if "Age" has a high Phi value and is significant, it means different age groups respond very differently to your question - making age an important variable to analyze further.
+              This analysis helps you quickly identify which groups or segments show meaningfully different patterns in their responses. For example, if "Age" has a high Phi value and is significant, it means different age groups respond very differently to your question - making age an important variable to analyze further.
             </p>
           </div>
         </div>

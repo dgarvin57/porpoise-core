@@ -755,13 +755,19 @@ Returns: { suggestedQuestionLabel, suggestedResponseLabels }
 ## 💡 Modernization Opportunities
 
 ### Things to KEEP from Orca:
-- Response labeling workflow (intuitive, efficient)
+- **Recoding functionality** (change data values across dataset)
 - Navigation between questions (trackbar is great UX)
 - Validation feedback (% clean metric)
-- Block question concept
+- Grid view showing all response values at once
+
+### Things Porpoise Already Has (Keep):
+- Question label editing
+- Block label editing
+- Response label editing
+- Inline editing approach
 
 ### Things to IMPROVE:
-- **Inline editing** instead of modal dialogs
+- **UX for response labeling** (Orca's grid view is more efficient)
 - **Bulk operations** (label all responses at once)
 - **Smart defaults** (auto-suggest labels based on common patterns)
 - **Real-time collaboration** (multiple users editing)
@@ -1055,12 +1061,19 @@ Returns: { suggestedQuestionLabel, suggestedResponseLabels }
 
 2. **✅ User Interviews** (CRITICAL - Validate Assumptions)
    - Schedule time with both active users
-   - Walk through their current Orca → Porpoise workflow
+   - Walk through their current workflow (Porpoise already has label editing)
    - Screen share and observe them working
-   - Ask: "Show me how you prep a survey from start to finish"
-   - Document pain points, feature usage, workarounds
-   - Ask: "What would you miss if Orca went away tomorrow?"
+   - Ask: "Show me how you currently edit question/response labels"
+   - Document: Is current UX sufficient or should we adopt Orca's approach?
+   - Ask: "What features from Orca do you miss most?"
+   - Ask: "How often do you need to recode data values?"
    - Ask: "What takes the longest/is most tedious?"
+   
+   **SPECIFIC QUESTIONS ABOUT EXISTING FEATURES:**
+   - "Is the current response labeling workflow easy enough?"
+   - "Would Orca's grid view (seeing all values at once) be better?"
+   - "Do you ever need to change data values after import? (recoding)"
+   - "Do you need data quality metrics (% clean, validation warnings)?"
    
    **SPECIFIC QUESTIONS ABOUT BLOCKS:**
    - "Can you explain what a block is and why you use them?"

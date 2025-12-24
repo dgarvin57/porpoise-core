@@ -213,6 +213,7 @@
 <script setup>
 import { ref } from 'vue'
 import SidebarNav from '../components/SidebarNav.vue'
+import { PRODUCT_FULL_NAME } from '@/config/branding'
 
 const activeSection = ref('contact')
 const isSubmitting = ref(false)
@@ -290,7 +291,7 @@ const knowledgeBase = [
 
 const videos = [
   {
-    title: 'Getting Started with Pulse Analytics',
+    title: `Getting Started with ${PRODUCT_FULL_NAME}`,
     description: 'A complete introduction to the platform and its core features',
     duration: '12:34',
     views: '2.5K'
@@ -322,7 +323,7 @@ const faqs = [
   },
   {
     question: 'What file formats can I import?',
-    answer: 'Pulse Analytics supports .porp, .porps, and .porpd files. You can also import CSV files with properly formatted survey data.'
+    answer: `${PRODUCT_FULL_NAME} supports .porp, .porps, and .porpd files. You can also import CSV files with properly formatted survey data.`
   },
   {
     question: 'How many responses can I collect?',

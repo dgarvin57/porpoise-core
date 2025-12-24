@@ -203,11 +203,13 @@
               <!-- Application Info -->
               <div class="space-y-3">
                 <div class="flex items-center space-x-3">
-                  <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                    <span class="text-white font-bold text-2xl">P</span>
-                  </div>
+                  <img
+                    :src="porpoiseLogo"
+                    alt="Porpoise Analytics logo"
+                    class="w-16 h-16"
+                  />
                   <div>
-                    <div class="text-lg font-semibold text-gray-900 dark:text-white">Pulse Analytics</div>
+                    <div class="text-lg font-semibold text-gray-900 dark:text-white">{{ PRODUCT_FULL_NAME }}</div>
                     <div class="text-sm text-gray-500 dark:text-gray-400">
                       UI Version {{ uiVersion }}
                       <span v-if="apiVersion"> • API Version {{ apiVersion }}</span>
@@ -217,7 +219,7 @@
                 </div>
 
                 <p class="text-sm text-gray-600 dark:text-gray-400">
-                  Professional polling and survey analysis platform for political campaigns and market research. Built on the legendary Porpoise survey statistical engine.
+                  Professional survey analysis platform for research, consulting, and decision-making. Built on the legendary Porpoise statistical engine.
                 </p>
 
                 <!-- Environment Badge -->
@@ -255,7 +257,7 @@
 
               <!-- Copyright -->
               <div class="text-center text-sm text-gray-500 dark:text-gray-400">
-                © 2025 Pulse Analytics. All rights reserved.
+                © 2025 {{ PRODUCT_FULL_NAME }}. All rights reserved.
               </div>
             </div>
           </div>
@@ -271,6 +273,8 @@ import axios from 'axios'
 import { API_BASE_URL } from '@/config/api'
 import SidebarNav from '../components/SidebarNav.vue'
 import packageJson from '../../package.json'
+import { PRODUCT_FULL_NAME, WEBSITE_URL } from '@/config/branding'
+import porpoiseLogo from '@/assets/Porpoise_48.png'
 
 const activeSection = ref('appearance')
 
