@@ -20,6 +20,7 @@
 
     <!-- Main Content with Resizable Splitter -->
     <div v-else class="h-full flex bg-gray-50 dark:bg-gray-900">
+      <div class="w-full max-w-7xl flex h-full">
       <!-- Left Panel: Question List (Resizable) -->
       <div :style="{ width: listWidth + '%' }" class="border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex flex-col">
         <!-- Search -->
@@ -478,6 +479,7 @@
             <p class="text-gray-500 dark:text-gray-400">Select a question to view details</p>
           </div>
         </div>
+      </div>
       </div>
     </div>
   </div>

@@ -5,7 +5,7 @@
         v-if="loading && !crosstabData"
         class="h-full overflow-auto"
       >
-        <div class="pt-3 px-6 pb-6 flex justify-center">
+        <div class="pt-3 px-6 pb-6">
           <div class="w-full max-w-[848px]">
             <!-- Header Skeleton -->
             <div class="flex items-end justify-between mb-2 pb-2">
@@ -71,7 +71,7 @@
         v-else-if="!crosstabData && props.firstQuestion && !props.secondQuestion"
         class="h-full overflow-auto"
       >
-        <div class="pt-3 px-6 pb-6 flex justify-center">
+        <div class="pt-3 px-6 pb-6">
           <div class="w-full max-w-[848px]">
             <!-- Header -->
             <div class="flex items-end justify-between mb-2 pb-2">
@@ -162,7 +162,7 @@
           </div>
         </div>
         
-        <div class="pt-3 px-6 pb-6 flex justify-center">
+        <div class="pt-3 px-6 pb-6">
           <div class="w-full max-w-[848px]">
             <!-- Header matching Results/StatSig tabs -->
             <div class="flex items-end justify-between mb-2 pb-2">

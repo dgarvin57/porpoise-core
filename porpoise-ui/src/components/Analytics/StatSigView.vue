@@ -126,7 +126,7 @@
 
       <!-- Statistical Significance Results -->
       <div v-else-if="statSigData && statSigData.length > 0" key="results" class="h-full overflow-auto">
-        <div class="pt-3 px-6 pb-6 flex justify-center">
+        <div class="pt-3 px-6 pb-6">
           <div class="w-full max-w-[848px]">
             <!-- Header with question label and buttons (matching Results tab) -->
             <div class="flex items-end justify-between mb-2 pb-2">
