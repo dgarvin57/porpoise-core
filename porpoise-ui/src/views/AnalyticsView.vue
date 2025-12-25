@@ -123,15 +123,16 @@
           ></div>
 
           <!-- Right: Main Content Area (Context + Content) -->
-          <div class="flex-1 flex flex-col min-w-0">
+          <div class="flex-1 flex flex-col min-w-0 bg-gray-50 dark:bg-gray-900">
             <!-- Top: Context Area (Responses Table + Question/Block) -->
-            <div 
-              :style="{ height: contextHeight + 'px' }"
-              class="flex-shrink-0 flex"
-            >
-              <!-- Left: Responses Table -->
+            <div class="flex-shrink-0 pt-3 px-6">
               <div 
-                :style="{ width: responsesTableWidth + 'px' }"
+                :style="{ height: contextHeight + 'px', maxWidth: '848px' }"
+                class="flex"
+              >
+                <!-- Left: Responses Table -->
+                <div 
+                  :style="{ width: responsesTableWidth + 'px' }"
                 class="flex-shrink-0 bg-white dark:bg-gray-800 overflow-hidden"
               >
                 <div class="h-full">
@@ -194,12 +195,15 @@
                 </div>
               </div>
             </div>
+            </div>
 
             <!-- Horizontal Resize Handle for Context Area -->
+            <div class="px-6">
             <div
-              class="h-1 bg-gray-200 dark:bg-gray-700 hover:bg-blue-500 dark:hover:bg-blue-600 cursor-row-resize flex-shrink-0 transition-colors"
+              class="h-1 bg-gray-200 dark:bg-gray-700 hover:bg-blue-500 dark:hover:bg-blue-600 cursor-row-resize flex-shrink-0 transition-colors max-w-[848px]"
               @mousedown="startResizeContext"
             ></div>
+            </div>
 
             <!-- Bottom: Content Area (Tabs + Chart) -->
             <div class="flex-1 bg-gray-50 dark:bg-gray-900 overflow-hidden min-h-0 flex flex-col">
