@@ -231,3 +231,17 @@ Railway pricing is usage-based. To optimize costs:
 - **UI:** https://pulse-ui-staging.up.railway.app
 - **API:** https://porpoise-api-staging.up.railway.app
 - **API Test:** https://porpoise-api-staging.up.railway.app/api/projects
+
+## Related Documentation
+
+- **UI Deployment Configuration:** See `porpoise-ui/DEPLOYMENT.md` for details on:
+  - Vite environment variable configuration
+  - API URL configuration
+  - Local vs production builds
+  - Environment file structure
+
+- **Security Configuration:** See `docs/SECURITY.md` for:
+  - CORS settings
+  - Rate limiting
+  - Authentication requirements (future)
+  - Security checklist for production

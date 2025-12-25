@@ -1,5 +1,8 @@
 // Porpoise.Api/Program.cs — NO SWAGGER, JUST PURE API
 using System.Reflection;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.RateLimiting;
 using Porpoise.Api.Configuration;
 using Porpoise.Api.Database;
 using Porpoise.Api.Middleware;
@@ -20,11 +23,54 @@ Console.WriteLine($"🚀 Porpoise API v{versionString} starting up...");
 
 builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
-        policy.AllowAnyOrigin()  // Allow all origins for now - we'll tighten this later
+        policy.WithOrigins(
+            "https://porpoiseanalytics.com",
+            "https://www.porpoiseanalytics.com",
+            "https://pulse-ui-production.up.railway.app",
+            "https://pulse-ui-staging.up.railway.app",
+            "http://localhost:5173"  // Local development
+        )
         .AllowAnyHeader()
         .AllowAnyMethod()
     )
 );
+
+// Configure forwarded headers for Railway proxy
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
+// Add rate limiting
+builder.Services.AddRateLimiter(options =>
+{
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+    {
+        // Use X-Forwarded-For header if available (for Railway proxy), otherwise use direct IP
+        var clientIp = httpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault()?.Split(',').FirstOrDefault()?.Trim()
+                       ?? httpContext.Connection.RemoteIpAddress?.ToString()
+                       ?? "unknown";
+        
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: clientIp,
+            factory: partition => new FixedWindowRateLimiterOptions
+            {
+                AutoReplenishment = true,
+                PermitLimit = 100,
+                Window = TimeSpan.FromMinutes(1)
+            });
+    });
+    
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        await context.HttpContext.Response.WriteAsync(
+            "Too many requests. Please try again later.",
+            cancellationToken);
+    };
+});
 
 // Add controllers with JSON options to handle string enums
 builder.Services.AddControllers()
@@ -145,8 +191,14 @@ builder.Services.AddSingleton<AIInsightsService>(sp =>
 
 var app = builder.Build();
 
+// Configure forwarded headers (must be before CORS)
+app.UseForwardedHeaders();
+
 // CORS must come first to handle preflight requests
 app.UseCors();
+
+// Rate limiting
+app.UseRateLimiter();
 
 // Add version endpoint (before tenant middleware)
 app.MapGet("/version", () => 
