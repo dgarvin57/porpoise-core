@@ -182,6 +182,150 @@ for i in {1..101}; do
 done
 ```
 
+### Automated Integration Tests (Future)
+
+For production systems with real customer data, add automated security tests:
+
+**Create:** `Porpoise.Api.Tests/Integration/SecurityTests.cs`
+
+```csharp
+using System.Net;
+using System.Net.Http;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Xunit;
+
+namespace Porpoise.Api.Tests.Integration;
+
+public class SecurityTests : IClassFixture<WebApplicationFactory<Program>>
+{
+    private readonly HttpClient _client;
+
+    public SecurityTests(WebApplicationFactory<Program> factory)
+    {
+        _client = factory.CreateClient();
+    }
+
+    [Fact]
+    public async Task RateLimiting_BlocksAfter100Requests()
+    {
+        // Arrange: Make 100 successful requests
+        for (int i = 0; i < 100; i++)
+        {
+            var response = await _client.GetAsync("/health");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        }
+
+        // Act: Make 101st request
+        var blockedResponse = await _client.GetAsync("/health");
+
+        // Assert: Should be rate limited
+        Assert.Equal(HttpStatusCode.TooManyRequests, blockedResponse.StatusCode);
+        var content = await blockedResponse.Content.ReadAsStringAsync();
+        Assert.Contains("Too many requests", content);
+    }
+
+    [Fact]
+    public async Task CORS_AllowsWhitelistedOrigins()
+    {
+        // Arrange
+        var request = new HttpRequestMessage(HttpMethod.Options, "/health");
+        request.Headers.Add("Origin", "https://porpoiseanalytics.com");
+        request.Headers.Add("Access-Control-Request-Method", "GET");
+
+        // Act
+        var response = await _client.SendAsync(request);
+
+        // Assert
+        Assert.True(response.Headers.Contains("Access-Control-Allow-Origin"));
+        var allowedOrigin = response.Headers.GetValues("Access-Control-Allow-Origin").FirstOrDefault();
+        Assert.Equal("https://porpoiseanalytics.com", allowedOrigin);
+    }
+
+    [Fact]
+    public async Task CORS_BlocksUnknownOrigins()
+    {
+        // Arrange
+        var request = new HttpRequestMessage(HttpMethod.Options, "/health");
+        request.Headers.Add("Origin", "https://evil-hacker-site.com");
+        request.Headers.Add("Access-Control-Request-Method", "GET");
+
+        // Act
+        var response = await _client.SendAsync(request);
+
+        // Assert: Should not have CORS headers for disallowed origin
+        Assert.False(response.Headers.Contains("Access-Control-Allow-Origin"));
+    }
+
+    [Theory]
+    [InlineData("https://porpoiseanalytics.com")]
+    [InlineData("https://www.porpoiseanalytics.com")]
+    [InlineData("https://pulse-ui-production.up.railway.app")]
+    [InlineData("https://pulse-ui-staging.up.railway.app")]
+    [InlineData("http://localhost:5173")]
+    public async Task CORS_AllowsAllWhitelistedOrigins(string origin)
+    {
+        // Arrange
+        var request = new HttpRequestMessage(HttpMethod.Options, "/health");
+        request.Headers.Add("Origin", origin);
+        request.Headers.Add("Access-Control-Request-Method", "GET");
+
+        // Act
+        var response = await _client.SendAsync(request);
+
+        // Assert
+        Assert.True(response.Headers.Contains("Access-Control-Allow-Origin"));
+        var allowedOrigin = response.Headers.GetValues("Access-Control-Allow-Origin").FirstOrDefault();
+        Assert.Equal(origin, allowedOrigin);
+    }
+
+    [Fact]
+    public async Task ForwardedHeaders_ExtractsClientIPForRateLimiting()
+    {
+        // Arrange
+        var request = new HttpRequestMessage(HttpMethod.Get, "/health");
+        request.Headers.Add("X-Forwarded-For", "192.168.1.100");
+
+        // Act: Make 101 requests with same forwarded IP
+        for (int i = 0; i < 100; i++)
+        {
+            var response = await _client.SendAsync(request.Clone());
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        }
+        
+        var blockedResponse = await _client.SendAsync(request);
+
+        // Assert: Should be rate limited based on X-Forwarded-For
+        Assert.Equal(HttpStatusCode.TooManyRequests, blockedResponse.StatusCode);
+    }
+}
+
+// Helper extension for cloning requests
+public static class HttpRequestMessageExtensions
+{
+    public static HttpRequestMessage Clone(this HttpRequestMessage request)
+    {
+        var clone = new HttpRequestMessage(request.Method, request.RequestUri);
+        foreach (var header in request.Headers)
+        {
+            clone.Headers.Add(header.Key, header.Value);
+        }
+        return clone;
+    }
+}
+```
+
+**When to implement:**
+- ✅ Now: Manual testing (documented above) is sufficient for demo data
+- ⏳ Later: Add automated tests before deploying with real customer data
+- ⏳ Future: Run tests in CI/CD pipeline to catch security regressions
+
+**Benefits of automated tests:**
+- Catch security configuration changes in CI/CD
+- Verify rate limiting works after dependency updates
+- Ensure CORS whitelist remains correct
+- Test forwarded header handling for proxy environments
+- Document expected security behavior in code
+
 ## Security Checklist for Production
 
 Before deploying with real user data:
