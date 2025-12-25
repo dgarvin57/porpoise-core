@@ -345,12 +345,299 @@ Before deploying with real user data:
 - [ ] Implement data backup and recovery process
 - [ ] Test disaster recovery procedures
 
+## Payment Processing & PCI Compliance (Future)
+
+### DO NOT Handle Credit Cards Directly
+
+**Never store credit card numbers, CVVs, or expiration dates in your database.**
+
+Use a payment processor that handles PCI compliance for you:
+- **Stripe** (Recommended) - Excellent .NET SDK, great docs, 2.9% + 30¢ per transaction
+- **Paddle** - Merchant of record, handles sales tax/VAT
+- **Braintree** (PayPal) - Enterprise-focused
+
+### How Payment Processing Works
+
+**User Flow:**
+1. User enters card on **Stripe's hosted page** or embedded Stripe Elements widget
+2. **Stripe tokenizes** the card - you never see the actual card number
+3. You receive a **token/customer ID** - store this in your database
+4. **Charge via Stripe API** - pass the token, Stripe processes payment
+5. **Stripe handles:** PCI compliance, fraud detection, chargebacks, refunds
+
+**What Stripe Handles (You Don't Worry About):**
+- ✅ PCI DSS compliance (Level 1 certified)
+- ✅ Card number encryption and storage
+- ✅ Fraud detection and prevention
+- ✅ International payments and currency conversion
+- ✅ 3D Secure authentication (SCA compliance)
+- ✅ Dispute/chargeback management
+- ✅ Payment method diversification (cards, ACH, wallets)
+
+**What You're Responsible For:**
+- ✅ User authentication - Ensure right user is logged in
+- ✅ Authorization - Users can only manage their own subscriptions
+- ✅ Webhook security - Verify Stripe webhook signatures
+- ✅ Subscription logic - Track plan levels, features, limits
+- ✅ Basic PII protection - Email addresses, names (not card data)
+- ✅ Audit logging - Who subscribed/cancelled when
+
+### Data Model
+
+**Store only Stripe references, never card data:**
+
+```csharp
+public class Subscription
+{
+    public int Id { get; set; }
+    public int TenantId { get; set; }  // Links to your customer/organization
+    
+    // Stripe references (safe to store)
+    public string StripeCustomerId { get; set; }  // "cus_abc123"
+    public string StripeSubscriptionId { get; set; }  // "sub_xyz789"
+    public string? StripePaymentMethodId { get; set; }  // "pm_card_xyz"
+    
+    // Your business logic
+    public string PlanLevel { get; set; }  // "basic", "pro", "enterprise"
+    public SubscriptionStatus Status { get; set; }  // Active, Cancelled, PastDue
+    public DateTime? TrialEndsAt { get; set; }
+    public DateTime? CurrentPeriodStart { get; set; }
+    public DateTime? CurrentPeriodEnd { get; set; }
+    
+    // Audit
+    public DateTime CreatedAt { get; set; }
+    public DateTime? CancelledAt { get; set; }
+}
+
+public enum SubscriptionStatus
+{
+    Trialing,
+    Active,
+    PastDue,
+    Cancelled,
+    Unpaid
+}
+```
+
+**NEVER store:**
+- ❌ Credit card numbers
+- ❌ CVV/CVC codes
+- ❌ Expiration dates
+- ❌ Full card PANs (Primary Account Numbers)
+
+### Implementation Steps
+
+1. **Create Stripe Account**
+   - Sign up at stripe.com
+   - Get API keys (test and live)
+   - Store in environment variables (never commit keys)
+
+2. **Install Stripe .NET SDK**
+   ```bash
+   dotnet add package Stripe.net
+   ```
+
+3. **Create Stripe Customer on User Signup**
+   ```csharp
+   var customerService = new CustomerService();
+   var customer = await customerService.CreateAsync(new CustomerCreateOptions
+   {
+       Email = user.Email,
+       Name = user.Name,
+       Metadata = new Dictionary<string, string>
+       {
+           { "tenant_id", tenant.Id.ToString() }
+       }
+   });
+   
+   // Store customer.Id in your database
+   tenant.StripeCustomerId = customer.Id;
+   ```
+
+4. **Create Checkout Session** (user subscribes)
+   ```csharp
+   var sessionService = new SessionService();
+   var session = await sessionService.CreateAsync(new SessionCreateOptions
+   {
+       Customer = tenant.StripeCustomerId,
+       Mode = "subscription",
+       LineItems = new List<SessionLineItemOptions>
+       {
+           new SessionLineItemOptions
+           {
+               Price = "price_pro_plan_monthly",  // From Stripe dashboard
+               Quantity = 1
+           }
+       },
+       SuccessUrl = "https://porpoiseanalytics.com/subscribe/success",
+       CancelUrl = "https://porpoiseanalytics.com/subscribe/cancel"
+   });
+   
+   // Redirect user to session.Url (Stripe hosted page)
+   ```
+
+5. **Handle Webhooks** (subscription events)
+   ```csharp
+   [ApiController]
+   [Route("api/webhooks/stripe")]
+   public class StripeWebhookController : ControllerBase
+   {
+       [HttpPost]
+       public async Task<IActionResult> HandleWebhook()
+       {
+           var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();
+           var stripeSignature = Request.Headers["Stripe-Signature"];
+           
+           try
+           {
+               var webhookSecret = Environment.GetEnvironmentVariable("STRIPE_WEBHOOK_SECRET");
+               var stripeEvent = EventUtility.ConstructEvent(
+                   json, stripeSignature, webhookSecret
+               );
+               
+               switch (stripeEvent.Type)
+               {
+                   case "customer.subscription.created":
+                       // Update subscription status to Active
+                       break;
+                   case "customer.subscription.updated":
+                       // Handle plan changes, renewals
+                       break;
+                   case "customer.subscription.deleted":
+                       // Mark subscription as cancelled
+                       break;
+                   case "invoice.payment_failed":
+                       // Notify user, mark as past_due
+                       break;
+               }
+               
+               return Ok();
+           }
+           catch (StripeException)
+           {
+               return BadRequest();
+           }
+       }
+   }
+   ```
+
+6. **Check Subscription Before API Access**
+   ```csharp
+   public class SubscriptionMiddleware
+   {
+       public async Task InvokeAsync(HttpContext context)
+       {
+           var tenantId = context.User.FindFirst("tenant_id")?.Value;
+           var subscription = await _db.Subscriptions
+               .FirstOrDefaultAsync(s => s.TenantId == int.Parse(tenantId));
+           
+           if (subscription?.Status != SubscriptionStatus.Active)
+           {
+               context.Response.StatusCode = 402;  // Payment Required
+               await context.Response.WriteAsync("Subscription required");
+               return;
+           }
+           
+           await _next(context);
+       }
+   }
+   ```
+
+### Security Considerations
+
+**Webhook Security:**
+- Always verify Stripe signatures on webhooks
+- Use raw request body for signature verification
+- Reject requests with invalid signatures
+
+**API Keys:**
+- Store in environment variables, never in code
+- Use test keys in development
+- Use restricted API keys (limit permissions)
+- Rotate keys periodically
+
+**Audit Logging:**
+- Log all subscription changes (created, updated, cancelled)
+- Track payment failures and retries
+- Monitor for suspicious activity (rapid subscribe/cancel)
+
+**User Privacy:**
+- Only store necessary PII (email, name)
+- Encrypt PII at rest if handling EU customers (GDPR)
+- Provide export/delete functionality for user data
+
+### Compliance Requirements
+
+**PCI DSS:** Handled by Stripe (you're not in scope if you never touch card data)
+
+**GDPR (if EU customers):**
+- ✅ Get consent before processing payments
+- ✅ Allow users to export their data
+- ✅ Allow users to delete their account and data
+- ✅ Have a privacy policy
+- ✅ Appoint a DPO if processing large scale
+
+**SCA (Strong Customer Authentication - EU):**
+- ✅ Handled by Stripe automatically
+- ✅ Uses 3D Secure for EU cards
+
+### Testing
+
+**Use Stripe Test Mode:**
+- Test card: `4242 4242 4242 4242`
+- Any future expiration, any CVV
+- Test webhooks locally with Stripe CLI
+
+**Stripe CLI:**
+```bash
+# Install Stripe CLI
+brew install stripe/stripe-cli/stripe
+
+# Forward webhooks to localhost
+stripe listen --forward-to localhost:5107/api/webhooks/stripe
+
+# Trigger test webhook
+stripe trigger customer.subscription.created
+```
+
+### Pricing Strategy Examples
+
+**SaaS Tiers:**
+- Free: 1 project, 100 responses/month, no AI
+- Pro ($29/mo): Unlimited projects, 10k responses/month, AI insights
+- Enterprise ($99/mo): Unlimited everything, priority support, white-label
+
+**Usage-Based:**
+- Base: $10/mo + $0.01 per response processed
+- Good for variable usage patterns
+
+### Checklist for Payment Processing
+
+Before accepting real payments:
+
+- [ ] Stripe account created and verified
+- [ ] Test mode working end-to-end
+- [ ] Webhook endpoint secured with signature verification
+- [ ] Subscription status checked before API access
+- [ ] User can view/manage their subscription
+- [ ] Cancellation flow implemented
+- [ ] Failed payment notifications sent to users
+- [ ] Privacy policy includes payment processing (mention Stripe)
+- [ ] Terms of service include refund policy
+- [ ] Audit logging for all subscription events
+- [ ] Test all webhooks (created, updated, deleted, payment_failed)
+- [ ] Handle edge cases (subscription past_due, cancelled with access until period end)
+
 ## Resources
 
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
 - [ASP.NET Core Security](https://learn.microsoft.com/en-us/aspnet/core/security/)
 - [Railway Security Best Practices](https://docs.railway.app/guides/security)
 - [Auth0 Documentation](https://auth0.com/docs)
+- [Stripe Documentation](https://stripe.com/docs)
+- [Stripe .NET SDK](https://github.com/stripe/stripe-dotnet)
+- [PCI DSS Compliance](https://www.pcisecuritystandards.org/)
+- [GDPR Overview](https://gdpr.eu/)
 
 ## Contact
 
