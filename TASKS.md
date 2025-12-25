@@ -33,6 +33,24 @@
 
 ## Later - Before Production 📋
 
+### Known Warnings & Issues (Non-Critical)
+- **FluentAssertions License Warning (3 warnings during test runs)**
+  - Appears when running `dotnet test` - one warning per test project
+  - Message: "Fluent Assertions is free for non-commercial use only. Commercial use requires a subscription."
+  - Current status: Using free version during development (1,018 assertions across test suite)
+  - Action needed before commercial release:
+    - Option 1: Purchase commercial license ($299/year for unlimited developers)
+    - Option 2: Convert all assertions to standard xUnit assertions (significant effort)
+  - **This is informational only - tests pass successfully, no code issues**
+
+### Frontend Performance Optimization
+- **Code-split AnalyticsView** - The AnalyticsView component (589kB / 130kB gzipped) will need to be refactored as we add more analytics features
+  - Currently exceeds Vite's 500kB chunk size recommendation
+  - Split into lazy-loaded sub-modules (Results, Crosstab, StatSig, etc.)
+  - Use dynamic imports for better initial load performance
+  - Implement manual chunking strategy via `build.rollupOptions.output.manualChunks`
+  - Deferred until after additional analytics features are implemented
+
 ### Data Migration Completion
 - **Remove BlkLabel/BlkStem from Question model** - Complete migration to QuestionBlocks table
   - Currently suppressed with `#pragma warning disable CS0618` in 6 files:

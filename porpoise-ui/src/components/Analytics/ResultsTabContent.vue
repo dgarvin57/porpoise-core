@@ -1,6 +1,6 @@
 <template>
-  <div class="h-full flex justify-center">
-    <div v-if="selectedQuestion" class="p-3 px-6 w-full max-w-[896px] ">
+  <div class="h-full overflow-auto">
+    <div v-if="selectedQuestion" class="pt-3 px-6 pb-6 w-full max-w-[848px]">
       <ResultsChart
         :question="selectedQuestion"
         :questionLabel="selectedQuestion.label || selectedQuestion.qstLabel || ''"

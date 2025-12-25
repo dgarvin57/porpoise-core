@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900 flex justify-center">
-    <div class="w-full max-w-[1600px] px-6 pt-2 pb-0 space-y-1">
+    <div class="w-full max-w-7xl px-2 sm:px-4 lg:px-6 pt-2 pb-0 space-y-1">
       <!-- Window Width Indicator (Debug Tool) -->
       <div class="fixed bottom-4 right-4 bg-black/80 text-white px-4 py-2 rounded-lg font-mono text-sm z-50 shadow-lg">
         Window: {{ windowWidth }}px

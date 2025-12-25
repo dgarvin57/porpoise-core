@@ -1,0 +1,7 @@
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Circular background -->
+  <circle cx="24" cy="24" r="24" fill="#1e3a8a"/>
+  
+  <!-- Larger, bolder P with less padding -->
+  <path d="M14 10v28h6V28h8c5.5 0 10-4.5 10-10s-4.5-10-10-10h-14zm6 6h8c2.8 0 5 2.2 5 5s-2.2 5-5 5h-8v-10z" fill="white"/>
+</svg>

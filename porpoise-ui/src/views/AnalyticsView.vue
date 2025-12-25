@@ -123,15 +123,16 @@
           ></div>
 
           <!-- Right: Main Content Area (Context + Content) -->
-          <div class="flex-1 flex flex-col min-w-0">
+          <div class="flex-1 flex flex-col min-w-0 bg-gray-50 dark:bg-gray-900">
             <!-- Top: Context Area (Responses Table + Question/Block) -->
-            <div 
-              :style="{ height: contextHeight + 'px' }"
-              class="flex-shrink-0 flex"
-            >
-              <!-- Left: Responses Table -->
+            <div class="flex-shrink-0 pt-3 pl-6 pr-6">
               <div 
-                :style="{ width: responsesTableWidth + 'px' }"
+                :style="{ height: contextHeight + 'px' }"
+                class="flex"
+              >
+                <!-- Left: Responses Table -->
+                <div 
+                  :style="{ width: responsesTableWidth + 'px' }"
                 class="flex-shrink-0 bg-white dark:bg-gray-800 overflow-hidden"
               >
                 <div class="h-full">
@@ -194,12 +195,15 @@
                 </div>
               </div>
             </div>
+            </div>
 
             <!-- Horizontal Resize Handle for Context Area -->
+            <div class="pl-6 pr-6">
             <div
               class="h-1 bg-gray-200 dark:bg-gray-700 hover:bg-blue-500 dark:hover:bg-blue-600 cursor-row-resize flex-shrink-0 transition-colors"
               @mousedown="startResizeContext"
             ></div>
+            </div>
 
             <!-- Bottom: Content Area (Tabs + Chart) -->
             <div class="flex-1 bg-gray-50 dark:bg-gray-900 overflow-hidden min-h-0 flex flex-col">
@@ -954,6 +958,12 @@ watch(activeAnalysisTab, async (newTab, oldTab) => {
     }
   }
   
+  // When switching TO statsig, ensure question data is loaded if we have a selected question ID
+  // This handles edge cases like page refresh where data might not be loaded yet
+  if (newTab === 'statsig' && selectedQuestionId.value && !selectedQuestionWithResponses.value) {
+    await loadQuestionData(selectedQuestionId.value)
+  }
+  
   // When switching AWAY FROM crosstab, dismiss the crosstab hint if it's showing
   if (oldTab === 'crosstab' && newTab !== 'crosstab' && activeHint.value?.key === 'crosstab-iv-selection') {
     dismissHint()
@@ -1100,7 +1110,7 @@ watch(selectedQuestionId, (newId) => {
   } else {
     selectedQuestionWithResponses.value = null
   }
-})
+}, { immediate: true })
 
 // Watch selectedQuestionWithResponses to sync with crosstab first question (results -> crosstab)
 // This ensures when you change the dependent variable on Results, it's reflected in Crosstab
@@ -1523,9 +1533,12 @@ onMounted(() => {
   loadSurveyInfo()
   
   // Load question data if there's already a selected question
-  if (selectedQuestionId.value) {
-    loadQuestionData(selectedQuestionId.value)
-  }
+  // Use nextTick to ensure state is fully loaded before fetching question data
+  nextTick(() => {
+    if (selectedQuestionId.value) {
+      loadQuestionData(selectedQuestionId.value)
+    }
+  })
   
   // Initialize split panel with first question if in split view
   if (splitViewEnabled.value && crosstabFirstQuestion.value) {
