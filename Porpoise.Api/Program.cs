@@ -1,6 +1,7 @@
 // Porpoise.Api/Program.cs — NO SWAGGER, JUST PURE API
 using System.Reflection;
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Porpoise.Api.Configuration;
 using Porpoise.Api.Database;
@@ -34,18 +35,33 @@ builder.Services.AddCors(options =>
     )
 );
 
+// Configure forwarded headers for Railway proxy
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 // Add rate limiting
 builder.Services.AddRateLimiter(options =>
 {
     options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
-        RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+    {
+        // Use X-Forwarded-For header if available (for Railway proxy), otherwise use direct IP
+        var clientIp = httpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault()?.Split(',').FirstOrDefault()?.Trim()
+                       ?? httpContext.Connection.RemoteIpAddress?.ToString()
+                       ?? "unknown";
+        
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: clientIp,
             factory: partition => new FixedWindowRateLimiterOptions
             {
                 AutoReplenishment = true,
                 PermitLimit = 100,
                 Window = TimeSpan.FromMinutes(1)
-            }));
+            });
+    });
     
     options.OnRejected = async (context, cancellationToken) =>
     {
@@ -174,6 +190,9 @@ builder.Services.AddSingleton<AIInsightsService>(sp =>
 });
 
 var app = builder.Build();
+
+// Configure forwarded headers (must be before CORS)
+app.UseForwardedHeaders();
 
 // CORS must come first to handle preflight requests
 app.UseCors();
