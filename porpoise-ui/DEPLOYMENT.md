@@ -1,7 +1,9 @@
 # API Configuration - Deployment Guide
 
+> **Note:** This document is located in `porpoise-ui/` rather than `docs/` because it contains UI-specific deployment configuration. For overall Railway deployment setup and backend configuration, see `docs/RAILWAY_DEPLOYMENT.md`.
+
 ## Overview
-All hardcoded API URLs have been replaced with environment-based configuration to support deployment to Railway or other platforms.
+All hardcoded API URLs have been replaced with environment-based configuration to support deployment to Railway or other platforms. This guide covers the Vue/Vite-specific environment variable handling and API configuration for the frontend application.
 
 ## Files Created
 
