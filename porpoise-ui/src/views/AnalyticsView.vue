@@ -125,9 +125,9 @@
           <!-- Right: Main Content Area (Context + Content) -->
           <div class="flex-1 flex flex-col min-w-0 bg-gray-50 dark:bg-gray-900">
             <!-- Top: Context Area (Responses Table + Question/Block) -->
-            <div class="flex-shrink-0 pt-3 px-6">
+            <div class="flex-shrink-0 pt-3 pl-6 pr-6">
               <div 
-                :style="{ height: contextHeight + 'px', maxWidth: '848px' }"
+                :style="{ height: contextHeight + 'px' }"
                 class="flex"
               >
                 <!-- Left: Responses Table -->
@@ -198,9 +198,9 @@
             </div>
 
             <!-- Horizontal Resize Handle for Context Area -->
-            <div class="px-6">
+            <div class="pl-6 pr-6">
             <div
-              class="h-1 bg-gray-200 dark:bg-gray-700 hover:bg-blue-500 dark:hover:bg-blue-600 cursor-row-resize flex-shrink-0 transition-colors max-w-[848px]"
+              class="h-1 bg-gray-200 dark:bg-gray-700 hover:bg-blue-500 dark:hover:bg-blue-600 cursor-row-resize flex-shrink-0 transition-colors"
               @mousedown="startResizeContext"
             ></div>
             </div>
