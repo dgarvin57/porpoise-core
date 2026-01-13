@@ -8,7 +8,7 @@
             <img
               :src="porpoiseLogo"
               alt="Porpoise Analytics logo"
-              class="w-10 h-10 rounded-lg drop-shadow-lg"
+              class="h-8 w-auto"
             />
             <div class="leading-tight">
               <span class="text-base font-semibold text-gray-900 dark:text-white">{{ PRODUCT_FULL_NAME }}</span>
@@ -111,7 +111,8 @@ import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
 import { API_BASE_URL } from '@/config/api'
 import { PRODUCT_FULL_NAME, PRODUCT_TAGLINE } from '@/config/branding'
-import porpoiseLogo from '@/assets/p_7.png'
+// Use SVG logo from public folder
+const porpoiseLogo = '/favicon-z.png'
 
 const router = useRouter()
 const route = useRoute()
