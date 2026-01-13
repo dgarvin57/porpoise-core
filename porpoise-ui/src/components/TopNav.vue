@@ -111,8 +111,7 @@ import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
 import { API_BASE_URL } from '@/config/api'
 import { PRODUCT_FULL_NAME, PRODUCT_TAGLINE } from '@/config/branding'
-// Use SVG logo from public folder
-const porpoiseLogo = '/favicon-z.png'
+import porpoiseLogo from '@/assets/p_7.png'
 
 const router = useRouter()
 const route = useRoute()
