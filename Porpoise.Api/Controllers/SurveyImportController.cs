@@ -344,6 +344,8 @@ public class SurveyImportController : ControllerBase
     /// Import a .porps/.porpd file pair
     /// </summary>
     [HttpPost("porps")]
+    [RequestSizeLimit(100 * 1024 * 1024)] // 100MB limit
+    [RequestFormLimits(MultipartBodyLengthLimit = 100 * 1024 * 1024)]
     public async Task<IActionResult> ImportPorpsFile(
         [FromForm] IFormFile surveyFile,
         [FromForm] IFormFile? dataFile,
@@ -485,6 +487,8 @@ public class SurveyImportController : ControllerBase
     /// Reads the project file and imports all referenced surveys
     /// </summary>
     [HttpPost("project")]
+    [RequestSizeLimit(100 * 1024 * 1024)] // 100MB limit
+    [RequestFormLimits(MultipartBodyLengthLimit = 100 * 1024 * 1024)]
     public async Task<IActionResult> ImportProjectFile(
         [FromForm] IFormFile projectFile,
         [FromForm] IFormFile? surveyFile,
@@ -563,6 +567,8 @@ public class SurveyImportController : ControllerBase
     /// Import a .porpz archive file (compressed survey package)
     /// </summary>
     [HttpPost("porpz")]
+    [RequestSizeLimit(100 * 1024 * 1024)] // 100MB limit
+    [RequestFormLimits(MultipartBodyLengthLimit = 100 * 1024 * 1024)]
     public async Task<IActionResult> ImportPorpzArchive([FromForm] IFormFile porpzFile)
     {
         try
@@ -653,6 +659,8 @@ public class SurveyImportController : ControllerBase
     /// Import from SPSS format
     /// </summary>
     [HttpPost("spss")]
+    [RequestSizeLimit(100 * 1024 * 1024)] // 100MB limit
+    [RequestFormLimits(MultipartBodyLengthLimit = 100 * 1024 * 1024)]
     public async Task<IActionResult> ImportSpssFile([FromForm] IFormFile spssFile)
     {
         try
@@ -681,6 +689,8 @@ public class SurveyImportController : ControllerBase
     /// Import from CSV format
     /// </summary>
     [HttpPost("csv")]
+    [RequestSizeLimit(100 * 1024 * 1024)] // 100MB limit
+    [RequestFormLimits(MultipartBodyLengthLimit = 100 * 1024 * 1024)]
     public async Task<IActionResult> ImportCsvFile(
         [FromForm] IFormFile csvFile,
         [FromForm] bool hasHeaders = true)

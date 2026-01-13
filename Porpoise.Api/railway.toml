@@ -6,3 +6,6 @@ buildCommand = "dotnet publish -c Release -o out"
 startCommand = "cd out && dotnet Porpoise.Api.dll"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
+
+# Railway proxy has a default 500MB limit which is sufficient
+# Our app is configured for 100MB max upload size
