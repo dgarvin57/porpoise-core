@@ -72,12 +72,27 @@ builder.Services.AddRateLimiter(options =>
     };
 });
 
+// Configure Kestrel for larger file uploads
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    // Allow up to 100MB request body size (for .porpz archives)
+    serverOptions.Limits.MaxRequestBodySize = 100 * 1024 * 1024; // 100MB
+});
+
 // Add controllers with JSON options to handle string enums
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
     });
+
+// Configure form options for multipart file uploads
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 100 * 1024 * 1024; // 100MB
+    options.ValueLengthLimit = int.MaxValue;
+    options.MultipartHeadersLengthLimit = int.MaxValue;
+});
 
 // Load AI prompt configuration from JSON file
 var promptConfigPath = Path.Combine(builder.Environment.ContentRootPath, "Configuration", "ai-prompts.json");
@@ -193,6 +208,9 @@ var app = builder.Build();
 
 // Configure forwarded headers (must be before CORS)
 app.UseForwardedHeaders();
+
+// Add request size limit error handling (must be early in pipeline)
+app.UseMiddleware<RequestSizeLimitMiddleware>();
 
 // CORS must come first to handle preflight requests
 app.UseCors();

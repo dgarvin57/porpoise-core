@@ -46,6 +46,7 @@ Successfully deployed Porpoise to Railway with separate production and staging e
 **Environment Variables:**
 ```
 ASPNETCORE_ENVIRONMENT=Production
+RAILWAY_MAX_REQUEST_SIZE=100MB
 ConnectionStrings__PorpoiseDb=Server=${{pulse-db-production.RAILWAY_PRIVATE_DOMAIN}};Port=3306;Database=railway;User=root;Password=${{pulse-db-production.MYSQL_ROOT_PASSWORD}};
 ```
 
@@ -88,6 +89,7 @@ VITE_API_BASE_URL=https://porpoise-api-production.up.railway.app
 **Environment Variables:**
 ```
 ASPNETCORE_ENVIRONMENT=Staging
+RAILWAY_MAX_REQUEST_SIZE=100MB
 ConnectionStrings__PorpoiseDb=Server=${{pulse-db-staging.RAILWAY_PRIVATE_DOMAIN}};Port=3306;Database=railway;User=root;Password=${{pulse-db-staging.MYSQL_ROOT_PASSWORD}};
 ```
 
@@ -231,6 +233,25 @@ Railway pricing is usage-based. To optimize costs:
 - **UI:** https://pulse-ui-staging.up.railway.app
 - **API:** https://porpoise-api-staging.up.railway.app
 - **API Test:** https://porpoise-api-staging.up.railway.app/api/projects
+
+## Important Configuration Notes
+
+### File Upload Size Limits
+
+Railway's proxy has a **10MB default limit** for HTTP request bodies. To support larger file uploads (e.g., .porpz survey archives), you **must** add the following environment variable to the API service:
+
+```
+RAILWAY_MAX_REQUEST_SIZE=100MB
+```
+
+This is configured in both production and staging environments. Without this, file uploads over 10MB will fail with a `413 Payload Too Large` error.
+
+**Note:** The ASP.NET application is also configured to support 100MB uploads via:
+- `Kestrel.Limits.MaxRequestBodySize`
+- `FormOptions.MultipartBodyLengthLimit`
+- `[RequestSizeLimit]` attributes on upload endpoints
+
+Both Railway's proxy limit AND the application limits must be set appropriately.
 
 ## Related Documentation
 

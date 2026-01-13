@@ -55,7 +55,7 @@
           </button>
 
           <p class="text-xs text-gray-500 dark:text-gray-500 mt-4">
-            Supported: .porps (survey), .porpd (data), .porp (project, optional), .porpz (archive) • Max 50MB
+            Supported: .porps (survey), .porpd (data), .porp (project, optional), .porpz (archive) • Max 100MB
           </p>
         </div>
       </div>
@@ -317,9 +317,9 @@ const addFiles = (files) => {
       continue
     }
     
-    // Validate file size (50MB max)
-    if (file.size > 50 * 1024 * 1024) {
-      errorMessages.value.push(`File too large: ${file.name}. Maximum size is 50MB.`)
+    // Validate file size (100MB max)
+    if (file.size > 100 * 1024 * 1024) {
+      errorMessages.value.push(`File too large: ${file.name}. Maximum size is 100MB.`)
       continue
     }
     
@@ -458,7 +458,16 @@ const uploadFiles = async () => {
     } catch (error) {
       fileItem.uploading = false
       fileItem.error = true
-      errorMessages.value.push(`Failed to upload ${fileItem.name}: ${error.response?.data?.message || error.message}`)
+      
+      // Handle 413 Payload Too Large errors specifically
+      if (error.response?.status === 413) {
+        const errorMsg = error.response?.data?.message || 
+                        error.response?.data?.error ||
+                        'File too large. Maximum upload size is 100MB.'
+        errorMessages.value.push(`${fileItem.name}: ${errorMsg}`)
+      } else {
+        errorMessages.value.push(`Failed to upload ${fileItem.name}: ${error.response?.data?.message || error.message}`)
+      }
     }
   }
   
