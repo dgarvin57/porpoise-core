@@ -8,7 +8,7 @@
             <img
               :src="porpoiseLogo"
               alt="Porpoise Analytics logo"
-              class="h-8 w-auto"
+              class="w-10 h-10 rounded-lg drop-shadow-lg"
             />
             <div class="leading-tight">
               <span class="text-base font-semibold text-gray-900 dark:text-white">{{ PRODUCT_FULL_NAME }}</span>
