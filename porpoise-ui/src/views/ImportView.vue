@@ -362,7 +362,7 @@ const uploadFiles = async () => {
       if (ext === 'porpz') {
         // Upload porpz archive
         formData.append('porpzFile', fileItem.file)
-        const response = await axios.post('${API_BASE_URL}/api/survey-import/porpz', formData, {
+        const response = await axios.post(`${API_BASE_URL}/api/survey-import/porpz`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
           onUploadProgress: (progressEvent) => {
             fileItem.progress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
@@ -403,7 +403,7 @@ const uploadFiles = async () => {
           matchingPorp.progress = 0
         }
         
-        const response = await axios.post('${API_BASE_URL}/api/survey-import/porps', formData, {
+        const response = await axios.post(`${API_BASE_URL}/api/survey-import/porps`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
           onUploadProgress: (progressEvent) => {
             const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
